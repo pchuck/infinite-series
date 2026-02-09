@@ -39,6 +39,12 @@ class TestGeneratePrimes(unittest.TestCase):
         self.assertEqual(generate_primes(1), [])
         self.assertEqual(generate_primes(2), [])
     
+    def test_negative_input_raises_error(self):
+        """Test that negative input raises ValueError"""
+        with self.assertRaises(ValueError) as ctx:
+            generate_primes(-1)
+        self.assertIn("non-negative", str(ctx.exception))
+    
     def test_large_prime_verification(self):
         """Verify a known large prime appears correctly"""
         primes = generate_primes(100)
@@ -99,6 +105,11 @@ class TestSieveOfEratosthenes(unittest.TestCase):
         self.assertEqual(sieve_of_eratosthenes(0), [])
         self.assertEqual(sieve_of_eratosthenes(1), [])
         self.assertEqual(sieve_of_eratosthenes(2), [])
+    
+    def test_negative_input_raises_error(self):
+        """Test that negative input raises ValueError"""
+        with self.assertRaises(ValueError):
+            sieve_of_eratosthenes(-1)
 
 
 class TestSegmentedSieve(unittest.TestCase):
@@ -163,6 +174,11 @@ class TestSegmentedSieve(unittest.TestCase):
         self.assertEqual(segmented_sieve(1), [])
         self.assertEqual(segmented_sieve(2), [])
     
+    def test_negative_input_raises_error(self):
+        """Test that negative input raises ValueError"""
+        with self.assertRaises(ValueError):
+            segmented_sieve(-1)
+    
     def test_segment_boundary_primes(self):
         """Test that primes at segment boundaries are found correctly"""
         # Test around common segment sizes
@@ -221,6 +237,11 @@ class TestParallelSieve(unittest.TestCase):
             with self.subTest(n=n):
                 result = parallel_segmented_sieve(n)
                 self.assertEqual(result, [])
+    
+    def test_negative_input_raises_error(self):
+        """Test that negative input raises ValueError"""
+        with self.assertRaises(ValueError):
+            parallel_segmented_sieve(-1)
     
     def test_generate_primes_with_parallel(self):
         """Test generate_primes with parallel=True"""

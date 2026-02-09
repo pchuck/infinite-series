@@ -11,6 +11,10 @@ import threading
 import time as time_module
 from typing import List, Optional, Callable, Any
 
+# Type alias for multiprocessing shared counter (ValueProxy with get_lock())
+# Using Any because ValueProxy type stubs don't expose get_lock() method
+SharedCounter = Any
+
 
 
 SEGMENTED_SIEVE_THRESHOLD = 10_000_000
@@ -24,7 +28,7 @@ def _worker_process_segment_chunk(
     n: int,
     segment_size: int,
     base_primes: List[int],
-    progress_counter: Any
+    progress_counter: Optional[SharedCounter]
 ) -> List[int]:
     """Worker function to process a chunk of segments in parallel
     
@@ -95,12 +99,18 @@ def sieve_of_eratosthenes(
     Args:
         n: Upper bound (exclusive)
         progress_callback: Optional function to call with current iteration count
-    """
-    if n <= 2:
-        return []
     
+    Returns:
+        List of all primes less than n
+    
+    Raises:
+        ValueError: If n is negative
+    """
     if n < 0:
         raise ValueError(f"n must be non-negative, got {n}")
+    
+    if n <= 2:
+        return []
     
     sieve = bytearray(b'\x01') * n
     sieve[0] = sieve[1] = 0
@@ -150,12 +160,15 @@ def segmented_sieve(
     
     Returns:
         List of all primes less than n
-    """
-    if n <= 2:
-        return []
     
+    Raises:
+        ValueError: If n is negative
+    """
     if n < 0:
         raise ValueError(f"n must be non-negative, got {n}")
+    
+    if n <= 2:
+        return []
     
     # Cache math functions locally for faster lookup
     _isqrt = math.isqrt
@@ -233,11 +246,11 @@ def parallel_segmented_sieve(
     Raises:
         ValueError: If n is negative
     """
-    if n <= 2:
-        return []
-
     if n < 0:
         raise ValueError(f"n must be non-negative, got {n}")
+
+    if n <= 2:
+        return []
 
     base_limit = int(math.isqrt(n))
     base_primes = sieve_of_eratosthenes(base_limit + 1)
@@ -249,7 +262,7 @@ def parallel_segmented_sieve(
     
     num_workers = min(num_workers, segments)
     
-    progress_counter: Any = None
+    progress_counter: Optional[SharedCounter] = None
     monitor_thread: Optional[threading.Thread] = None
     stop_monitoring = threading.Event()
     
@@ -261,8 +274,7 @@ def parallel_segmented_sieve(
             def monitor_progress():
                 last_seen = 0
                 while not stop_monitoring.is_set():
-                    # type: ignore
-                    current = progress_counter.value
+                    current = progress_counter.value  # type: ignore[union-attr]
                     if current > last_seen and progress_callback:
                         progress_callback(current - last_seen)
                         last_seen = current
