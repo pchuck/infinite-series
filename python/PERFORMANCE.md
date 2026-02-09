@@ -39,5 +39,9 @@
 | 100,000    | 0.0895s     | 0.0108s        | 8.31x   |
 
 ## Benchmarks
-- ** m3 ultra **: `[PERF] n=5000000000 | primes=234954223 | time=44.543s | primes/s=5,274,722`
-- ** 7900x **: [PERF] n=500000000 | primes=26355867 | time=14.489s | primes/s=1,819,013
+- Apple M3 ultra<br>
+  `[PERF] n=5000000000 | primes=234954223 | time=44.543s | primes/s=5,274,722`
+- Apple M2<br>
+  `[PERF] n=5000000000 | primes=234954223 | time=62.816s | primes/s=3,740,340`
+- AMD 7900x<br>
+  `[PERF] n=500000000 | primes=26355867 | time=14.489s | primes/s=1,819,013`
