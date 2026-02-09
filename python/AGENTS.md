@@ -77,11 +77,6 @@
 
 ### Common Patterns
 - **tqdm integration**: Pass iteration count to progress callback, let tqdm handle updates
-  ```python
-  with tqdm(total=max_iterations) as pbar:
-      def callback(current):
-          pbar.update(1)
-  ```
 - **Error handling**: Catch `ValueError` for user input, provide clear messages
 - **Type hints**: Use `Optional[T]` for nullable returns, `Callable[[Arg], Ret]` for callbacks
 

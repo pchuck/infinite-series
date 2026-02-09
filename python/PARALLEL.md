@@ -128,7 +128,7 @@ Speedup depends on:
 3. Hardware characteristics: CPU cache, memory bandwidth
 4. Python multiprocessing implementation overhead
 
-**Note:** In test environments with limited CPUs or high overhead, sequential may appear faster. The implementation is correct and provides identical results.
+**Note:** In test environments with limited CPUs or high overhead, sequential may appear faster. 
 
 ## Edge Cases Handled
 
@@ -139,8 +139,6 @@ Speedup depends on:
 5. **Multiprocessing failures**: Gracefully falls back to sequential
 
 ## Testing
-
-Comprehensive test suite added:
 
 ```python
 class TestParallelSieve(unittest.TestCase):
@@ -157,19 +155,6 @@ class TestParallelSieve(unittest.TestCase):
         """Test that progress parameter works with parallel execution"""
 ```
 
-All tests verify:
-- Correctness: Parallel produces identical results to sequential
-- Edge cases: n <= 2, worker counts, segment boundaries
-- Progress tracking: Shared counter updates correctly
-
-## Code Style
-
-- Type hints for all functions
-- Follows existing code conventions
-- No comments added (per project style)
-- Passes ruff linting
-- All 34 tests pass successfully
-
 ## Summary
 
-Segmented sieve algorithm's independent segments make it well-suited for parallel processing. While actual speedup depends on hardware characteristics.
+Segmented sieve algorithm's independent segments make it well-suited for parallel processing. 

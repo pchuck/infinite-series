@@ -29,7 +29,7 @@
 - Shows speed ratios
 - Demonstrates performance gains at different scales
 
-## Performance Results
+## Relative Performance
 
 | Input Size | Unoptimized | Optimized      | Speedup |
 |------------|-------------|----------------|---------|
@@ -38,19 +38,6 @@
 | 10,000     | 0.0052s     | 0.0008s        | 6.23x   |
 | 100,000    | 0.0895s     | 0.0108s        | 8.31x   |
 
-## Usage
-
-```bash
-# Run performance comparison
-python performance_comparison.py
-
-# Run tests
-python -m pytest test_generators.py -v
-
-# Use prime generator
-python prime_generator.py 100
-```
-
-## Conclusion
-
-The optimizations provide significant performance improvements, especially for larger inputs. The Sieve of Eratosthenes algorithm is the default algorithm.
+## Benchmarks
+- ** m3 ultra **: `[PERF] n=5000000000 | primes=234954223 | time=44.543s | primes/s=5,274,722`
+- ** 7900x **: [PERF] n=500000000 | primes=26355867 | time=14.489s | primes/s=1,819,013

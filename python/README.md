@@ -41,11 +41,15 @@ python prime_generator.py
 ## Performance
 
 The prime generator uses the Sieve of Eratosthenes algorithm, which is significantly faster than trial division:
-
 - **Small numbers (100)**: 2.5x faster
 - **Medium numbers (1,000)**: 2.7x faster
 - **Large numbers (10,000)**: 6.2x faster
 - **Very large numbers (100,000)**: 8.3x faster
+
+Real-world performance
+- 5.3M primes/s on an M3 Ultra
+
+See [Performance](PERFORMANCE.md)
 
 ### Memory Efficiency
 
@@ -63,7 +67,10 @@ Available for very large inputs (≥ 500M):
 
 ## Testing
 
-Run the comprehensive test suite:
+All tests verify:
+- Correctness: Parallel produces identical results to sequential
+- Edge cases: n <= 2, worker counts, segment boundaries
+- Progress tracking: Shared counter updates correctly
 
 ```bash
 # Run all tests
@@ -71,13 +78,8 @@ python -m pytest test_generators.py -v
 
 # Run with coverage
 python -m pytest test_generators.py --cov=. --cov-report=html
-```
 
-## Performance Comparison
-
-Compare the old and optimized algorithms:
-
-```bash
+# Compare algorithms:
 python performance_comparison.py
 ```
 
@@ -92,4 +94,11 @@ python performance_comparison.py
 ├── OPTIMIZATION_SUMMARY.md  # Detailed optimization notes
 └── README.md               # This file
 ```
+
+## Code Style
+
+- Type hints for all functions
+- Follows existing code conventions
+- Passes ruff linting
+
 
