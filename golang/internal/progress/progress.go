@@ -9,6 +9,7 @@ import (
 	"time"
 )
 
+// ProgressBar provides a simple terminal progress bar that writes to stderr.
 type ProgressBar struct {
 	total       int64
 	completed   int64
@@ -16,7 +17,6 @@ type ProgressBar struct {
 	startTime   time.Time
 	description string
 	mu          sync.Mutex
-	started     bool
 }
 
 func NewProgressBar(total int64, description string) *ProgressBar {
@@ -56,10 +56,6 @@ func (p *ProgressBar) SetCompleted(completed int64) {
 
 func (p *ProgressBar) Finish() {
 	p.mu.Lock()
-	if !p.started {
-		p.started = true
-		p.startTime = time.Now()
-	}
 	p.completed = p.total
 	p.render()
 	fmt.Fprintln(os.Stderr)
@@ -85,73 +81,24 @@ func (p *ProgressBar) render() {
 	filled := int(percent * float64(p.width))
 
 	elapsed := time.Since(p.startTime)
-	_ = elapsed
+	rate := float64(p.completed) / elapsed.Seconds()
+	var rateStr string
+	if rate >= 1_000_000 {
+		rateStr = fmt.Sprintf("%.1fM/s", rate/1_000_000)
+	} else if rate >= 1_000 {
+		rateStr = fmt.Sprintf("%.1fK/s", rate/1_000)
+	} else {
+		rateStr = fmt.Sprintf("%.0f/s", rate)
+	}
 
-	fmt.Fprintf(os.Stderr, "\r%s: [%s%s] %3.0f%% | %d/%d",
+	fmt.Fprintf(os.Stderr, "\r%s: [%s%s] %3.0f%% | %d/%d | %s",
 		p.description,
 		strings.Repeat("=", filled),
 		strings.Repeat(" ", p.width-filled),
 		percent*100,
 		p.completed,
-		p.total)
-}
-
-type MultiProgress struct {
-	bars     []*ProgressBar
-	mu       sync.Mutex
-	active   int
-	maxDescr int
-}
-
-func NewMultiProgress() *MultiProgress {
-	return &MultiProgress{
-		maxDescr: 20,
-	}
-}
-
-func (m *MultiProgress) AddBar(total int64, description string) *ProgressBar {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	if len(description) > m.maxDescr {
-		description = description[:m.maxDescr-3] + "..."
-	} else if len(description) < m.maxDescr {
-		description = strings.Repeat(" ", m.maxDescr-len(description)) + description
-	}
-
-	bar := &ProgressBar{
-		total:       total,
-		width:       30,
-		description: description,
-		startTime:   time.Now(),
-		started:     true,
-	}
-	m.bars = append(m.bars, bar)
-	m.active++
-	return bar
-}
-
-func (m *MultiProgress) RemoveBar(bar *ProgressBar) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	for i, b := range m.bars {
-		if b == bar {
-			m.bars = append(m.bars[:i], m.bars[i+1:]...)
-			m.active--
-			break
-		}
-	}
-}
-
-func (m *MultiProgress) RenderAll() {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	for _, bar := range m.bars {
-		bar.render()
-		fmt.Fprintln(os.Stderr)
-	}
+		p.total,
+		rateStr)
 }
 
 func GetCPUCount() int {

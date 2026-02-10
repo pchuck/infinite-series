@@ -2,7 +2,6 @@ package prime
 
 import (
 	"fmt"
-	"os"
 	"runtime"
 	"testing"
 )
@@ -141,15 +140,4 @@ func BenchmarkCompareParallelism(b *testing.B) {
 			ParallelSegmentedSieve(n, workers, DefaultSegmentSize, nil)
 		}
 	})
-}
-
-func PrintMemoryStats(b *testing.B) {
-	var m runtime.MemStats
-	runtime.ReadMemStats(&m)
-
-	fmt.Fprintf(os.Stderr, "Memory Stats:\n")
-	fmt.Fprintf(os.Stderr, "  Alloc: %.2f MB\n", float64(m.Alloc)/1024/1024)
-	fmt.Fprintf(os.Stderr, "  TotalAlloc: %.2f MB\n", float64(m.TotalAlloc)/1024/1024)
-	fmt.Fprintf(os.Stderr, "  Sys: %.2f MB\n", float64(m.Sys)/1024/1024)
-	fmt.Fprintf(os.Stderr, "  NumGC: %d\n", m.NumGC)
 }

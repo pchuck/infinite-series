@@ -1,6 +1,7 @@
 package prime
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -23,6 +24,16 @@ func TestSieveOfEratosthenes(t *testing.T) {
 		{
 			name:     "n=5",
 			n:        5,
+			expected: []int{2, 3},
+		},
+		{
+			name:     "n=3",
+			n:        3,
+			expected: []int{2},
+		},
+		{
+			name:     "n=4",
+			n:        4,
 			expected: []int{2, 3},
 		},
 		{
@@ -105,7 +116,7 @@ func TestSegmentedSieve(t *testing.T) {
 func TestSegmentedSieveMatchesClassic(t *testing.T) {
 	testValues := []int{100, 500, 1000, 5000, 10000}
 	for _, n := range testValues {
-		t.Run("", func(t *testing.T) {
+		t.Run(fmt.Sprintf("n=%d", n), func(t *testing.T) {
 			expected := SieveOfEratosthenes(n)
 			result := SegmentedSieve(n, 100, nil)
 			if len(result) != len(expected) {
@@ -146,14 +157,14 @@ func TestSegmentedSieveLargeInput(t *testing.T) {
 func TestSegmentedSieveWithProgress(t *testing.T) {
 	n := 100
 	segmentSize := 10
-	callCount := 0
-	callback := func(segIdx int) {
-		callCount++
+	totalDelta := 0
+	callback := func(delta int) {
+		totalDelta += delta
 	}
 
 	result := SegmentedSieve(n, segmentSize, callback)
 
-	if callCount == 0 {
+	if totalDelta == 0 {
 		t.Error("Progress callback was not called")
 	}
 
@@ -169,7 +180,7 @@ func TestSegmentedSieveCustomSegmentSize(t *testing.T) {
 
 	segmentSizes := []int{1, 10, 100, 1000}
 	for _, segSize := range segmentSizes {
-		t.Run("", func(t *testing.T) {
+		t.Run(fmt.Sprintf("seg=%d", segSize), func(t *testing.T) {
 			result := SegmentedSieve(n, segSize, nil)
 			if len(result) != len(expected) {
 				t.Errorf("SegmentedSieve(%d, %d) count = %d, want %d", n, segSize, len(result), len(expected))
@@ -201,7 +212,7 @@ func TestSegmentedSieveEdgeCases(t *testing.T) {
 func TestParallelSegmentedSieveMatchesSegmented(t *testing.T) {
 	testValues := []int{100, 500, 1000, 5000, 10000}
 	for _, n := range testValues {
-		t.Run("", func(t *testing.T) {
+		t.Run(fmt.Sprintf("n=%d", n), func(t *testing.T) {
 			expected := SegmentedSieve(n, 100, nil)
 			result := ParallelSegmentedSieve(n, 2, 100, nil)
 			if len(result) != len(expected) {
@@ -223,7 +234,7 @@ func TestParallelSegmentedSieveWithVariousWorkers(t *testing.T) {
 	workerCounts := []int{1, 2, 4}
 
 	for _, workers := range workerCounts {
-		t.Run("", func(t *testing.T) {
+		t.Run(fmt.Sprintf("workers=%d", workers), func(t *testing.T) {
 			result := ParallelSegmentedSieve(n, workers, 100, nil)
 			if len(result) != len(expected) {
 				t.Errorf("ParallelSegmentedSieve(%d, workers=%d) length = %d, want %d", n, workers, len(result), len(expected))
@@ -235,7 +246,7 @@ func TestParallelSegmentedSieveWithVariousWorkers(t *testing.T) {
 func TestParallelSegmentedSieveEdgeCases(t *testing.T) {
 	testValues := []int{0, 1, 2}
 	for _, n := range testValues {
-		t.Run("", func(t *testing.T) {
+		t.Run(fmt.Sprintf("n=%d", n), func(t *testing.T) {
 			result := ParallelSegmentedSieve(n, 2, 100, nil)
 			if result != nil {
 				t.Errorf("ParallelSegmentedSieve(%d) = %v, want nil", n, result)
@@ -247,15 +258,20 @@ func TestParallelSegmentedSieveEdgeCases(t *testing.T) {
 func TestParallelSegmentedSieveWithProgress(t *testing.T) {
 	n := 10000
 	expected := SegmentedSieve(n, 100, nil)
-	callCount := 0
-	callback := func(segIdx int) {
-		callCount++
+	totalDelta := 0
+	callback := func(delta int) {
+		totalDelta += delta
 	}
 
 	result := ParallelSegmentedSieve(n, 2, 100, callback)
 
 	if len(result) != len(expected) {
 		t.Errorf("ParallelSegmentedSieve with callback = %v, want %v", result, expected)
+	}
+
+	// Progress callback should have been called with total segments
+	if totalDelta == 0 {
+		t.Error("Progress callback was not called in parallel mode")
 	}
 }
 
@@ -314,6 +330,15 @@ func TestNoComposites(t *testing.T) {
 	for _, p := range primes {
 		if p <= 1 {
 			t.Errorf("Found non-prime: %d", p)
+		}
+		// Actually verify primality
+		if p > 2 && p%2 == 0 {
+			t.Errorf("Found even composite: %d", p)
+		}
+		for d := 3; d*d <= p; d += 2 {
+			if p%d == 0 {
+				t.Errorf("Found composite: %d (divisible by %d)", p, d)
+			}
 		}
 	}
 }
