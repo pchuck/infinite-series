@@ -32,6 +32,73 @@ pub fn is_probable_prime(n: &BigUint) -> bool {
     true
 }
 
+pub fn is_probable_prime_parallel(n: &BigUint, threads: usize) -> bool {
+    let two: BigUint = BigUint::from(2usize);
+    if n < &two {
+        return false;
+    }
+
+    for p in [2u64, 3u64, 5u64] {
+        let small_p = BigUint::from(p);
+        if n == &small_p {
+            return true;
+        }
+        if n % small_p == Zero::zero() {
+            return false;
+        }
+    }
+
+    let (d, s) = decompose_into_d_and_s(n);
+    let bases = get_test_bases(n);
+
+    if threads <= 1 || bases.len() < 2 {
+        for a in &bases {
+            let a_big = BigUint::from(*a);
+            if !miller_rabin_witness(&a_big, &d, s, n) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    let chunk_size = (bases.len() + threads - 1) / threads;
+    let mut all_passed = true;
+
+    std::thread::scope(|scope| {
+        let mut handles = Vec::new();
+        for i in 0..threads {
+            let start_idx = i * chunk_size;
+            if start_idx >= bases.len() {
+                break;
+            }
+            let end_idx = std::cmp::min(start_idx + chunk_size, bases.len());
+            let d_copy = d.clone();
+            let s_val = s;
+            let n_copy = n.clone();
+            let bases_copy = bases.clone();
+
+            handles.push(scope.spawn(move || -> bool {
+                for j in start_idx..end_idx {
+                    if j >= bases_copy.len() {
+                        break;
+                    }
+                    let a_big = BigUint::from(bases_copy[j]);
+                    if !miller_rabin_witness(&a_big, &d_copy, s_val, &n_copy) {
+                        return false;
+                    }
+                }
+                true
+            }));
+        }
+
+        for handle in handles {
+            all_passed = all_passed && handle.join().unwrap();
+        }
+    });
+
+    all_passed
+}
+
 fn decompose_into_d_and_s(n: &BigUint) -> (BigUint, usize) {
     let one: BigUint = One::one();
     let mut d: BigUint = n.clone() - one;

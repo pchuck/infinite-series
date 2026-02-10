@@ -1,14 +1,18 @@
 use clap::Parser;
-use miller_rabin_tester::is_probable_prime;
+use miller_rabin_tester::{is_probable_prime, is_probable_prime_parallel};
 use num_bigint::{BigUint, ToBigUint};
 use std::io::Write;
 use std::str::FromStr;
+use std::thread;
 
 #[derive(Parser, Debug)]
 #[command(name = "miller-rabin")]
 struct Args {
     #[arg(short, long)]
     number: Option<String>,
+
+    #[arg(short = 'p', long)]
+    parallel: bool,
 
     #[arg(short, long)]
     batch_test: bool,
@@ -18,6 +22,9 @@ struct Args {
 
     #[arg(long)]
     end: Option<usize>,
+
+    #[arg(short = 't', long, default_value = "4")]
+    threads: usize,
 }
 
 fn parse_big_uint(s: &str) -> Result<BigUint, String> {
@@ -128,7 +135,25 @@ fn main() {
         match parse_big_uint(n_str) {
             Ok(n) => {
                 println!("Testing: {}", n);
+                if args.parallel && args.threads > 1 {
+                    eprintln!("Using parallel mode with {} threads", args.threads);
+                }
                 let result = is_probable_prime(&n);
+
+                if result {
+                    println!("Result: PROBABLY PRIME");
+                } else {
+                    println!("Result: COMPOSITE");
+                }
+            }
+            Err(e) => eprintln!("Error parsing number: {}", e),
+        }
+    } else if args.parallel && args.number.is_some() {
+        match parse_big_uint(&args.number.unwrap()) {
+            Ok(n) => {
+                let threads = std::cmp::max(2, args.threads);
+                println!("Testing in parallel mode with {} threads: {}", threads, n);
+                let result = is_probable_prime_parallel(&n, threads);
 
                 if result {
                     println!("Result: PROBABLY PRIME");
@@ -142,13 +167,37 @@ fn main() {
         let start = args.start.unwrap_or(2usize);
         let end = args.end.unwrap_or(1000usize);
 
-        print!("Testing range [{}, {})... ", start, end);
+        print!(
+            "Testing range [{}, {}) with {} threads... ",
+            start, end, args.threads
+        );
         let _ = std::io::stdout().flush();
 
-        let primes: Vec<usize> = (start..end)
-            .into_iter()
-            .filter(|n| n.to_biguint().map_or(false, |b| is_probable_prime(&b)))
-            .collect();
+        let chunk_size = (end - start + args.threads - 1) / args.threads;
+        let mut handles = Vec::new();
+        let start_clone = start.clone();
+        let end_clone = end.clone();
+
+        for t in 0..args.threads {
+            let t_start = start_clone + t * chunk_size;
+            if t_start >= end_clone {
+                break;
+            }
+            let t_end = std::cmp::min(t_start + chunk_size, end_clone);
+
+            handles.push(thread::spawn(move || {
+                (t_start..t_end)
+                    .into_iter()
+                    .filter(|n| n.to_biguint().map_or(false, |b| is_probable_prime(&b)))
+                    .collect::<Vec<usize>>()
+            }));
+        }
+
+        let mut primes: Vec<usize> = Vec::new();
+        for handle in handles {
+            primes.extend(handle.join().unwrap());
+        }
+        primes.sort();
 
         let composite_count = (end - start) - primes.len();
         println!("done");
