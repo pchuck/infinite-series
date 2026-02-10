@@ -60,6 +60,9 @@ pub fn segmented_sieve(
     let segments = (n + segment_size - 1) / segment_size;
     let mut primes = Vec::with_capacity(n / (n as f64).ln() as usize);
 
+    // Reusable buffer for segments - allocate once to max segment size
+    let mut is_prime = vec![true; segment_size];
+
     for seg_idx in 0..segments {
         let low = seg_idx * segment_size;
         let high = min(low + segment_size, n);
@@ -70,7 +73,8 @@ pub fn segmented_sieve(
 
         let segment_low = if low < 2 { 2 } else { low };
         let seg_len = high - segment_low;
-        let mut is_prime = vec![true; seg_len];
+        // Reuse buffer: reset only the portion we need
+        is_prime[..seg_len].fill(true);
 
         for &p in &base_primes {
             let mut start = ((low + p - 1) / p) * p;
@@ -89,7 +93,8 @@ pub fn segmented_sieve(
             }
         }
 
-        for (i, &is_p) in is_prime.iter().enumerate() {
+        // Only iterate over the actual segment length, not the full buffer
+        for (i, &is_p) in is_prime[..seg_len].iter().enumerate() {
             if is_p {
                 primes.push(segment_low + i);
             }
@@ -145,6 +150,8 @@ pub fn parallel_segmented_sieve(
             
             handles.push(s.spawn(move || {
                 let mut results: Vec<SegmentResult> = Vec::new();
+                // Reusable buffer for this worker's segments
+                let mut is_prime = vec![true; segment_size];
                 
                 for seg_idx in start_seg..end_seg {
                     let low = seg_idx * segment_size;
@@ -159,7 +166,8 @@ pub fn parallel_segmented_sieve(
                     
                     let segment_low = if low < 2 { 2 } else { low };
                     let seg_len = high - segment_low;
-                    let mut is_prime = vec![true; seg_len];
+                    // Reuse buffer: reset only the portion we need
+                    is_prime[..seg_len].fill(true);
                     
                     for &p in &base_primes {
                         let mut start = ((low + p - 1) / p) * p;
@@ -178,11 +186,15 @@ pub fn parallel_segmented_sieve(
                         }
                     }
                     
-                    let primes: Vec<usize> = is_prime
-                        .into_iter()
-                        .enumerate()
-                        .filter_map(|(i, is_p)| if is_p { Some(segment_low + i) } else { None })
-                        .collect();
+                    // Extract primes without consuming the buffer
+                    // Use a slice to limit iteration to actual segment length
+                    let segment_slice = &is_prime[..seg_len];
+                    let mut primes = Vec::with_capacity(seg_len / 10);
+                    for (i, &is_p) in segment_slice.iter().enumerate() {
+                        if is_p {
+                            primes.push(segment_low + i);
+                        }
+                    }
                     
                     results.push(SegmentResult {
                         seg_idx,
@@ -198,14 +210,17 @@ pub fn parallel_segmented_sieve(
             }));
         }
         
-        let mut all_results: Vec<SegmentResult> = Vec::with_capacity(segments);
+        // Pre-allocate results indexed by segment to avoid sorting
+        let mut all_primes: Vec<Vec<usize>> = vec![Vec::new(); segments];
         for handle in handles {
-            let mut results = handle.join().unwrap();
-            all_results.append(&mut results);
+            let results = handle.join().unwrap();
+            for result in results {
+                all_primes[result.seg_idx] = result.primes;
+            }
         }
         
-        all_results.sort_by_key(|r| r.seg_idx);
-        all_results.into_iter().flat_map(|r| r.primes).collect()
+        // Flatten results in segment order
+        all_primes.into_iter().flatten().collect()
     })
 }
 

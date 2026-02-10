@@ -49,6 +49,9 @@ def _worker_process_segment_chunk(
     primes = []
     _append = primes.append
     
+    # Reusable buffer for segments - allocate once to max segment size
+    is_prime = bytearray(segment_size)
+    
     for seg_idx in range(start_seg, end_seg):
         low = seg_idx * segment_size
         high = _min(low + segment_size, n)
@@ -58,7 +61,10 @@ def _worker_process_segment_chunk(
         
         segment_low = _max(low, 2)
         seg_len = high - segment_low
-        is_prime = bytearray(b'\x01') * seg_len
+        # Reuse buffer: reset only the portion we need
+        is_prime[:seg_len] = b'\x01' * seg_len
+        # Create a view of just the segment portion for operations
+        segment_view = memoryview(is_prime)[:seg_len]
         
         for p in base_primes:
             # Optimized: use integer arithmetic only, avoid isinstance check
@@ -73,10 +79,10 @@ def _worker_process_segment_chunk(
                 
             step = p
             count = (seg_len - adjusted_start + step - 1) // step
-            is_prime[adjusted_start :: step] = b'\x00' * count
+            segment_view[adjusted_start :: step] = b'\x00' * count
         
         # Optimized: Use bytes.find() for 2.9x faster prime extraction
-        data = bytes(is_prime)
+        data = bytes(segment_view)
         idx = -1
         while True:
             idx = data.find(1, idx + 1)
@@ -182,6 +188,9 @@ def segmented_sieve(
     primes: List[int] = []
     _append = primes.append  # Local binding for faster calls
     
+    # Reusable buffer for segments - allocate once to max segment size
+    is_prime = bytearray(segment_size)
+    
     for seg_idx in range(segments):
         low = seg_idx * segment_size
         high = _min(low + segment_size, n)
@@ -191,7 +200,10 @@ def segmented_sieve(
         
         segment_low = _max(low, 2)
         seg_len = high - segment_low
-        is_prime = bytearray(b'\x01') * seg_len
+        # Reuse buffer: reset only the portion we need
+        is_prime[:seg_len] = b'\x01' * seg_len
+        # Create a view of just the segment portion for operations
+        segment_view = memoryview(is_prime)[:seg_len]
         
         for p in base_primes:
             # Optimized: use integer arithmetic only, avoid isinstance check
@@ -206,10 +218,10 @@ def segmented_sieve(
                 
             step = p
             count = (seg_len - adjusted_start + step - 1) // step
-            is_prime[adjusted_start :: step] = b'\x00' * count
+            segment_view[adjusted_start :: step] = b'\x00' * count
         
         # Optimized: Use bytes.find() for 2.9x faster prime extraction
-        data = bytes(is_prime)
+        data = bytes(segment_view)
         idx = -1
         while True:
             idx = data.find(1, idx + 1)
