@@ -3,6 +3,7 @@ package prime
 import (
 	"math"
 	"runtime"
+	"sort"
 	"sync"
 	"sync/atomic"
 )
@@ -22,7 +23,7 @@ func SieveOfEratosthenes(n int) []int {
 		sieve[i] = 1
 	}
 
-	limit := int(math.Sqrt(float64(n - 1)))
+	limit := int(math.Sqrt(float64(n)))
 	for i := 2; i <= limit; i++ {
 		if sieve[i] == 1 {
 			start := i * i
@@ -237,19 +238,14 @@ func ParallelSegmentedSieve(n int, workers, segmentSize int, progress func(int))
 		results = append(results, result)
 	}
 
-	numResults := len(results)
 	allPrimes := make([]int, 0, n/int(math.Log(float64(n))))
-	for i := 0; i < numResults; i++ {
-		minIdx := i
-		for j := i + 1; j < numResults; j++ {
-			if results[j].segIdx < results[minIdx].segIdx {
-				minIdx = j
-			}
-		}
-		if minIdx != i {
-			results[i], results[minIdx] = results[minIdx], results[i]
-		}
-		allPrimes = append(allPrimes, results[i].primes...)
+	
+	sort.Slice(results, func(i, j int) bool {
+		return results[i].segIdx < results[j].segIdx
+	})
+	
+	for _, result := range results {
+		allPrimes = append(allPrimes, result.primes...)
 	}
 
 	return allPrimes
