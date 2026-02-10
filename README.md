@@ -178,7 +178,7 @@ infinite-series/
 - Uses `thread::scope` for scoped parallelism
 
 
-## Comparison
+## Comparison 
 
 | Feature | Python | Go | Rust |
 |---------|--------|-----|-----|
@@ -246,4 +246,6 @@ The Go and Rust implementations offer significant performance improvements over 
 2. **SIMD implementation**: Vectorized composite marking for modern CPUs
 3. **Expand Features**: Add more options like saving primes to file
 4. **Testing**: Expand test suite with edge cases and performance benchmarks
+
+This project demonstrates that premature optimization can be counterproductive, and that modern allocators are highly optimized for common allocation patterns.
 
