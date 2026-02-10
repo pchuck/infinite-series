@@ -2,7 +2,7 @@
 
 ## Overview
 
-High-performance prime number generators in Python, Go, and Rust with consistent APIs and comparable algorithms. Compare performance across three language implementations.
+High-performance prime number generators in Python, Go, and Rust with consistent APIs and comparable algorithms. All three implementations use odd-only segmented sieves for optimal memory and cache utilization.
 
 ## Implementations
 
@@ -57,6 +57,99 @@ make test             # Run tests
 make lint             # Run ruff linter
 ```
 
+## CLI Usage Examples
+
+### Generate primes < 1000
+```bash
+./primes 1000                          # Go
+python prime_generator.py 1000         # Python
+./target/release/primes -n 1000        # Rust
+```
+
+### Count primes < 10M (quiet mode)
+```bash
+./primes --quiet 10000000              # Go
+python prime_generator.py 10000000 --quiet  # Python
+./target/release/primes -n 10000000 --quiet # Rust
+```
+
+### With progress bar (10M)
+```bash
+./primes --progress 10000000           # Go
+python prime_generator.py 10000000 --progress  # Python
+./target/release/primes -n 10000000 -P # Rust
+```
+
+### Parallel processing (100M)
+```bash
+./primes --parallel --progress 100000000           # Go
+python prime_generator.py 100000000 --parallel --progress  # Python
+./target/release/primes -n 100000000 -p -P         # Rust
+```
+
+## Algorithm Selection
+
+Each implementation auto-selects the best algorithm based on input size:
+
+| n Range | Algorithm | Memory |
+|---------|-----------|--------|
+| n < 1M | Classic Sieve (odd-only) | O(n/2) |
+| 1M <= n < 100M | Segmented Sieve (odd-only) | O(sqrt(n) + segment/2) |
+| n >= 100M | Parallel Segmented Sieve (odd-only) | O(sqrt(n) + segment/2) per worker |
+
+All algorithms skip even numbers, halving both memory usage and composite-marking work compared to a full sieve.
+
+## Performance Optimizations
+
+### Implemented Optimizations
+
+All three implementations share the same core optimization strategy:
+
+| Optimization | Python | Go | Rust | Impact |
+|--------------|--------|-----|------|--------|
+| Odd-only sieve | yes | yes | yes | 2x memory reduction, ~2x faster marking |
+| Shared segment helper (DRY) | yes | yes | yes | Single sieving implementation, no duplication |
+| SIMD-optimized extraction | `bytes.find()` | `bytes.IndexByte` | iterator | Hardware-accelerated prime extraction |
+| Pre-allocated result vectors | yes | yes | yes | Reduces reallocations |
+| Efficient buffer reset | slice assign | for loop | `.fill()` | Zero-allocation per segment |
+| Delta-based progress callbacks | yes | yes | yes | Correct progress tracking |
+| O(n) parallel result merging | `heapq.merge` | indexed collect | ordered concat | Avoids O(n log n) sort |
+| Shared base primes (no copy) | N/A (pickle) | shared slice | `&[usize]` ref | Zero-copy in parallel workers |
+| Bounded channel buffers | N/A | `numWorkers*2` | N/A | Limits peak memory in parallel mode |
+| Streamed output | generator join | `strings.Builder` | `BufWriter` | Avoids huge in-memory string |
+
+### Language-Specific Details
+
+**Python:**
+- `bytearray` with slice assignment for fast composite marking
+- `memoryview` for zero-copy segment operations
+- `math.isqrt()` for exact integer square root (no float imprecision)
+- `heapq.merge()` for O(n) merging of pre-sorted parallel results
+- Progress bar writes to stderr (not stdout) to avoid mixing with data
+- Returns `List[int]` (not `List[str]`) to avoid millions of string allocations
+
+**Go:**
+- `bytes.IndexByte` for SIMD-optimized prime extraction (replaces hand-rolled linear scan)
+- Simple `for` loop buffer reset (replaces `bytes.Repeat` which allocated per segment)
+- Atomic counter with monitor goroutine for parallel progress tracking
+- Bounded work/result channels to limit memory pressure
+- Proper error handling on CLI input parsing
+
+**Rust:**
+- `thread::scope` allows sharing `base_primes` by reference (zero-clone)
+- Each parallel worker returns a single `Vec<usize>` (no intermediate `SegmentResult` structs)
+- `BufWriter` for streaming output directly to stdout
+- Correct `format_number` with comma separators for all magnitudes
+- `div_ceil()` for idiomatic ceiling division
+
+### Future Optimization Candidates
+
+1. **Bit-packed storage** -- 8x further memory reduction on top of odd-only (16x total vs original)
+2. **Wheel factorization (mod 30)** -- skip multiples of 2, 3, 5 to eliminate 73% of candidates
+3. **SIMD composite marking** -- pre-computed masks for small primes applied with vectorized AND
+4. **Cache-optimal segment sizing** -- auto-tune segment size to fit L1/L2 cache
+5. **Maintained starting offsets** -- avoid per-segment division by tracking offsets across segments
+
 ## Performance Benchmarks
 
 Testing environment: AMD Ryzen 9 7900X 12-Core Processor
@@ -83,58 +176,32 @@ Testing environment: AMD Ryzen 9 7900X 12-Core Processor
 | 10M | ~1.7M/s | ~10.6M/s | ~12.8M/s | **7.5x** |
 | 100M | ~900K/s | ~6M/s | ~7.5M/s | **8x** |
 
-## CLI Usage Examples
-
-### Generate primes < 1000
-```bash
-./primes 1000
-python prime_generator.py 1000
-./target/release/primes -n 1000
-```
-
-### Count primes < 10M (quiet mode)
-```bash
-./primes --quiet 10000000
-python prime_generator.py 10000000
-./target/release/primes -n 10000000 --quiet
-```
-
-### With progress bar (10M)
-```bash
-./primes --progress 10000000
-python prime_generator.py 10000000 --progress
-./target/release/primes -n 10000000 -P
-```
-
-### Parallel processing (100M)
-```bash
-./primes --parallel --progress 100000000
-python prime_generator.py 100000000 --parallel --progress
-./target/release/primes -n 100000000 -p -P
-```
-
-## Algorithm Selection
-
-| n Range | Algorithm | Memory |
-|---------|-----------|--------|
-| n < 1M | Classic Sieve | O(n) |
-| 1M ≤ n < 100M | Segmented Sieve | O(√n + segment) |
-| n ≥ 100M | Parallel Segmented Sieve | O(√n + segment) |
-
 ## Key Observations
 
 ### Why Rust/Go are Faster than Python
 
 1. **Compilation**: Rust/Go compile to native machine code; Python is interpreted
-2. **Memory Management**: Lower overhead, efficient allocation
-3. **Type System**: Native types vs. Python objects
-4. **No GIL**: True parallelism in compiled languages
+2. **Memory Management**: Lower overhead, efficient allocation, no GC pauses
+3. **Type System**: Native integer types vs. Python objects (28 bytes per int)
+4. **No GIL**: True parallelism in compiled languages (Python uses multiprocessing to work around GIL)
 
 ### Rust vs Go
 
-- **Rust**: Slightly faster (~20%), zero-cost abstractions, no runtime
-- **Go**: Simpler concurrency model, faster compilation, easier debugging
+- **Rust**: ~20% faster, zero-cost abstractions, no runtime overhead, `thread::scope` for safe borrowing
+- **Go**: Simpler concurrency model, faster compilation, easier debugging, goroutines are lightweight
 - **Both**: 7-8x faster than Python on large inputs
+
+## Comparison
+
+| Feature | Python | Go | Rust |
+|---------|--------|-----|-----|
+| Sieve type | Odd-only bytearray | Odd-only `[]byte` | Odd-only `Vec<bool>` |
+| Memory (100M primes) | ~50MB sieve | ~50MB sieve | ~50MB sieve |
+| Progress bar | tqdm / fallback | Custom ANSI | Custom ANSI |
+| Parallelism | multiprocessing | Goroutines + channels | Thread scope |
+| Compilation | Interpreted | Compiled | Compiled |
+| Concurrency | Process-based | True parallel | True parallel |
+| Type safety | Optional (mypy) | Native | Native |
 
 ## Project Structure
 
@@ -145,107 +212,44 @@ infinite-series/
 ├── README.md             # This file
 ├── python/
 │   ├── Makefile
-│   ├── prime_generator.py
-│   └── test_generators.py
+│   ├── prime_generator.py      # Core implementation
+│   ├── test_generators.py      # Test suite (37 tests)
+│   ├── performance_comparison.py
+│   └── parallel_comparison.py
 ├── golang/
 │   ├── Makefile
-│   ├── cmd/primes/main.go
-│   └── prime/primes.go
+│   ├── cmd/primes/main.go      # CLI entry point
+│   ├── prime/
+│   │   ├── primes.go           # Core implementation
+│   │   ├── primes_test.go      # Test suite
+│   │   └── primes_benchmark_test.go
+│   └── internal/progress/
+│       └── progress.go         # Progress bar
 └── rust/
     ├── Makefile
-    ├── src/
-    │   ├── main.rs
-    │   ├── lib.rs
-    │   └── progress.rs
-    └── Cargo.toml
+    ├── Cargo.toml
+    └── src/
+        ├── lib.rs              # Core implementation (9 tests)
+        ├── main.rs             # CLI entry point (1 test)
+        └── progress.rs         # Progress bar
 ```
 
 ## Language-Specific Notes
 
 ### Python
-- Requires: Python 3.12+, pytest, ruff, mypy (optional)
-- Uses `bytearray` for memory-efficient sieving
-- Optional tqdm progress bar with fallback
+- Requires: Python 3.12+, pytest, ruff (optional), mypy (optional), tqdm (optional)
+- Uses `bytearray` with odd-only indexing for memory-efficient sieving
+- Optional tqdm progress bar with custom ANSI fallback to stderr
+- `--quiet` flag for count-only output
 
 ### Go
 - Requires: Go 1.21+
-- Custom progress bar (no external dependencies)
-- Uses goroutines with work/channels pattern
+- Custom ANSI progress bar (no external dependencies)
+- Uses goroutines with bounded work/result channels
+- Atomic progress counter with monitor goroutine for parallel mode
 
 ### Rust
 - Requires: Rust 1.75+
-- No external dependencies for progress bar
-- Uses `thread::scope` for scoped parallelism
-
-
-## Comparison 
-
-| Feature | Python | Go | Rust |
-|---------|--------|-----|-----|
-| Memory (1B primes) | ~1GB | ~1GB | ~1GB |
-| Progress bar | tqdm | Custom ANSI | Custom ANSI |
-| Parallelism | multiprocessing | Goroutines + channels | Thread scope |
-| Compilation | Interpreted | Compiled | Compiled |
-| Concurrency | GIL-bound | True parallel | True parallel |
-| Memory management | Garbage collection | Efficient allocation | Efficient allocation |
-| Type safety | Optional (mypy) | Native | Native |
-| Performance | Baseline | 2-5x faster | 8x faster |
-
-## Performance Optimizations
-
-### Implemented Optimizations
-
-The following optimizations have been successfully implemented across all three languages:
-
-| Optimization | Python | Go | Rust | Impact |
-|--------------|--------|-----|------|--------|
-| Fast prime extraction via `bytes.find()` | ✅ | - | - | 2.9x faster (Python) |
-| Pre-calculated slice assignments | ✅ | ✅ | ✅ | Reduces loop overhead |
-| Local variable caching | ✅ | ✅ | ✅ | Eliminates repeated lookups |
-| Pre-allocated result vectors | - | ✅ | ✅ | Reduces reallocations |
-| Result ordering without sort | - | ✅ | ✅ | O(1) vs O(n log n) |
-
-### Attempted Optimizations (Not Adopted)
-
-**Buffer reuse and `sync.Pool` in Go**: Attempted to reuse segment buffers across iterations to reduce allocations. Performance was substantially worse (~2-3x slower).
-
-**Why it failed:**
-- Modern allocators (jemalloc, ptmalloc) have highly optimized thread-local caches
-- Allocation cost for 1MB buffers is ~100ns - negligible compared to sieve operations
-- Buffer reset operations (`copy()`, `fill()`) touch memory unnecessarily
-- Cache pollution from reuse hurts performance more than allocation helps
-- `sync.Pool` overhead exceeds benefits for this buffer size
-
-**Lesson:** Don't fight the allocator. Fresh allocations are often faster due to:
-- Zero-copy page optimizations
-- Clean cache lines
-- No memory zeroing/copying overhead
-
-**When buffer reuse actually helps:**
-- Large buffers (>10MB where allocation dominates)
-- Real-time systems (need predictable latency)
-- Memory-constrained environments
-- Very high operation frequency (>10K ops/sec)
-
-### Future Optimization Candidates
-
-Based on profiling, the following may offer genuine improvements:
-
-1. **Bit-packed storage** - 8x memory reduction, better cache utilization
-2. **Wheel factorization** - Skip multiples of 2,3,5 to eliminate 73% of composites
-3. **SIMD composite marking** - Process 16-32 numbers at once with AVX2
-4. **Cache-optimal segment sizing** - Tune to L1/L2 cache size
-
-## Conclusion
-
-The Go and Rust implementations offer significant performance improvements over the Python version, especially for large inputs. Both languages provide efficient memory management and true parallelism, making them suitable for high-performance prime number generation tasks.
-
-### Next Steps
-
-1. **Profile-guided optimization**: Use actual profiling data before optimizing
-2. **SIMD implementation**: Vectorized composite marking for modern CPUs
-3. **Expand Features**: Add more options like saving primes to file
-4. **Testing**: Expand test suite with edge cases and performance benchmarks
-
-This project demonstrates that premature optimization can be counterproductive, and that modern allocators are highly optimized for common allocation patterns.
-
+- Only external dependency: `clap` for CLI parsing
+- Custom ANSI progress bar with rate display
+- Uses `thread::scope` for safe scoped parallelism with zero-copy data sharing
