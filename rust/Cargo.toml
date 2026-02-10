@@ -1,0 +1,16 @@
+[package]
+name = "primes"
+version = "1.0.0"
+edition = "2021"
+description = "High-performance prime number generator"
+authors = ["Prime Generator"]
+
+[dependencies]
+clap = { version = "4.4", features = ["derive"] }
+
+[dev-dependencies]
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1

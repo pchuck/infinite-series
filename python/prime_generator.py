@@ -327,6 +327,63 @@ def _get_tqdm():
         return None, False
 
 
+class SimpleProgressBar:
+    def __init__(self, total: int, description: str = "Generating primes"):
+        self.total = total
+        self.completed = 0
+        self.description = description
+        self.width = 40
+        self.start_time = time_module.time()
+        self.last_update = 0
+
+    def update(self, delta: int = 1):
+        self.completed += delta
+        now = time_module.time()
+        if now - self.last_update < 0.05 and self.completed < self.total:
+            return
+        self.last_update = now
+        self.render()
+
+    def render(self):
+        if self.total == 0:
+            return
+        percent = min(1.0, self.completed / self.total)
+        filled = int(percent * self.width)
+        bar = "=" * filled + " " * (self.width - filled)
+
+        elapsed = time_module.time() - self.start_time
+        rate = self.completed / elapsed if elapsed > 0 else 0
+
+        if rate >= 1_000_000:
+            rate_str = f"{rate/1_000_000:.1f}M/s"
+        elif rate >= 1_000:
+            rate_str = f"{rate/1_000:.1f}K/s"
+        else:
+            rate_str = f"{rate:.0f}/s"
+
+        remaining = self.total - self.completed
+        if rate > 0 and remaining > 0:
+            eta_secs = remaining / rate
+            if eta_secs >= 3600:
+                eta_str = f"{int(eta_secs/3600)}h{int((eta_secs%3600)/60)}m"
+            elif eta_secs >= 60:
+                eta_str = f"{int(eta_secs/60)}m{int(eta_secs%60)}s"
+            else:
+                eta_str = f"{int(eta_secs)}s"
+        else:
+            eta_str = "0s"
+
+        print(
+            f"\r{self.description}: [{bar}] {percent*100:3.0f}% | {self.completed}/{self.total} | {rate_str} | eta {eta_str}    ",
+            end="", flush=True
+        )
+
+    def finish(self):
+        self.completed = self.total
+        self.render()
+        print(flush=True)
+
+
 def generate_primes(
     n: int,
     show_progress: bool = False,
@@ -387,19 +444,29 @@ def generate_primes(
 
                 primes = sieve_of_eratosthenes(n, progress_callback=progress_callback_classic)
     elif show_progress and not tqdm_available:
-        print("Generating primes...", end="", flush=True)
-        
         if use_segmented:
+            segments = (n + DEFAULT_SEGMENT_SIZE - 1) // DEFAULT_SEGMENT_SIZE
+            progress_bar = SimpleProgressBar(segments, "Generating primes")
+
+            def progress_callback_seg(seg_idx):
+                progress_bar.update(1)
+
             if use_parallel:
-                primes = parallel_segmented_sieve(n, segment_size=DEFAULT_SEGMENT_SIZE)
+                primes = parallel_segmented_sieve(n, segment_size=DEFAULT_SEGMENT_SIZE,
+                                                 progress_callback=progress_callback_seg)
             else:
-                primes = segmented_sieve(n)
+                primes = segmented_sieve(n, progress_callback=progress_callback_seg)
+
+            progress_bar.finish()
         else:
-            def dummy_callback(current):
-                pass
-            primes = sieve_of_eratosthenes(n, progress_callback=dummy_callback)
-        
-        print(" Done!")
+            total = int(n**0.5)
+            progress_bar = SimpleProgressBar(total, "Generating primes")
+
+            def progress_callback_classic(current):
+                progress_bar.update(1)
+
+            primes = sieve_of_eratosthenes(n, progress_callback=progress_callback_classic)
+            progress_bar.finish()
     else:
         if use_segmented:
             if use_parallel:
@@ -466,9 +533,10 @@ def main():
 
         # Output performance summary to stderr
         primes_per_sec = len(primes) / elapsed if elapsed > 0 else 0
+        largest_prime = int(primes[-1]) if primes else 0
         print(
-            f"[PERF] n={n} | primes={len(primes)} | time={elapsed:.3f}s | "
-            f"primes/s={primes_per_sec:,.0f}",
+            f"Done! Largest prime < {n} is {largest_prime}. "
+            f"Generated {len(primes)} primes in {elapsed:.3f}s ({primes_per_sec:,.0f} primes/s).",
             file=sys.stderr,
         )
 
