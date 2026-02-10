@@ -1,7 +1,8 @@
 use clap::Parser;
 use miller_rabin_tester::{is_probable_prime, is_probable_prime_parallel};
 use num_bigint::{BigUint, ToBigUint};
-use std::io::Write;
+use std::fs;
+use std::io::{self, Write};
 use std::str::FromStr;
 use std::thread;
 
@@ -10,6 +11,9 @@ use std::thread;
 struct Args {
     #[arg(short, long)]
     number: Option<String>,
+
+    #[arg(short = 'f', long)]
+    file: Option<String>,
 
     #[arg(short = 'p', long)]
     parallel: bool,
@@ -29,6 +33,15 @@ struct Args {
 
 fn parse_big_uint(s: &str) -> Result<BigUint, String> {
     BigUint::from_str(s).map_err(|e| e.to_string())
+}
+
+fn read_numbers_from_file(path: &str) -> io::Result<Vec<String>> {
+    let content = fs::read_to_string(path)?;
+    Ok(content
+        .lines()
+        .filter(|line| !line.trim().is_empty())
+        .map(|line| line.trim().to_string())
+        .collect())
 }
 
 #[cfg(test)]
@@ -131,14 +144,50 @@ mod tests {
 fn main() {
     let args = Args::parse();
 
-    if let Some(n_str) = &args.number {
+    if args.file.is_some() && (args.number.is_some() || args.batch_test) {
+        eprintln!("Error: Cannot combine --file with --number or --batch-test");
+        std::process::exit(1);
+    }
+
+    if let Some(file_path) = &args.file {
+        match read_numbers_from_file(file_path) {
+            Ok(numbers) => {
+                println!("Testing {} numbers from file: {}", numbers.len(), file_path);
+                let mut primes_found = 0;
+                let mut composites_found = 0;
+
+                for n_str in &numbers {
+                    if let Ok(n) = parse_big_uint(n_str) {
+                        print!("  {}: ", n_str);
+                        let _ = io::stdout().flush();
+                        let is_prime = is_probable_prime(&n);
+                        println!("{}", if is_prime { "PRIME" } else { "COMPOSITE" });
+                        if is_prime {
+                            primes_found += 1;
+                        } else {
+                            composites_found += 1;
+                        }
+                    }
+                }
+
+                println!(
+                    "\nSummary: {} primes, {} composites out of {} numbers",
+                    primes_found,
+                    composites_found,
+                    numbers.len()
+                );
+            }
+            Err(e) => eprintln!("Error reading file '{}': {}", file_path, e),
+        }
+    } else if let Some(n_str) = &args.number {
         match parse_big_uint(n_str) {
             Ok(n) => {
                 println!("Testing: {}", n);
-                if args.parallel && args.threads > 1 {
-                    eprintln!("Using parallel mode with {} threads", args.threads);
-                }
-                let result = is_probable_prime(&n);
+                let result = if args.parallel && args.threads > 1 {
+                    is_probable_prime_parallel(&n, args.threads)
+                } else {
+                    is_probable_prime(&n)
+                };
 
                 if result {
                     println!("Result: PROBABLY PRIME");
@@ -146,7 +195,7 @@ fn main() {
                     println!("Result: COMPOSITE");
                 }
             }
-            Err(e) => eprintln!("Error parsing number: {}", e),
+            Err(e) => eprintln!("Error parsing number '{}': {}", n_str, e),
         }
     } else if args.parallel && args.number.is_some() {
         match parse_big_uint(&args.number.unwrap()) {
@@ -171,7 +220,7 @@ fn main() {
             "Testing range [{}, {}) with {} threads... ",
             start, end, args.threads
         );
-        let _ = std::io::stdout().flush();
+        let _ = io::stdout().flush();
 
         let chunk_size = (end - start + args.threads - 1) / args.threads;
         let mut handles = Vec::new();
@@ -218,7 +267,7 @@ fn main() {
             println!();
         }
     } else {
-        eprintln!("Provide --number, or use --batch-test with --start/--end");
+        eprintln!("Provide --number <N>, --file <path>, or use --batch-test with --start/--end");
         std::process::exit(1);
     }
 }
