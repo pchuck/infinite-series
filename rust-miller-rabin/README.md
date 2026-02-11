@@ -17,7 +17,7 @@ A standalone Rust application that implements the Miller-Rabin probabilistic pri
 cargo run --release -- --number <N>
 
 # Test with parallel base checking (multi-threaded Miller-Rabin)
-cargo run --release -- --number <N> -p -t 8
+cargo run --release -- --number <N> --parallel --threads 8
 
 # Batch test a range of numbers in parallel
 cargo run --release -- --batch-test --start <START> --end <END>
@@ -33,10 +33,10 @@ cargo run --release -- --file <path>
 cargo run --release -- --number 104729
 
 # Test large prime with 8-thread parallel base checking
-cargo run --release -- --number 2147483647 -p -t 8
+cargo run --release -- --number 2147483647 --parallel --threads 8
 
-# Batch test range 100000-105000 using 4 threads
-cargo run --release -- --batch-test --start 100000 --end 105000 -t 4
+# Batch test range 2-1000 using 4 threads
+cargo run --release -- --batch-test --start 2 --end 1000 --threads 4
 
 # Test numbers from file (one per line)
 echo -e "7\n11\n15\n104729" > /tmp/numbers.txt
@@ -56,13 +56,59 @@ Each line should contain one integer:
 
 Output shows each number's primality status and a summary.
 
-## Parallelism
+### Parallelism
 
 The implementation provides parallelism at two levels:
 
-1. **Parallel Base Testing**: Miller-Rabin bases are distributed across threads when `-p` flag is used with `--number`. Each thread tests a subset of the deterministic bases independently.
+1. **Parallel Base Testing**: Miller-Rabin bases are distributed across threads when `--parallel` flag is used with `--number`. Each thread tests a subset of the deterministic bases independently.
 
 2. **Batch Processing**: When testing number ranges (`--batch-test`), the range is divided into chunks and processed concurrently by multiple threads.
+
+### Error Handling
+
+- Invalid input numbers: Reports parsing errors for malformed integers
+- File read errors: Shows path and I/O error details
+- Thread panics: Warns if a worker thread crashes during batch processing
+
+## Troubleshooting
+
+- **Out of memory**: Large ranges with many threads may require significant memory. Reduce thread count or range size.
+- **Slow performance on very large numbers**: Numbers exceeding 2^64 use larger base sets; consider using `--parallel` for multi-threaded base testing.
+
+### Performance Notes
+
+- Sequential mode is faster for small numbers (< 1M) due to overhead
+- Parallel mode benefits increase with number size (more bases to test)
+- Batch processing scales linearly with available threads
+
+## Dependencies
+
+```toml
+[dependencies]
+num-bigint = "0.4"
+num-integer = "0.1"
+num-traits = "0.2"
+clap = { version = "4.4", features = ["derive"] }
+```
+
+Requires Rust 2021 edition and a compiler with support for the above dependencies.
+
+### Installation
+
+```bash
+# Clone and build
+git clone <repository-url>
+cd rust-miller-rabin
+cargo build --release
+
+# Run directly
+./target/release/miller-rabin-tester --number 104729
+```
+
+Or install to PATH:
+```bash
+cargo install --path .
+```
 
 ## Building
 
@@ -79,8 +125,8 @@ cargo build --release
 | `make release` | Build optimized release binary |
 | `make test` | Run unit tests |
 | `make run` | Test number 7 (sequential) |
-| `make batch` | Batch test range 100k-105m with 4 threads |
+| `make batch` | Batch test range 2-1000 with 4 threads |
 | `make benchmark` | Test large prime 2147483647 |
 | `make parallel` | Parallel test 2147483647 with 8 threads |
 | `make file-test` | Test numbers from a file (creates /tmp/mr_test_numbers.txt) |
-| `make clean` | Remove build artifacts |
+| `make clean` | Remove build artifacts */

@@ -197,21 +197,6 @@ fn main() {
             }
             Err(e) => eprintln!("Error parsing number '{}': {}", n_str, e),
         }
-    } else if args.parallel && args.number.is_some() {
-        match parse_big_uint(&args.number.unwrap()) {
-            Ok(n) => {
-                let threads = std::cmp::max(2, args.threads);
-                println!("Testing in parallel mode with {} threads: {}", threads, n);
-                let result = is_probable_prime_parallel(&n, threads);
-
-                if result {
-                    println!("Result: PROBABLY PRIME");
-                } else {
-                    println!("Result: COMPOSITE");
-                }
-            }
-            Err(e) => eprintln!("Error parsing number: {}", e),
-        }
     } else if args.batch_test {
         let start = args.start.unwrap_or(2usize);
         let end = args.end.unwrap_or(1000usize);
@@ -222,8 +207,9 @@ fn main() {
         );
         let _ = io::stdout().flush();
 
-        let chunk_size = (end - start + args.threads - 1) / args.threads;
-        let mut handles = Vec::new();
+        let total_numbers = end - start;
+        let chunk_size = (total_numbers + args.threads - 1) / args.threads;
+        let mut handles = Vec::with_capacity(args.threads);
         let start_clone = start.clone();
         let end_clone = end.clone();
 
@@ -242,9 +228,12 @@ fn main() {
             }));
         }
 
-        let mut primes: Vec<usize> = Vec::new();
+        let mut primes: Vec<usize> = Vec::with_capacity(1024);
         for handle in handles {
-            primes.extend(handle.join().unwrap());
+            match handle.join() {
+                Ok(mutex_primes) => primes.extend(mutex_primes),
+                Err(_) => eprintln!("Warning: A worker thread panicked"),
+            };
         }
         primes.sort();
 
