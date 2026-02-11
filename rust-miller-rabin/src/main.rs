@@ -1,5 +1,8 @@
 use clap::Parser;
-use miller_rabin_tester::{is_probable_prime, is_probable_prime_parallel};
+use miller_rabin_tester::{
+    is_probable_prime, is_probable_prime_parallel, is_probable_prime_parallel_with_bases,
+    is_probable_prime_with_bases,
+};
 use num_bigint::{BigUint, ToBigUint};
 use std::fs;
 use std::io::{self, Write};
@@ -29,10 +32,17 @@ struct Args {
 
     #[arg(short = 't', long, default_value = "4")]
     threads: usize,
+
+    #[arg(short = 'b', long)]
+    bases: Option<String>,
 }
 
 fn parse_big_uint(s: &str) -> Result<BigUint, String> {
     BigUint::from_str(s).map_err(|e| e.to_string())
+}
+
+fn parse_bases(s: &str) -> Vec<u64> {
+    s.split(',').filter_map(|x| x.trim().parse().ok()).collect()
 }
 
 fn read_numbers_from_file(path: &str) -> io::Result<Vec<String>> {
@@ -153,6 +163,11 @@ fn main() {
         match read_numbers_from_file(file_path) {
             Ok(numbers) => {
                 println!("Testing {} numbers from file: {}", numbers.len(), file_path);
+                if args.bases.is_some() {
+                    eprintln!(
+                        "Warning: Custom bases ignored in file mode (uses deterministic bases)"
+                    );
+                }
                 let mut primes_found = 0;
                 let mut composites_found = 0;
 
@@ -183,7 +198,13 @@ fn main() {
         match parse_big_uint(n_str) {
             Ok(n) => {
                 println!("Testing: {}", n);
-                let result = if args.parallel && args.threads > 1 {
+                let custom_bases: Vec<u64> =
+                    args.bases.as_ref().map_or(Vec::new(), |s| parse_bases(s));
+                let result = if !custom_bases.is_empty() && args.parallel && args.threads > 1 {
+                    is_probable_prime_parallel_with_bases(&n, args.threads, &custom_bases)
+                } else if !custom_bases.is_empty() {
+                    is_probable_prime_with_bases(&n, &custom_bases)
+                } else if args.parallel && args.threads > 1 {
                     is_probable_prime_parallel(&n, args.threads)
                 } else {
                     is_probable_prime(&n)

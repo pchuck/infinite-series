@@ -26,6 +26,14 @@ fn get_test_bases_for_size(n: &BigUint) -> Vec<u64> {
     }
 }
 
+fn filter_bases_for_n(bases: &[u64], n: &BigUint) -> Vec<u64> {
+    bases
+        .iter()
+        .filter(|a| BigUint::from(**a).cmp(n) == Ordering::Less)
+        .map(|x| *x)
+        .collect()
+}
+
 pub fn is_probable_prime(n: &BigUint) -> bool {
     if n < &BigUint::from(2usize) {
         return false;
@@ -180,4 +188,112 @@ pub fn mod_pow(mut base: BigUint, mut exp: BigUint, modulus: &BigUint) -> BigUin
     }
 
     result
+}
+
+pub fn is_probable_prime_with_bases(n: &BigUint, custom_bases: &[u64]) -> bool {
+    if n < &BigUint::from(2usize) {
+        return false;
+    }
+
+    for p in [2u64, 3u64, 5u64] {
+        let small_p = BigUint::from(p);
+        if n == &small_p {
+            return true;
+        }
+        if n % small_p == Zero::zero() {
+            return false;
+        }
+    }
+
+    let (d, s) = decompose_into_d_and_s(n);
+
+    let bases: Vec<u64> = if custom_bases.is_empty() {
+        get_test_bases_for_size(n)
+    } else {
+        filter_bases_for_n(custom_bases, n)
+    };
+
+    for a in bases {
+        let a_big = BigUint::from(a);
+        if !miller_rabin_witness(&a_big, &d, s, n) {
+            return false;
+        }
+    }
+
+    true
+}
+
+pub fn is_probable_prime_parallel_with_bases(
+    n: &BigUint,
+    threads: usize,
+    custom_bases: &[u64],
+) -> bool {
+    if n < &BigUint::from(2usize) {
+        return false;
+    }
+
+    for p in [2u64, 3u64, 5u64] {
+        let small_p = BigUint::from(p);
+        if n == &small_p {
+            return true;
+        }
+        if n % small_p == Zero::zero() {
+            return false;
+        }
+    }
+
+    let (d, s) = decompose_into_d_and_s(n);
+
+    let bases: Vec<u64> = if custom_bases.is_empty() {
+        get_test_bases_for_size(n)
+    } else {
+        filter_bases_for_n(custom_bases, n)
+    };
+
+    if threads <= 1 || bases.len() < 2 {
+        for a in &bases {
+            let a_big = BigUint::from(*a);
+            if !miller_rabin_witness(&a_big, &d, s, n) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    std::thread::scope(|scope| -> bool {
+        let mut handles: Vec<_> = Vec::with_capacity(threads);
+        let chunk_size = (bases.len() + threads - 1) / threads;
+
+        for i in 0..threads {
+            let start_idx = i * chunk_size;
+            if start_idx >= bases.len() {
+                break;
+            }
+            let end_idx = std::cmp::min(start_idx + chunk_size, bases.len());
+            let d_copy = d.clone();
+            let n_copy = n.clone();
+            let bases_ref = &bases;
+
+            handles.push(scope.spawn(move || -> bool {
+                for j in start_idx..end_idx {
+                    if j >= bases_ref.len() {
+                        break;
+                    }
+                    let a_big = BigUint::from(bases_ref[j]);
+                    if !miller_rabin_witness(&a_big, &d_copy, s, &n_copy) {
+                        return false;
+                    }
+                }
+                true
+            }));
+        }
+
+        let mut all_passed = true;
+        while let Some(handle) = handles.pop() {
+            if !handle.join().unwrap() {
+                all_passed = false;
+            }
+        }
+        all_passed
+    })
 }
