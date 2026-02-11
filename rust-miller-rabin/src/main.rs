@@ -1,7 +1,8 @@
 use clap::Parser;
 use miller_rabin_tester::{
     get_test_bases_for_size, is_probable_prime, is_probable_prime_parallel,
-    is_probable_prime_parallel_with_bases, is_probable_prime_with_bases,
+    is_probable_prime_parallel_with_bases, is_probable_prime_parallel_with_progress,
+    is_probable_prime_with_bases, is_probable_prime_with_progress, ProgressCallback,
 };
 use num_bigint::{BigUint, ToBigUint};
 use serde_json::json;
@@ -59,6 +60,9 @@ struct Args {
 
     #[arg(long, default_value = "text", help = "Output format: text or json")]
     output_format: String,
+
+    #[arg(long, help = "Show progress bar for large number tests")]
+    show_progress: bool,
 }
 
 fn parse_big_uint(s: &str) -> Result<BigUint, String> {
@@ -114,6 +118,24 @@ fn format_duration(ms: f64) -> String {
         format!("{:.2} ms", ms)
     } else {
         format!("{:.2} s", ms / 1000.0)
+    }
+}
+
+fn render_progress_bar(current: usize, total: usize, width: usize) -> String {
+    if total == 0 {
+        return "[>".to_string();
+    }
+    let filled = (current * width) / total;
+    let empty = width.saturating_sub(filled);
+    format!("[{}{}]", "█".repeat(filled.min(width)), "░".repeat(empty))
+}
+
+fn print_progress(current: usize, total: usize) {
+    let bar = render_progress_bar(current, total, 30);
+    let percent = (current * 100) / total;
+    eprint!("\r  Progress: {} {:>3}%", bar, percent);
+    if current >= total {
+        eprintln!();
     }
 }
 
@@ -307,7 +329,28 @@ fn main() {
                 println!("Testing: {}", n);
                 let custom_bases: Vec<u64> =
                     args.bases.as_ref().map_or(Vec::new(), |s| parse_bases(s));
-                let result = if !custom_bases.is_empty() && args.parallel {
+
+                let result = if args.show_progress {
+                    if args.parallel {
+                        let bases = get_test_bases_for_size(&n);
+                        metrics.bases_tested = bases.len();
+                        eprintln!(
+                            "Running Miller-Rabin with {} bases using {} threads...",
+                            bases.len(),
+                            threads
+                        );
+                        let progress_fn: &ProgressCallback =
+                            &|current, total| print_progress(current, total);
+                        is_probable_prime_parallel_with_progress(&n, threads, progress_fn)
+                    } else {
+                        let bases = get_test_bases_for_size(&n);
+                        metrics.bases_tested = bases.len();
+                        eprintln!("Running Miller-Rabin with {} bases...", bases.len());
+                        let progress_fn: &ProgressCallback =
+                            &|current, total| print_progress(current, total);
+                        is_probable_prime_with_progress(&n, progress_fn)
+                    }
+                } else if !custom_bases.is_empty() && args.parallel {
                     is_probable_prime_parallel_with_bases(&n, threads, &custom_bases)
                 } else if !custom_bases.is_empty() {
                     let bases = miller_rabin_tester::filter_bases_for_n(&custom_bases, &n);

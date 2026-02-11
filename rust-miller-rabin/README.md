@@ -9,6 +9,7 @@ A standalone Rust application that implements the Miller-Rabin probabilistic pri
 - Supports arbitrary-precision integers via `num-bigint`
 - Efficient modular exponentiation implementation
 - Parallel base testing using std::thread for large numbers
+- **Progress bar** support for monitoring long-running tests with `--show-progress`
 
 ## Quick Start
 
@@ -24,6 +25,10 @@ make release
 
 # Custom thread count with parallel mode
 ./target/release/miller-rabin-tester --number 104729 -p -t 8
+
+# Show progress bar for large numbers (recommended for tests > 100ms)
+./target/release/miller-rabin-tester --number 104729 --show-progress
+./target/release/miller-rabin-tester --number 104729 -p --show-progress
 ```
 
 ## Usage Modes
@@ -39,6 +44,10 @@ make release
 
 # Parallel with custom thread count  
 ./miller-rabin-tester --number 104729 -p -t 8
+
+# Show progress bar for large number tests (sequential or parallel)
+./miller-rabin-tester --number 104729 --show-progress
+./miller-rabin-tester --number 104729 -p --show-progress
 ```
 
 ### Batch Range Testing
@@ -105,6 +114,30 @@ Performance Metrics:
   }
 }
 ```
+
+### Progress Bar Mode (`--show-progress`)
+
+```bash
+# Show real-time progress for sequential mode
+./miller-rabin-tester --number 104729 --show-progress
+```
+
+**Output:**
+```
+Testing: 104729
+Running Miller-Rabin with 12 bases...
+  Progress: [██████░░░░░░░░░░░░░░░░░░░░░░░░]  22%
+  Progress: [█████████░░░░░░░░░░░░░░░░░░░░░]  30%
+  ...
+  Progress: [██████████████████████████████] 100%
+Result: PROBABLY PRIME
+```
+
+**Features:**
+- **Sequential mode**: Shows fine-grained progress within each modular exponentiation
+- **Parallel mode**: Shows aggregated progress across all threads
+- Updates every ~1% of total work or every 10 operations (whichever is larger)
+- Useful for numbers with 1000+ digits where tests can take minutes
 
 ## Performance Benchmarks
 
@@ -191,6 +224,23 @@ EXTRA='-p' make m1279   # Faster for larger numbers
 | `make file-test` | Create test file and run tests |
 | `make large-benchmark` | Run full benchmark suite (M607, M1279, M2203) |
 
+### Criterion Benchmarks
+
+Run detailed performance benchmarks using Criterion:
+
+```bash
+# Run all benchmarks
+cargo bench
+
+# Run specific benchmark
+cargo bench is_probable_prime
+```
+
+Available benchmarks:
+- `bench_is_probable_prime` - Sequential primality test performance
+- `bench_parallel` - Parallel mode performance with 4 threads
+- `bench_get_bases` - Base selection performance
+
 ## Environment Variables for Makefile
 
 ```bash
@@ -239,6 +289,22 @@ When `-t 0` (or omitted in parallel mode):
 - Uses all available CPU cores via `num_cpus` crate
 - On this system: ~24 threads detected
 
+### Progress Tracking
+
+The `--show-progress` flag provides real-time feedback during long-running tests:
+
+- **Sequential Mode**: Progress updates during each modular exponentiation operation, showing advancement through each of the 12-19 bases
+- **Parallel Mode**: Uses atomic counters to aggregate progress across all threads, updating every 1% of total computational work
+
+**Example for large Mersenne prime M44497 (~13,390 digits):**
+```bash
+# Without progress (appears to hang for minutes)
+./miller-rabin-tester --number $(cat large_prime_m44497.txt) -p
+
+# With progress (shows continuous updates)
+./miller-rabin-tester --number $(cat large_prime_m44497.txt) -p --show-progress
+```
+
 ## Dependencies
 
 ```toml
@@ -246,9 +312,12 @@ When `-t 0` (or omitted in parallel mode):
 num-bigint = "0.4"
 num-integer = "0.1"  
 num-traits = "0.2"
-num_cpus = "6"        # Auto-detect CPU cores
+num_cpus = "0"        # Auto-detect CPU cores
 clap = { version = "4.4", features = ["derive"] }
 serde_json = "1"       # JSON output format support
+
+[dev-dependencies]
+criterion = { version = "0.4", default-features = false }
 ```
 
 Requires Rust 2021 edition and a compiler with support for the above dependencies.
@@ -295,3 +364,10 @@ Uses 18-19 bases for larger numbers to maintain deterministic correctness.
 **Out of memory**: Large ranges with many threads may require significant memory. Reduce thread count or range size.
 
 **Slow performance on very large numbers**: Numbers exceeding 2^64 use larger base sets; parallel mode helps significantly for these.
+
+**Progress appears to hang**: Use `--show-progress` flag to see real-time updates. For very large numbers (10,000+ digits), tests can take several minutes with minimal output. The progress bar tracks operations within the modular exponentiation:
+
+```bash
+# For numbers taking minutes to test
+./miller-rabin-tester --number <very_large_prime> -p --show-progress
+```

@@ -100,27 +100,22 @@ m2203:
 m11213:
 	@if [ ! -f large_prime_m11213.txt ]; then \
 		echo "Generating M11213 (~3375 digits)..."; python3 -c "open('large_prime_m11213.txt','w').write(str((1<<11213)-1))"; fi
-	cargo run --release -- --number $$(cat large_prime_m11213.txt) --verbose
-
-m11213-p:
-	@if [ ! -f large_prime_m11213.txt ]; then \
-		echo "Generating M11213 (~3375 digits)..."; python3 -c "open('large_prime_m11213.txt','w').write(str((1<<11213)-1))"; fi
-	cargo run --release -- --number $$(cat large_prime_m11213.txt) --verbose --parallel
+	cargo run --release -- --number $$(cat large_prime_m11213.txt) --verbose --parallel --show-progress
 
 m44497:
 	@if [ ! -f large_prime_m44497.txt ]; then \
 		echo "Generating M44497 (~13390 digits)..."; python3 -c "import sys; sys.set_int_max_str_digits(15000); open('large_prime_m44497.txt','w').write(str((1<<44497)-1))"; fi
-	cargo run --release -- --number $$(cat large_prime_m44497.txt) --verbose --parallel
+	cargo run --release -- --number $$(cat large_prime_m44497.txt) --verbose --parallel --show-progress
 
 m86243:
 	@if [ ! -f large_prime_m86243.txt ]; then \
 		echo "Generating M86243 (~25960 digits)..."; python3 -c "import sys; sys.set_int_max_str_digits(30000); open('large_prime_m86243.txt','w').write(str((1<<86243)-1))"; fi
-	cargo run --release -- --number $$(cat large_prime_m86243.txt)
+	cargo run --release -- --number $$(cat large_prime_m86243.txt) --verbose --parallel --show-progress
 
 m216091:
 	@if [ ! -f large_prime_m216091.txt ]; then \
 		echo "Generating M216091 (~65K digits)..."; python3 -c "import sys; sys.set_int_max_str_digits(70000); open('large_prime_m216091.txt','w').write(str((1<<216091)-1))"; fi
-	cargo run --release -- --number $$(cat large_prime_m216091.txt)
+	cargo run --release -- --number $$(cat large_prime_m216091.txt) --verbose --parallel --show-progress
 
 m13982683:
 	@echo ""
