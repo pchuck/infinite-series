@@ -1,13 +1,22 @@
 use clap::Parser;
 use miller_rabin_tester::{
-    is_probable_prime, is_probable_prime_parallel, is_probable_prime_parallel_with_bases,
-    is_probable_prime_with_bases,
+    get_test_bases_for_size, is_probable_prime, is_probable_prime_parallel,
+    is_probable_prime_parallel_with_bases, is_probable_prime_with_bases,
 };
 use num_bigint::{BigUint, ToBigUint};
+use serde_json::json;
 use std::fs;
 use std::io::{self, Write};
 use std::str::FromStr;
 use std::thread;
+
+fn get_available_threads() -> usize {
+    let cores = num_cpus::get();
+    if cores < 1 {
+        return 4;
+    }
+    cores
+}
 
 #[derive(Parser, Debug)]
 #[command(name = "miller-rabin")]
@@ -18,7 +27,11 @@ struct Args {
     #[arg(short = 'f', long)]
     file: Option<String>,
 
-    #[arg(short = 'p', long)]
+    #[arg(
+        short = 'p',
+        long,
+        help = "Enable parallel processing (auto-detects CPU cores)"
+    )]
     parallel: bool,
 
     #[arg(short, long)]
@@ -30,11 +43,22 @@ struct Args {
     #[arg(long)]
     end: Option<usize>,
 
-    #[arg(short = 't', long, default_value = "4")]
+    #[arg(
+        short = 't',
+        long,
+        default_value_t = 0,
+        help = "Number of threads (0=auto-detect)"
+    )]
     threads: usize,
 
     #[arg(short = 'b', long)]
     bases: Option<String>,
+
+    #[arg(long, help = "Show detailed performance metrics")]
+    verbose: bool,
+
+    #[arg(long, default_value = "text", help = "Output format: text or json")]
+    output_format: String,
 }
 
 fn parse_big_uint(s: &str) -> Result<BigUint, String> {
@@ -52,6 +76,57 @@ fn read_numbers_from_file(path: &str) -> io::Result<Vec<String>> {
         .filter(|line| !line.trim().is_empty())
         .map(|line| line.trim().to_string())
         .collect())
+}
+
+struct PerfMetrics {
+    start_time: std::time::Instant,
+    bases_tested: usize,
+    threads_used: usize,
+}
+
+impl PerfMetrics {
+    fn new() -> Self {
+        Self {
+            start_time: std::time::Instant::now(),
+            bases_tested: 0,
+            threads_used: 1,
+        }
+    }
+
+    fn elapsed_ms(&self) -> f64 {
+        self.start_time.elapsed().as_millis() as f64
+    }
+
+    fn throughput(&self, count: usize) -> f64 {
+        let elapsed = self.start_time.elapsed().as_secs_f64();
+        if elapsed > 0.0 {
+            count as f64 / elapsed
+        } else {
+            0.0
+        }
+    }
+}
+
+fn format_duration(ms: f64) -> String {
+    if ms < 1.0 {
+        format!("{:.3} ms", ms)
+    } else if ms < 1000.0 {
+        format!("{:.2} ms", ms)
+    } else {
+        format!("{:.2} s", ms / 1000.0)
+    }
+}
+
+fn output_json(metrics: &PerfMetrics, data: serde_json::Value) {
+    let json_output = json!({
+        "performance_ms": metrics.elapsed_ms(),
+        "bases_tested": metrics.bases_tested,
+        "threads_used": metrics.threads_used,
+        "data": data
+    });
+    if let Ok(s) = serde_json::to_string_pretty(&json_output) {
+        println!("{}", s);
+    }
 }
 
 #[cfg(test)]
@@ -153,6 +228,14 @@ mod tests {
 
 fn main() {
     let args = Args::parse();
+    let mut metrics = PerfMetrics::new();
+
+    let threads: usize = if args.threads > 0 {
+        args.threads
+    } else {
+        get_available_threads()
+    };
+    metrics.threads_used = if args.parallel { threads } else { 1 };
 
     if args.file.is_some() && (args.number.is_some() || args.batch_test) {
         eprintln!("Error: Cannot combine --file with --number or --batch-test");
@@ -162,7 +245,8 @@ fn main() {
     if let Some(file_path) = &args.file {
         match read_numbers_from_file(file_path) {
             Ok(numbers) => {
-                println!("Testing {} numbers from file: {}", numbers.len(), file_path);
+                let total = numbers.len();
+                println!("Testing {} numbers from file: {}", total, file_path);
                 if args.bases.is_some() {
                     eprintln!(
                         "Warning: Custom bases ignored in file mode (uses deterministic bases)"
@@ -175,7 +259,12 @@ fn main() {
                     if let Ok(n) = parse_big_uint(n_str) {
                         print!("  {}: ", n_str);
                         let _ = io::stdout().flush();
+                        metrics.bases_tested += get_test_bases_for_size(&n).len();
                         let is_prime = is_probable_prime(&n);
+
+                        if args.verbose {
+                            print!(" [bases tested]");
+                        }
                         println!("{}", if is_prime { "PRIME" } else { "COMPOSITE" });
                         if is_prime {
                             primes_found += 1;
@@ -185,12 +274,30 @@ fn main() {
                     }
                 }
 
-                println!(
-                    "\nSummary: {} primes, {} composites out of {} numbers",
-                    primes_found,
-                    composites_found,
-                    numbers.len()
+                let elapsed = metrics.elapsed_ms();
+                eprintln!(
+                    "Found {} primes and {} composites (out of {})",
+                    primes_found, composites_found, total
                 );
+
+                if args.verbose {
+                    eprintln!(
+                        "Performance: {:.2} ms total, {:.3} ms/number, throughput: {:.0}/s",
+                        elapsed,
+                        elapsed / total as f64,
+                        metrics.throughput(total)
+                    );
+                }
+
+                if args.output_format == "json" {
+                    output_json(
+                        &metrics,
+                        json!({
+                            "primes_found": primes_found,
+                            "composites_found": composites_found
+                        }),
+                    );
+                }
             }
             Err(e) => eprintln!("Error reading file '{}': {}", file_path, e),
         }
@@ -200,13 +307,19 @@ fn main() {
                 println!("Testing: {}", n);
                 let custom_bases: Vec<u64> =
                     args.bases.as_ref().map_or(Vec::new(), |s| parse_bases(s));
-                let result = if !custom_bases.is_empty() && args.parallel && args.threads > 1 {
-                    is_probable_prime_parallel_with_bases(&n, args.threads, &custom_bases)
+                let result = if !custom_bases.is_empty() && args.parallel {
+                    is_probable_prime_parallel_with_bases(&n, threads, &custom_bases)
                 } else if !custom_bases.is_empty() {
+                    let bases = miller_rabin_tester::filter_bases_for_n(&custom_bases, &n);
+                    metrics.bases_tested = bases.len();
                     is_probable_prime_with_bases(&n, &custom_bases)
-                } else if args.parallel && args.threads > 1 {
-                    is_probable_prime_parallel(&n, args.threads)
+                } else if args.parallel {
+                    let bases = get_test_bases_for_size(&n);
+                    metrics.bases_tested = bases.len();
+                    is_probable_prime_parallel(&n, threads)
                 } else {
+                    let bases = get_test_bases_for_size(&n);
+                    metrics.bases_tested = bases.len();
                     is_probable_prime(&n)
                 };
 
@@ -214,6 +327,27 @@ fn main() {
                     println!("Result: PROBABLY PRIME");
                 } else {
                     println!("Result: COMPOSITE");
+                }
+
+                if args.verbose || args.output_format == "json" {
+                    let elapsed = metrics.elapsed_ms();
+                    eprintln!(
+                        "Performance: {} total, bases tested: {}, threads used: {}",
+                        format_duration(elapsed),
+                        metrics.bases_tested,
+                        metrics.threads_used
+                    );
+                }
+
+                if args.output_format == "json" {
+                    output_json(
+                        &metrics,
+                        json!({
+                            "number": n_str.to_string(),
+                            "is_prime": result,
+                            "probabilistic_bases_used": metrics.bases_tested > 0
+                        }),
+                    );
                 }
             }
             Err(e) => eprintln!("Error parsing number '{}': {}", n_str, e),
@@ -224,47 +358,70 @@ fn main() {
 
         print!(
             "Testing range [{}, {}) with {} threads... ",
-            start, end, args.threads
+            start,
+            end,
+            if args.parallel { threads } else { 1 }
         );
         let _ = io::stdout().flush();
 
         let total_numbers = end - start;
-        let chunk_size = (total_numbers + args.threads - 1) / args.threads;
-        let mut handles = Vec::with_capacity(args.threads);
-        let start_clone = start.clone();
-        let end_clone = end.clone();
-
-        for t in 0..args.threads {
-            let t_start = start_clone + t * chunk_size;
-            if t_start >= end_clone {
-                break;
-            }
-            let t_end = std::cmp::min(t_start + chunk_size, end_clone);
-
-            handles.push(thread::spawn(move || {
-                (t_start..t_end)
-                    .into_iter()
-                    .filter(|n| n.to_biguint().map_or(false, |b| is_probable_prime(&b)))
-                    .collect::<Vec<usize>>()
-            }));
-        }
-
         let mut primes: Vec<usize> = Vec::with_capacity(1024);
-        for handle in handles {
-            match handle.join() {
-                Ok(mutex_primes) => primes.extend(mutex_primes),
-                Err(_) => eprintln!("Warning: A worker thread panicked"),
-            };
+
+        if !args.parallel {
+            for n in start..end {
+                if let Some(b) = n.to_biguint() {
+                    metrics.bases_tested += get_test_bases_for_size(&b).len();
+                    if is_probable_prime(&b) {
+                        primes.push(n);
+                    }
+                }
+            }
+        } else {
+            let chunk_size = (total_numbers + threads - 1) / threads;
+            let mut handles: Vec<_> = Vec::with_capacity(threads);
+            let start_clone = start.clone();
+            let end_clone = end.clone();
+
+            for t in 0..threads {
+                let t_start = start_clone + t * chunk_size;
+                if t_start >= end_clone {
+                    break;
+                }
+                let t_end = std::cmp::min(t_start + chunk_size, end_clone);
+
+                handles.push(thread::spawn(move || -> (Vec<usize>, usize) {
+                    let mut primes_in_chunk: Vec<usize> = Vec::new();
+                    let mut bases_total = 0usize;
+
+                    for n in t_start..t_end {
+                        if let Some(b) = n.to_biguint() {
+                            let bases = get_test_bases_for_size(&b);
+                            bases_total += bases.len();
+
+                            if is_probable_prime(&b) {
+                                primes_in_chunk.push(n);
+                            }
+                        }
+                    }
+
+                    (primes_in_chunk, bases_total)
+                }));
+            }
+
+            for handle in handles {
+                match handle.join() {
+                    Ok((chunk_primes, chunk_bases)) => {
+                        primes.extend(chunk_primes);
+                        metrics.bases_tested += chunk_bases;
+                    }
+                    Err(_) => eprintln!("Warning: A worker thread panicked"),
+                }
+            }
+
+            primes.sort();
         }
-        primes.sort();
 
         let composite_count = (end - start) - primes.len();
-        println!("done");
-        println!(
-            "Found {} primes and {} composites",
-            primes.len(),
-            composite_count
-        );
 
         if !primes.is_empty() {
             print!("Primes: ");
@@ -275,6 +432,41 @@ fn main() {
                 print!("{}", p);
             }
             println!();
+        }
+
+        let elapsed = metrics.elapsed_ms();
+        let prime_density = if total_numbers > 0 {
+            (primes.len() * 100) as f64 / total_numbers as f64
+        } else {
+            0.0
+        };
+
+        eprintln!(
+            "\nPerformance Metrics:\n  Total time: {}\n  Bases tested: {}\n  Threads used: {}\n  Prime density: {:.2}%\n  Throughput: {:.1}/s\n  Avg ms/number: {:.4}",
+            format_duration(elapsed),
+            metrics.bases_tested,
+            metrics.threads_used,
+            prime_density,
+            metrics.throughput(total_numbers),
+            elapsed / total_numbers.max(1) as f64
+        );
+
+        if args.verbose && !primes.is_empty() {
+            eprintln!("First 10 primes: {:?}", &primes[..primes.len().min(10)]);
+        }
+
+        if args.output_format == "json" {
+            output_json(
+                &metrics,
+                json!({
+                    "range_start": start,
+                    "range_end": end,
+                    "total_tested": total_numbers,
+                    "primes_found": primes.len(),
+                    "composites_found": composite_count,
+                    "prime_density_percent": prime_density
+                }),
+            );
         }
     } else {
         eprintln!("Provide --number <N>, --file <path>, or use --batch-test with --start/--end");

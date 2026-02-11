@@ -8,7 +8,7 @@ const M_R_TEST_BASES_128: &[u64] = &[
     2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67,
 ];
 
-fn get_test_bases_for_size(n: &BigUint) -> Vec<u64> {
+pub fn get_test_bases_for_size(n: &BigUint) -> Vec<u64> {
     let n_128_max = BigUint::from(3_474_749_660_399u64);
 
     if n < &n_128_max {
@@ -26,7 +26,7 @@ fn get_test_bases_for_size(n: &BigUint) -> Vec<u64> {
     }
 }
 
-fn filter_bases_for_n(bases: &[u64], n: &BigUint) -> Vec<u64> {
+pub fn filter_bases_for_n(bases: &[u64], n: &BigUint) -> Vec<u64> {
     bases
         .iter()
         .filter(|a| BigUint::from(**a).cmp(n) == Ordering::Less)

@@ -1,3 +1,12 @@
 *~
 Cargo.lock
 target/
+composite_large.txt
+large_batch_input.txt
+large_prime_m11213.txt
+large_prime_m1279.txt
+large_prime_m13982683.txt
+large_prime_m2203.txt
+large_prime_m4259.txt
+large_prime_m44497.txt
+large_prime_m607.txt
