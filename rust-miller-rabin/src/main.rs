@@ -1,3 +1,8 @@
+//! Miller-Rabin primality tester CLI
+//!
+//! Command-line interface for testing primality of arbitrarily large integers
+//! using the deterministic Miller-Rabin algorithm.
+
 use clap::Parser;
 use miller_rabin_tester::{
     get_test_bases_for_size, is_probable_prime, is_probable_prime_parallel,
@@ -11,23 +16,28 @@ use std::io::{self, Write};
 use std::str::FromStr;
 use std::thread;
 
+/// Get the number of available CPU cores
 fn get_available_threads() -> usize {
-    let cores = num_cpus::get();
-    if cores < 1 {
-        return 4;
-    }
-    cores
+    thread::available_parallelism()
+        .map(|p| p.get())
+        .unwrap_or(4)
 }
 
+/// CLI arguments
 #[derive(Parser, Debug)]
 #[command(name = "miller-rabin")]
+#[command(about = "Miller-Rabin primality tester for large integers")]
+#[command(version)]
 struct Args {
+    /// Number to test (as string)
     #[arg(short, long)]
     number: Option<String>,
 
+    /// File containing numbers to test (one per line)
     #[arg(short = 'f', long)]
     file: Option<String>,
 
+    /// Enable parallel processing
     #[arg(
         short = 'p',
         long,
@@ -35,15 +45,19 @@ struct Args {
     )]
     parallel: bool,
 
+    /// Run batch test on range
     #[arg(short, long)]
     batch_test: bool,
 
+    /// Start of range for batch test
     #[arg(long)]
     start: Option<usize>,
 
+    /// End of range for batch test
     #[arg(long)]
     end: Option<usize>,
 
+    /// Number of threads (0 = auto-detect)
     #[arg(
         short = 't',
         long,
@@ -52,27 +66,37 @@ struct Args {
     )]
     threads: usize,
 
+    /// Custom test bases (comma-separated)
     #[arg(short = 'b', long)]
     bases: Option<String>,
 
+    /// Show detailed performance metrics
     #[arg(long, help = "Show detailed performance metrics")]
     verbose: bool,
 
+    /// Output format: text or json
     #[arg(long, default_value = "text", help = "Output format: text or json")]
     output_format: String,
 
+    /// Show progress bar for large number tests
     #[arg(long, help = "Show progress bar for large number tests")]
     show_progress: bool,
 }
 
+/// Parse a BigUint from string
 fn parse_big_uint(s: &str) -> Result<BigUint, String> {
     BigUint::from_str(s).map_err(|e| e.to_string())
 }
 
+/// Parse comma-separated list of bases
 fn parse_bases(s: &str) -> Vec<u64> {
-    s.split(',').filter_map(|x| x.trim().parse().ok()).collect()
+    s.split(',')
+        .filter_map(|x| x.trim().parse().ok())
+        .filter(|&x| x >= 2)
+        .collect()
 }
 
+/// Read numbers from a file (one per line)
 fn read_numbers_from_file(path: &str) -> io::Result<Vec<String>> {
     let content = fs::read_to_string(path)?;
     Ok(content
@@ -82,6 +106,7 @@ fn read_numbers_from_file(path: &str) -> io::Result<Vec<String>> {
         .collect())
 }
 
+/// Performance metrics tracking
 struct PerfMetrics {
     start_time: std::time::Instant,
     bases_tested: usize,
@@ -111,6 +136,7 @@ impl PerfMetrics {
     }
 }
 
+/// Format duration in human-readable format
 fn format_duration(ms: f64) -> String {
     if ms < 1.0 {
         format!("{:.3} ms", ms)
@@ -121,6 +147,7 @@ fn format_duration(ms: f64) -> String {
     }
 }
 
+/// Render a progress bar
 fn render_progress_bar(current: usize, total: usize, width: usize) -> String {
     if total == 0 {
         return "[>".to_string();
@@ -130,15 +157,34 @@ fn render_progress_bar(current: usize, total: usize, width: usize) -> String {
     format!("[{}{}]", "█".repeat(filled.min(width)), "░".repeat(empty))
 }
 
-fn print_progress(current: usize, total: usize) {
+/// Print progress to stderr
+///
+/// Uses a shared AtomicBool to ensure the 100% line is rendered and
+/// finalized with a newline exactly once.
+fn print_progress(current: usize, total: usize, finished: &std::sync::atomic::AtomicBool) {
+    use std::sync::atomic::Ordering;
+
+    if total == 0 {
+        return;
+    }
+
+    // Once we've printed the final 100% + newline, suppress all further output.
+    if finished.load(Ordering::Relaxed) {
+        return;
+    }
+
     let bar = render_progress_bar(current, total, 30);
     let percent = (current * 100) / total;
     eprint!("\r  Progress: {} {:>3}%", bar, percent);
+    let _ = std::io::stderr().flush();
+
     if current >= total {
+        finished.store(true, Ordering::Relaxed);
         eprintln!();
     }
 }
 
+/// Output results in JSON format
 fn output_json(metrics: &PerfMetrics, data: serde_json::Value) {
     let json_output = json!({
         "performance_ms": metrics.elapsed_ms(),
@@ -149,103 +195,6 @@ fn output_json(metrics: &PerfMetrics, data: serde_json::Value) {
     if let Ok(s) = serde_json::to_string_pretty(&json_output) {
         println!("{}", s);
     }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use num_bigint::ToBigUint;
-
-    #[test]
-    fn test_small_primes() {
-        let small_primes = [2usize, 3, 5, 7, 11, 13, 17, 19];
-        for p in small_primes {
-            if let Some(n) = p.to_biguint() {
-                assert!(is_probable_prime(&n), "{} should be prime", p);
-            }
-        }
-    }
-
-    #[test]
-    fn test_small_composites() {
-        let composites = [4usize, 6, 8, 9, 10, 12, 14, 15];
-        for c in composites {
-            if let Some(n) = c.to_biguint() {
-                assert!(!is_probable_prime(&n), "{} should be composite", c);
-            }
-        }
-    }
-
-    #[test]
-    fn test_known_primes() {
-        let primes = ["1009", "104729"];
-        for p in &primes {
-            if let Ok(n) = parse_big_uint(p) {
-                assert!(is_probable_prime(&n), "{} should be prime", p);
-            }
-        }
-    }
-
-    #[test]
-    fn test_known_composites() {
-        let composites = ["341", "561", "645"];
-        for c in &composites {
-            if let Ok(n) = parse_big_uint(c) {
-                assert!(!is_probable_prime(&n), "{} should be composite", c);
-            }
-        }
-    }
-
-    #[test]
-    fn test_large_primes() {
-        let large_primes = ["1299709"];
-        for p in &large_primes {
-            if let Ok(n) = parse_big_uint(p) {
-                assert!(is_probable_prime(&n), "{} should be prime", p);
-            }
-        }
-    }
-
-    #[test]
-    fn test_large_composites() {
-        let large_composites = ["104730"];
-        for c in &large_composites {
-            if let Ok(n) = parse_big_uint(c) {
-                assert!(!is_probable_prime(&n), "{} should be composite", c);
-            }
-        }
-    }
-
-    #[test]
-    fn test_carmichael_numbers() {
-        let carmichaels = ["561", "1105", "1729", "2465"];
-        for n in &carmichaels {
-            if let Ok(num) = parse_big_uint(n) {
-                assert!(!is_probable_prime(&num), "{} is Carmichael (composite)", n);
-            }
-        }
-    }
-
-    #[test]
-    fn test_fermat_primes() {
-        for p in [0usize, 1, 2] {
-            let pow_2_p = BigUint::from(2usize).pow(p as u32);
-            let n = pow_2_p.pow(2) + BigUint::from(1usize);
-            assert!(is_probable_prime(&n), "{} should be prime", n);
-        }
-    }
-
-    #[test]
-    fn test_fermat_composites() {
-        for p in [5usize, 6] {
-            let pow_2_p = BigUint::from(2usize).pow(p as u32);
-            let n = pow_2_p.pow(2) + BigUint::from(1usize);
-            assert!(!is_probable_prime(&n), "{} should be composite", n);
-        }
-    }
-
-    #[test]
-    fn test_mr_testing() {}
 }
 
 fn main() {
@@ -259,11 +208,13 @@ fn main() {
     };
     metrics.threads_used = if args.parallel { threads } else { 1 };
 
+    // Validate arguments
     if args.file.is_some() && (args.number.is_some() || args.batch_test) {
         eprintln!("Error: Cannot combine --file with --number or --batch-test");
         std::process::exit(1);
     }
 
+    // File mode - test multiple numbers from file
     if let Some(file_path) = &args.file {
         match read_numbers_from_file(file_path) {
             Ok(numbers) => {
@@ -323,7 +274,11 @@ fn main() {
             }
             Err(e) => eprintln!("Error reading file '{}': {}", file_path, e),
         }
-    } else if let Some(n_str) = &args.number {
+        return;
+    }
+
+    // Single number mode
+    if let Some(n_str) = &args.number {
         match parse_big_uint(n_str) {
             Ok(n) => {
                 println!("Testing: {}", n);
@@ -331,6 +286,10 @@ fn main() {
                     args.bases.as_ref().map_or(Vec::new(), |s| parse_bases(s));
 
                 let result = if args.show_progress {
+                    use std::sync::atomic::AtomicBool;
+                    use std::sync::Arc;
+                    let finished = Arc::new(AtomicBool::new(false));
+
                     if args.parallel {
                         let bases = get_test_bases_for_size(&n);
                         metrics.bases_tested = bases.len();
@@ -339,19 +298,22 @@ fn main() {
                             bases.len(),
                             threads
                         );
+                        let f = Arc::clone(&finished);
                         let progress_fn: &ProgressCallback =
-                            &|current, total| print_progress(current, total);
+                            &move |current, total| print_progress(current, total, &f);
                         is_probable_prime_parallel_with_progress(&n, threads, progress_fn)
                     } else {
                         let bases = get_test_bases_for_size(&n);
                         metrics.bases_tested = bases.len();
                         eprintln!("Running Miller-Rabin with {} bases...", bases.len());
+                        let f = Arc::clone(&finished);
                         let progress_fn: &ProgressCallback =
-                            &|current, total| print_progress(current, total);
+                            &move |current, total| print_progress(current, total, &f);
                         is_probable_prime_with_progress(&n, progress_fn)
                     }
                 } else if !custom_bases.is_empty() && args.parallel {
                     is_probable_prime_parallel_with_bases(&n, threads, &custom_bases)
+                        .unwrap_or(false)
                 } else if !custom_bases.is_empty() {
                     let bases = miller_rabin_tester::filter_bases_for_n(&custom_bases, &n);
                     metrics.bases_tested = bases.len();
@@ -359,7 +321,7 @@ fn main() {
                 } else if args.parallel {
                     let bases = get_test_bases_for_size(&n);
                     metrics.bases_tested = bases.len();
-                    is_probable_prime_parallel(&n, threads)
+                    is_probable_prime_parallel(&n, threads, &[]).unwrap_or(false)
                 } else {
                     let bases = get_test_bases_for_size(&n);
                     metrics.bases_tested = bases.len();
@@ -395,9 +357,18 @@ fn main() {
             }
             Err(e) => eprintln!("Error parsing number '{}': {}", n_str, e),
         }
-    } else if args.batch_test {
+        return;
+    }
+
+    // Batch test mode
+    if args.batch_test {
         let start = args.start.unwrap_or(2usize);
         let end = args.end.unwrap_or(1000usize);
+
+        if start >= end {
+            eprintln!("Error: start must be less than end");
+            std::process::exit(1);
+        }
 
         print!(
             "Testing range [{}, {}) with {} threads... ",
@@ -411,6 +382,7 @@ fn main() {
         let mut primes: Vec<usize> = Vec::with_capacity(1024);
 
         if !args.parallel {
+            // Sequential processing
             for n in start..end {
                 if let Some(b) = n.to_biguint() {
                     metrics.bases_tested += get_test_bases_for_size(&b).len();
@@ -420,17 +392,16 @@ fn main() {
                 }
             }
         } else {
+            // Parallel batch processing
             let chunk_size = (total_numbers + threads - 1) / threads;
             let mut handles: Vec<_> = Vec::with_capacity(threads);
-            let start_clone = start.clone();
-            let end_clone = end.clone();
 
             for t in 0..threads {
-                let t_start = start_clone + t * chunk_size;
-                if t_start >= end_clone {
+                let t_start = start + t * chunk_size;
+                if t_start >= end {
                     break;
                 }
-                let t_end = std::cmp::min(t_start + chunk_size, end_clone);
+                let t_end = std::cmp::min(t_start + chunk_size, end);
 
                 handles.push(thread::spawn(move || -> (Vec<usize>, usize) {
                     let mut primes_in_chunk: Vec<usize> = Vec::new();
@@ -472,6 +443,10 @@ fn main() {
                 if i > 0 {
                     print!(", ");
                 }
+                if i >= 20 {
+                    print!("... ({} more)", primes.len() - 20);
+                    break;
+                }
                 print!("{}", p);
             }
             println!();
@@ -485,7 +460,13 @@ fn main() {
         };
 
         eprintln!(
-            "\nPerformance Metrics:\n  Total time: {}\n  Bases tested: {}\n  Threads used: {}\n  Prime density: {:.2}%\n  Throughput: {:.1}/s\n  Avg ms/number: {:.4}",
+            "\nPerformance Metrics:\n  \
+            Total time: {}\n  \
+            Bases tested: {}\n  \
+            Threads used: {}\n  \
+            Prime density: {:.2}%\n  \
+            Throughput: {:.1}/s\n  \
+            Avg ms/number: {:.4}",
             format_duration(elapsed),
             metrics.bases_tested,
             metrics.threads_used,
@@ -511,8 +492,100 @@ fn main() {
                 }),
             );
         }
-    } else {
-        eprintln!("Provide --number <N>, --file <path>, or use --batch-test with --start/--end");
-        std::process::exit(1);
+        return;
+    }
+
+    eprintln!("Provide --number <N>, --file <path>, or use --batch-test with --start/--end");
+    std::process::exit(1);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use num_bigint::ToBigUint;
+
+    #[test]
+    fn test_small_primes() {
+        let small_primes = [2usize, 3, 5, 7, 11, 13, 17, 19];
+        for p in small_primes {
+            if let Some(n) = p.to_biguint() {
+                assert!(is_probable_prime(&n), "{} should be prime", p);
+            }
+        }
+    }
+
+    #[test]
+    fn test_small_composites() {
+        let composites = [4usize, 6, 8, 9, 10, 12, 14, 15];
+        for c in composites {
+            if let Some(n) = c.to_biguint() {
+                assert!(!is_probable_prime(&n), "{} should be composite", c);
+            }
+        }
+    }
+
+    #[test]
+    fn test_known_primes() {
+        let primes = ["1009", "104729"];
+        for p in &primes {
+            if let Ok(n) = parse_big_uint(p) {
+                assert!(is_probable_prime(&n), "{} should be prime", p);
+            }
+        }
+    }
+
+    #[test]
+    fn test_known_composites() {
+        let composites = ["341", "561", "645"];
+        for c in &composites {
+            if let Ok(n) = parse_big_uint(c) {
+                assert!(!is_probable_prime(&n), "{} should be composite", c);
+            }
+        }
+    }
+
+    #[test]
+    fn test_carmichael_numbers() {
+        let carmichaels = ["561", "1105", "1729", "2465"];
+        for n in &carmichaels {
+            if let Ok(num) = parse_big_uint(n) {
+                assert!(!is_probable_prime(&num), "{} is Carmichael (composite)", n);
+            }
+        }
+    }
+
+    #[test]
+    fn test_fermat_primes() {
+        for p in [0usize, 1, 2] {
+            let pow_2_p = BigUint::from(2usize).pow(p as u32);
+            let n = pow_2_p.pow(2) + BigUint::from(1usize);
+            assert!(is_probable_prime(&n), "{} should be prime", n);
+        }
+    }
+
+    #[test]
+    fn test_fermat_composites() {
+        for p in [5usize, 6] {
+            let pow_2_p = BigUint::from(2usize).pow(p as u32);
+            let n = pow_2_p.pow(2) + BigUint::from(1usize);
+            assert!(!is_probable_prime(&n), "{} should be composite", n);
+        }
+    }
+
+    #[test]
+    fn test_parse_bases() {
+        assert_eq!(parse_bases("2,3,5,7"), vec![2, 3, 5, 7]);
+        assert_eq!(parse_bases("2, 3, 5"), vec![2, 3, 5]);
+        assert_eq!(parse_bases(""), Vec::<u64>::new());
+        assert_eq!(parse_bases("invalid"), Vec::<u64>::new());
+        // Bases less than 2 should be filtered
+        assert_eq!(parse_bases("0,1,2,3"), vec![2, 3]);
+    }
+
+    #[test]
+    fn test_format_duration() {
+        assert_eq!(format_duration(0.5), "0.500 ms");
+        assert_eq!(format_duration(10.0), "10.00 ms");
+        assert_eq!(format_duration(1500.0), "1.50 s");
     }
 }

@@ -95,7 +95,7 @@ m1279:
 m2203:
 	@if [ ! -f large_prime_m2203.txt ]; then \
 		echo "Generating M2203 (~664 digits)..."; python3 -c "open('large_prime_m2203.txt','w').write(str((1<<2203)-1))"; fi
-	cargo run --release -- --number $$(cat large_prime_m2203.txt)
+	cargo run --release -- --number $$(cat large_prime_m2203.txt)  --verbose --parallel --show-progress
 
 m11213:
 	@if [ ! -f large_prime_m11213.txt ]; then \
