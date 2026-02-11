@@ -3,33 +3,36 @@
 //! This module provides deterministic test bases for the Miller-Rabin primality test.
 //! The number of bases required depends on the size of the number being tested:
 //!
-//! - For n < 3_474_749_660_399: 12 bases are sufficient for deterministic results
-//! - For n < 3_317_044_064_679_887_385_961_981: 19 bases are sufficient
+//! - For n < 3,474,749,660,399: 12 bases are sufficient for deterministic results
+//! - For larger n: 19 bases provide deterministic coverage up to ~3.3x10^25
 //!
 //! These bounds are derived from published research on deterministic Miller-Rabin testing.
 
 use num_bigint::BigUint;
 
-/// Threshold for switching from 64-bit to 128-bit test bases
-/// Numbers less than this value require only 12 bases for deterministic results
-pub const DETERMINISTIC_THRESHOLD_64: u64 = 3_474_749_660_399;
+/// Numbers below this threshold require only 12 bases for deterministic results.
+/// Above this threshold, 19 bases are used.
+pub const SMALL_NUMBER_THRESHOLD: u64 = 3_474_749_660_399;
 
-/// Threshold for 128-bit test bases
-/// Numbers less than this value require 19 bases for deterministic results
-pub const DETERMINISTIC_THRESHOLD_128: u64 = u64::MAX;
+/// Test bases sufficient for deterministic results when n < SMALL_NUMBER_THRESHOLD
+const BASES_SMALL: &[u64] = &[2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37];
 
-/// Test bases sufficient for deterministic results on all 64-bit integers (n < 3.4 trillion)
-const M_R_TEST_BASES_64: &[u64] = &[2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37];
-
-/// Extended test bases for larger numbers (up to ~3.3e25)
-const M_R_TEST_BASES_128: &[u64] = &[
+/// Extended test bases for larger numbers
+const BASES_LARGE: &[u64] = &[
     2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67,
 ];
 
+/// The largest base value in any base set (67).
+/// Used for fast-path optimization in `filter_bases_for_n`.
+const MAX_BASE: u64 = 67;
+
 /// Returns the appropriate test bases for the given number size.
 ///
-/// For numbers less than 3_474_749_660_399, uses 12 bases (deterministic for 64-bit).
-/// For larger numbers, uses 19 bases (deterministic up to ~3.3e25).
+/// For numbers less than [`SMALL_NUMBER_THRESHOLD`], uses 12 bases.
+/// For larger numbers, uses 19 bases.
+///
+/// Note: The returned slice is NOT filtered by n. Bases >= n must be
+/// removed before use. See [`filter_bases_for_n`].
 ///
 /// # Examples
 /// ```
@@ -41,19 +44,32 @@ const M_R_TEST_BASES_128: &[u64] = &[
 /// assert_eq!(bases.len(), 12);
 /// ```
 pub fn get_test_bases_for_size(n: &BigUint) -> &'static [u64] {
-    let n_128_max = BigUint::from(DETERMINISTIC_THRESHOLD_64);
+    // Compare using bit count first (fast path): SMALL_NUMBER_THRESHOLD is ~42 bits.
+    // Any n with > 42 bits is definitely above the threshold.
+    let threshold_bits = 42; // ceil(log2(3_474_749_660_399)) = 42
+    let n_bits = n.bits();
 
-    if n < &n_128_max {
-        M_R_TEST_BASES_64
+    if n_bits > threshold_bits {
+        BASES_LARGE
+    } else if n_bits < threshold_bits {
+        BASES_SMALL
     } else {
-        M_R_TEST_BASES_128
+        // Exact comparison only when bit counts match
+        let threshold = BigUint::from(SMALL_NUMBER_THRESHOLD);
+        if n < &threshold {
+            BASES_SMALL
+        } else {
+            BASES_LARGE
+        }
     }
 }
 
 /// Filters test bases to only include those less than n.
 ///
 /// Miller-Rabin requires bases a where 2 <= a < n.
-/// This function filters the provided bases accordingly.
+///
+/// This uses a fast path: since the largest possible base is 67,
+/// any n > 67 means all bases pass, avoiding per-element conversion.
 ///
 /// # Examples
 /// ```
@@ -66,11 +82,14 @@ pub fn get_test_bases_for_size(n: &BigUint) -> &'static [u64] {
 /// assert_eq!(filtered, vec![2, 3, 5, 7]);
 /// ```
 pub fn filter_bases_for_n(bases: &[u64], n: &BigUint) -> Vec<u64> {
-    bases
-        .iter()
-        .filter(|&&a| BigUint::from(a) < *n)
-        .copied()
-        .collect()
+    // Fast path: if n > MAX_BASE, all bases pass (no conversion needed)
+    if n > &BigUint::from(MAX_BASE) {
+        return bases.to_vec();
+    }
+
+    // For small n, extract as u64 and compare natively (no BigUint per element)
+    let n_u64: u64 = n.try_into().unwrap_or(u64::MAX);
+    bases.iter().filter(|&&a| a < n_u64).copied().collect()
 }
 
 #[cfg(test)]
@@ -81,16 +100,27 @@ mod tests {
     fn test_get_test_bases_small_number() {
         let n = BigUint::from(100u32);
         let bases = get_test_bases_for_size(&n);
-        assert_eq!(bases, M_R_TEST_BASES_64);
+        assert_eq!(bases, BASES_SMALL);
         assert_eq!(bases.len(), 12);
     }
 
     #[test]
     fn test_get_test_bases_large_number() {
-        let n = BigUint::from(DETERMINISTIC_THRESHOLD_64 + 1);
+        let n = BigUint::from(SMALL_NUMBER_THRESHOLD + 1);
         let bases = get_test_bases_for_size(&n);
-        assert_eq!(bases, M_R_TEST_BASES_128);
+        assert_eq!(bases, BASES_LARGE);
         assert_eq!(bases.len(), 19);
+    }
+
+    #[test]
+    fn test_get_test_bases_at_threshold() {
+        let n = BigUint::from(SMALL_NUMBER_THRESHOLD);
+        let bases = get_test_bases_for_size(&n);
+        assert_eq!(bases, BASES_LARGE);
+
+        let n = BigUint::from(SMALL_NUMBER_THRESHOLD - 1);
+        let bases = get_test_bases_for_size(&n);
+        assert_eq!(bases, BASES_SMALL);
     }
 
     #[test]
@@ -107,5 +137,27 @@ mod tests {
         let n = BigUint::from(2u32);
         let filtered = filter_bases_for_n(bases, &n);
         assert!(filtered.is_empty());
+    }
+
+    #[test]
+    fn test_filter_bases_all_pass() {
+        // n > 67 means all bases pass the filter
+        let n = BigUint::from(1000u32);
+        let filtered = filter_bases_for_n(BASES_LARGE, &n);
+        assert_eq!(filtered, BASES_LARGE.to_vec());
+    }
+
+    #[test]
+    fn test_filter_bases_boundary() {
+        // n = 68: MAX_BASE is 67, so all bases should pass
+        let n = BigUint::from(68u32);
+        let filtered = filter_bases_for_n(BASES_LARGE, &n);
+        assert_eq!(filtered, BASES_LARGE.to_vec());
+
+        // n = 67: base 67 should be excluded
+        let n = BigUint::from(67u32);
+        let filtered = filter_bases_for_n(BASES_LARGE, &n);
+        assert!(!filtered.contains(&67));
+        assert!(filtered.contains(&61));
     }
 }

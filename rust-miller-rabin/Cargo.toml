@@ -7,9 +7,7 @@ authors = ["Prime Generator"]
 
 [dependencies]
 num-bigint = "0.4"
-num-integer = "0.1"
 num-traits = "0.2"
-num_cpus = "0"
 clap = { version = "4.4", features = ["derive"] }
 serde_json = "1"
 thiserror = "1.0"

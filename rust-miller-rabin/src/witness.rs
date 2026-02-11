@@ -5,11 +5,16 @@
 
 use num_bigint::BigUint;
 use num_traits::{One, Zero};
+use std::sync::atomic::{AtomicUsize, Ordering};
 
 /// Decomposes n-1 into d * 2^s where d is odd.
 ///
 /// This is the first step in the Miller-Rabin test, writing n-1 in the form
 /// required by the algorithm.
+///
+/// # Panics
+/// Panics if `n < 2` (subtraction underflow on unsigned BigUint).
+/// Callers must validate `n >= 2` before calling.
 ///
 /// # Examples
 /// ```
@@ -22,11 +27,11 @@ use num_traits::{One, Zero};
 /// assert_eq!(s, 4);
 /// ```
 pub fn decompose_into_d_and_s(n: &BigUint) -> (BigUint, usize) {
-    let one = BigUint::one();
-    let mut d = n.clone() - &one;
+    let mut d = n - BigUint::one();
     let mut s: usize = 0;
 
-    while (&d & &one).is_zero() {
+    // Use bit(0) to check parity -- O(1), no allocation
+    while !d.is_zero() && !d.bit(0) {
         d >>= 1usize;
         s += 1;
     }
@@ -37,7 +42,8 @@ pub fn decompose_into_d_and_s(n: &BigUint) -> (BigUint, usize) {
 /// Modular exponentiation: computes (base^exp) % modulus efficiently
 /// using the square-and-multiply algorithm.
 ///
-/// This is a critical performance function used extensively in Miller-Rabin testing.
+/// Optionally tracks progress by incrementing a shared atomic counter
+/// once per exponent bit processed. Pass `None` to skip tracking.
 ///
 /// # Examples
 /// ```
@@ -47,10 +53,15 @@ pub fn decompose_into_d_and_s(n: &BigUint) -> (BigUint, usize) {
 /// let base = BigUint::from(3u32);
 /// let exp = BigUint::from(10u32);
 /// let modulus = BigUint::from(7u32);
-/// let result = mod_pow(base, exp, &modulus);
-/// assert_eq!(result, BigUint::from(4u32)); // 3^10 mod 7 = 59049 mod 7 = 4
+/// let result = mod_pow(base, &exp, &modulus, None);
+/// assert_eq!(result, BigUint::from(4u32)); // 3^10 mod 7 = 4
 /// ```
-pub fn mod_pow(mut base: BigUint, mut exp: BigUint, modulus: &BigUint) -> BigUint {
+pub fn mod_pow(
+    mut base: BigUint,
+    exp: &BigUint,
+    modulus: &BigUint,
+    progress: Option<&AtomicUsize>,
+) -> BigUint {
     if modulus.is_one() {
         return BigUint::zero();
     }
@@ -58,12 +69,18 @@ pub fn mod_pow(mut base: BigUint, mut exp: BigUint, modulus: &BigUint) -> BigUin
     let mut result = BigUint::one();
     base %= modulus;
 
-    while !exp.is_zero() {
-        if (&exp & &one()).is_one() {
+    let total_bits = exp.bits();
+
+    for i in 0..total_bits {
+        // Check bit i of the exponent -- O(1), no allocation
+        if exp.bit(i) {
             result = (&result * &base) % modulus;
         }
         base = (&base * &base) % modulus;
-        exp >>= 1usize;
+
+        if let Some(counter) = progress {
+            counter.fetch_add(1, Ordering::Relaxed);
+        }
     }
 
     result
@@ -74,11 +91,14 @@ pub fn mod_pow(mut base: BigUint, mut exp: BigUint, modulus: &BigUint) -> BigUin
 /// Returns true if 'a' is NOT a witness (n may be prime),
 /// returns false if 'a' IS a witness (n is definitely composite).
 ///
+/// Optionally tracks modular exponentiation progress via an atomic counter.
+///
 /// # Arguments
 /// * `a` - The base to test (must be 2 <= a < n)
 /// * `d` - The odd component from n-1 = d * 2^s
 /// * `s` - The power of 2 from n-1 = d * 2^s
 /// * `n` - The number being tested for primality
+/// * `progress` - Optional shared counter for progress tracking
 ///
 /// # Examples
 /// ```
@@ -89,11 +109,28 @@ pub fn mod_pow(mut base: BigUint, mut exp: BigUint, modulus: &BigUint) -> BigUin
 /// let n = BigUint::from(561u32);
 /// let a = BigUint::from(2u32);
 /// let (d, s) = decompose_into_d_and_s(&n);
-/// let is_not_witness = miller_rabin_witness(&a, &d, s, &n);
+/// let is_not_witness = miller_rabin_witness(&a, &d, s, &n, None);
 /// assert!(!is_not_witness); // 2 IS a witness that 561 is composite
 /// ```
-pub fn miller_rabin_witness(a: &BigUint, d: &BigUint, s: usize, n: &BigUint) -> bool {
-    let x = mod_pow(a.clone(), d.clone(), n);
+pub fn miller_rabin_witness(
+    a: &BigUint,
+    d: &BigUint,
+    s: usize,
+    n: &BigUint,
+    progress: Option<&AtomicUsize>,
+) -> bool {
+    let x = mod_pow(a.clone(), d, n, progress);
+    witness_check(x, s, n)
+}
+
+/// The squaring phase of the Miller-Rabin witness test.
+///
+/// Given x = a^d mod n, performs up to s squarings to determine
+/// if the base is a witness for n's compositeness.
+///
+/// Returns true if n may be prime (not a witness),
+/// false if n is definitely composite (witness found).
+pub fn witness_check(x: BigUint, s: usize, n: &BigUint) -> bool {
     let one = BigUint::one();
     let n_minus_1 = n - &one;
 
@@ -102,7 +139,7 @@ pub fn miller_rabin_witness(a: &BigUint, d: &BigUint, s: usize, n: &BigUint) -> 
     }
 
     let mut current = x;
-    for _ in 0..s {
+    for _ in 1..s {
         let y = (&current * &current) % n;
         if y == n_minus_1 {
             return true;
@@ -135,13 +172,7 @@ pub fn miller_rabin_test(a: &BigUint, n: &BigUint) -> bool {
         return *n == BigUint::from(2u32);
     }
     let (d, s) = decompose_into_d_and_s(n);
-    miller_rabin_witness(a, &d, s, n)
-}
-
-/// Helper function to create BigUint::one()
-#[inline]
-fn one() -> BigUint {
-    BigUint::one()
+    miller_rabin_witness(a, &d, s, n, None)
 }
 
 #[cfg(test)]
@@ -171,34 +202,66 @@ mod tests {
         let base = BigUint::from(3u32);
         let exp = BigUint::from(10u32);
         let modulus = BigUint::from(7u32);
-        assert_eq!(mod_pow(base, exp, &modulus), BigUint::from(4u32));
+        assert_eq!(mod_pow(base, &exp, &modulus, None), BigUint::from(4u32));
 
         // Edge cases
         assert_eq!(
-            mod_pow(BigUint::from(2u32), BigUint::zero(), &BigUint::from(7u32)),
+            mod_pow(
+                BigUint::from(2u32),
+                &BigUint::zero(),
+                &BigUint::from(7u32),
+                None
+            ),
             BigUint::one()
         );
         assert_eq!(
-            mod_pow(BigUint::from(5u32), BigUint::one(), &BigUint::from(7u32)),
+            mod_pow(
+                BigUint::from(5u32),
+                &BigUint::one(),
+                &BigUint::from(7u32),
+                None
+            ),
             BigUint::from(5u32)
         );
     }
 
     #[test]
+    fn test_mod_pow_with_progress() {
+        let base = BigUint::from(3u32);
+        let exp = BigUint::from(10u32); // 10 = 0b1010, 4 bits
+        let modulus = BigUint::from(7u32);
+        let counter = AtomicUsize::new(0);
+
+        let result = mod_pow(base, &exp, &modulus, Some(&counter));
+        assert_eq!(result, BigUint::from(4u32));
+        assert_eq!(counter.load(Ordering::Relaxed), 4); // 4 bits processed
+    }
+
+    #[test]
     fn test_witness_for_composite() {
-        // 561 is a Carmichael number, but 2 is a witness
         let n = BigUint::from(561u32);
         let a = BigUint::from(2u32);
         let (d, s) = decompose_into_d_and_s(&n);
-        assert!(!miller_rabin_witness(&a, &d, s, &n)); // 2 IS a witness
+        assert!(!miller_rabin_witness(&a, &d, s, &n, None));
     }
 
     #[test]
     fn test_witness_for_prime() {
-        // 17 is prime, no base should be a witness
         let n = BigUint::from(17u32);
         let a = BigUint::from(2u32);
         let (d, s) = decompose_into_d_and_s(&n);
-        assert!(miller_rabin_witness(&a, &d, s, &n)); // 2 is NOT a witness
+        assert!(miller_rabin_witness(&a, &d, s, &n, None));
+    }
+
+    #[test]
+    fn test_witness_check_separated() {
+        // Verify witness_check produces the same result as miller_rabin_witness
+        let n = BigUint::from(561u32);
+        let a = BigUint::from(2u32);
+        let (d, s) = decompose_into_d_and_s(&n);
+
+        let x = mod_pow(a, &d, &n, None);
+        let result = witness_check(x, s, &n);
+        assert!(!result); // 561 is composite
     }
 }
