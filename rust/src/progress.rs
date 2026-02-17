@@ -40,8 +40,7 @@ impl ProgressBar {
         let completed = state.completed;
 
         let now = Instant::now();
-        if now.duration_since(state.last_update) >= self.update_interval
-            || completed >= self.total
+        if now.duration_since(state.last_update) >= self.update_interval || completed >= self.total
         {
             state.last_update = now;
             drop(state);

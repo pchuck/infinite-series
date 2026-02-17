@@ -11,14 +11,27 @@ build:
 release:
 	cargo build --release
 
-run: build
-	./target/debug/primes -n 1000
+run_cli_direct: 
+	cargo run --bin primes_cli
 
-run-release: release
-	./target/release/primes -n 1000000 --quiet
+run_gui_direct: 
+	cargo run --bin primes_gui
 
-run-release-parallel-progress: release
-	@./target/release/primes -n $(N) -p -P > /dev/null
+run_cli: build
+	./target/debug/primes_cli
+
+run_gui: build
+	./target/debug/primes_gui -n 1000
+
+
+run-release_cli: release
+	./target/release/primes_cli -n 1000000 --quiet
+
+run-release-parallel_cli: release
+	@./target/release/primes_cli -n $(N) -p -P > /dev/null
+
+run-release_gui: release
+	./target/release/primes_gui
 
 test:
 	cargo test
@@ -43,9 +56,11 @@ help:
 	@echo ""
 	@echo "  make build                    - Build debug version"
 	@echo "  make release                  - Build optimized release"
-	@echo "  make run                      - Run debug (n=1000)"
-	@echo "  make run-release              - Run release, count primes < 1M"
-	@echo "  make run-release-parallel-progress - Run release parallel + progress (10M)"
+	@echo "  make run_gui                  - Run debug gui"
+	@echo "  make run-release_gui          - Run release gui"
+	@echo "  make run_cli                  - Run debug (n=1000)"
+	@echo "  make run-release_cli          - Run release, count primes < 1M"
+	@echo "  make run-release-parallel_cli - Run parallel + progress(10M)"
 	@echo "  make test                     - Run all tests"
 	@echo "  make test-verbose             - Run tests with output"
 	@echo "  make clean                    - Clean build artifacts"

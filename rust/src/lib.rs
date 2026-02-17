@@ -266,8 +266,11 @@ pub fn generate_primes(
         return Vec::new();
     }
 
-    let workers =
-        workers.unwrap_or_else(|| std::thread::available_parallelism().map(|p| p.get()).unwrap_or(4));
+    let workers = workers.unwrap_or_else(|| {
+        std::thread::available_parallelism()
+            .map(|p| p.get())
+            .unwrap_or(4)
+    });
     let segment_size = segment_size.unwrap_or(DEFAULT_SEGMENT_SIZE);
 
     if parallel && n >= PARALLEL_THRESHOLD {
