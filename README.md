@@ -54,10 +54,14 @@ The GUI provides interactive visualizations of prime number distributions:
 | **Grid** | Square grid layout starting from top-left - simple Cartesian view |
 | **Row** | Single horizontal number line - shows distribution along a line |
 | **Prime Wheel** | Concentric rings by modulo - primes cluster on spokes coprime to the modulus |
+| **Prime Density** | Graph of π(x) vs x/ln(x) - visualizes the Prime Number Theorem (prime counting function vs approximation) |
+| **Riemann Zeta** | Critical strip plot showing non-trivial zeros on the critical line σ=0.5 - visualizes the connection between prime distribution and the Riemann Hypothesis |
 
 **Parameters:**
-- **Cell Spacing** - Controls dot size/spacing (Ulam Spiral, Sacks Spiral, Grid)
+- **Prime Size** / **Non-Prime Size** - Controls dot sizes (Ulam Spiral, Sacks Spiral, Grid, Row, Prime Wheel)
+- **Show Numbers** - Display numbers on the visualization (when zoomed in)
 - **Modulo** - Ring modulus (Prime Wheel: try 6, 30, 210 to see different prime patterns)
+- **Zeros** - Number of zeros to display (Riemann Zeta: 1-20)
 
 ### Go
 ```bash

@@ -58,6 +58,9 @@ Run `cargo run --bin primes_gui` to launch the interactive visualization.
 | **Grid** | Square grid layout starting from top-left - simple Cartesian view |
 | **Row** | Single horizontal number line - shows distribution along a line |
 | **Prime Wheel** | Concentric rings by modulo - primes cluster on spokes coprime to the modulus |
+| **Prime Density** | Graph of π(x) vs x/ln(x) - visualizes the Prime Number Theorem (prime counting function vs approximation) |
+| **Riemann Zeta** | Critical strip plot showing non-trivial zeros on the critical line σ=0.5 - visualizes the connection between prime distribution and the Riemann Hypothesis |
+
 
 ### GUI Parameters
 
