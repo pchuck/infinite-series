@@ -14,6 +14,7 @@ enum VisualizationType {
     RiemannZeta,
     HexagonalLattice,
     TriangularLattice,
+    FermatsSpiral,
 }
 
 impl VisualizationType {
@@ -27,6 +28,20 @@ impl VisualizationType {
                 | Self::PrimeWheel
                 | Self::HexagonalLattice
                 | Self::TriangularLattice
+                | Self::FermatsSpiral
+        )
+    }
+
+    fn supports_twin_primes(self) -> bool {
+        matches!(
+            self,
+            Self::UlamSpiral
+                | Self::SacksSpiral
+                | Self::Grid
+                | Self::Row
+                | Self::HexagonalLattice
+                | Self::TriangularLattice
+                | Self::FermatsSpiral
         )
     }
 
@@ -51,6 +66,7 @@ impl std::fmt::Display for VisualizationType {
             VisualizationType::RiemannZeta => write!(f, "Riemann Zeta"),
             VisualizationType::HexagonalLattice => write!(f, "Hexagonal Lattice"),
             VisualizationType::TriangularLattice => write!(f, "Triangular Lattice"),
+            VisualizationType::FermatsSpiral => write!(f, "Fermat's Spiral"),
         }
     }
 }
@@ -67,6 +83,12 @@ struct VisualizerConfig {
     background_color: egui::Color32,
     visualization: VisualizationType,
     num_zeros: usize,
+    show_twin_primes: bool,
+    twin_color: egui::Color32,
+    show_cousin_primes: bool,
+    cousin_color: egui::Color32,
+    show_sexy_primes: bool,
+    sexy_color: egui::Color32,
 }
 
 impl Default for VisualizerConfig {
@@ -82,6 +104,12 @@ impl Default for VisualizerConfig {
             background_color: egui::Color32::from_rgba_unmultiplied(20, 20, 30, 255),
             visualization: VisualizationType::UlamSpiral,
             num_zeros: 10,
+            show_twin_primes: false,
+            twin_color: egui::Color32::from_rgba_unmultiplied(255, 50, 50, 255),
+            show_cousin_primes: false,
+            cousin_color: egui::Color32::from_rgba_unmultiplied(255, 120, 120, 255),
+            show_sexy_primes: false,
+            sexy_color: egui::Color32::from_rgba_unmultiplied(255, 180, 180, 255),
         }
     }
 }
@@ -189,6 +217,21 @@ impl PrimeVisualizerApp {
     fn draw_number(&self, n: usize, x: f32, y: f32, painter: &egui::Painter) {
         let is_prime = self.primes.contains(&n);
 
+        let is_twin_prime = is_prime
+            && self.config.show_twin_primes
+            && (self.primes.contains(&(n + 2)) || (n > 2 && self.primes.contains(&(n - 2))));
+
+        let is_cousin_prime = is_prime
+            && self.config.show_cousin_primes
+            && !is_twin_prime
+            && (self.primes.contains(&(n + 4)) || (n > 4 && self.primes.contains(&(n - 4))));
+
+        let is_sexy_prime = is_prime
+            && self.config.show_sexy_primes
+            && !is_twin_prime
+            && !is_cousin_prime
+            && (self.primes.contains(&(n + 6)) || (n > 6 && self.primes.contains(&(n - 6))));
+
         let size = if is_prime {
             self.config.prime_size as f32
         } else {
@@ -200,7 +243,13 @@ impl PrimeVisualizerApp {
             return;
         }
 
-        let color = if is_prime {
+        let color = if is_twin_prime {
+            self.config.twin_color
+        } else if is_cousin_prime {
+            self.config.cousin_color
+        } else if is_sexy_prime {
+            self.config.sexy_color
+        } else if is_prime {
             self.config.prime_color
         } else {
             self.config.non_prime_color
@@ -240,6 +289,7 @@ impl PrimeVisualizerApp {
             VisualizationType::RiemannZeta => self.draw_riemann_zeta(ui, rect),
             VisualizationType::HexagonalLattice => self.draw_hexagonal_spiral(ui, rect),
             VisualizationType::TriangularLattice => self.draw_triangle_spiral(ui, rect),
+            VisualizationType::FermatsSpiral => self.draw_fermats_spiral(ui, rect),
         }
     }
 
@@ -746,6 +796,46 @@ impl PrimeVisualizerApp {
         }
     }
 
+    fn generate_fermats_spiral_positions(max_n: usize) -> Vec<(usize, f32, f32)> {
+        (1..=max_n)
+            .map(|n| {
+                let n_f = n as f32;
+                let r = n_f.sqrt();
+                let theta = n_f * 2.39996_f32; // golden angle in radians
+                let x = r * theta.cos();
+                let y = r * theta.sin();
+                (n, x, y)
+            })
+            .collect()
+    }
+
+    fn draw_fermats_spiral(&self, ui: &mut egui::Ui, rect: egui::Rect) {
+        let positions = Self::generate_fermats_spiral_positions(self.config.max_number);
+
+        if positions.is_empty() {
+            return;
+        }
+
+        let mut max_r = 0.0f32;
+        for (_, x, y) in &positions {
+            let r = (x * x + y * y).sqrt();
+            max_r = max_r.max(r);
+        }
+
+        let available = rect.width().min(rect.height()) / 2.0 - 20.0;
+        let scale = if max_r > 0.0 { available / max_r } else { 1.0 };
+
+        let center_x = rect.center().x;
+        let center_y = rect.center().y;
+        let painter = ui.painter();
+
+        for (n, x, y) in &positions {
+            let screen_x = center_x + *x * scale;
+            let screen_y = center_y - *y * scale;
+            self.draw_number(*n, screen_x, screen_y, painter);
+        }
+    }
+
     fn draw_ulam_spiral(&self, ui: &mut egui::Ui, rect: egui::Rect) {
         let positions = Self::generate_ulam_spiral_positions(self.config.max_number);
 
@@ -912,12 +1002,17 @@ impl eframe::App for PrimeVisualizerApp {
                         ui.selectable_value(
                             &mut self.config.visualization,
                             VisualizationType::HexagonalLattice,
-                            "Hexagonal Spiral",
+                            "Hexagonal Lattice",
                         );
                         ui.selectable_value(
                             &mut self.config.visualization,
                             VisualizationType::TriangularLattice,
-                            "Triangle Spiral",
+                            "Triangular Lattice",
+                        );
+                        ui.selectable_value(
+                            &mut self.config.visualization,
+                            VisualizationType::FermatsSpiral,
+                            "Fermat's Spiral",
                         );
                     });
 
@@ -960,12 +1055,43 @@ impl eframe::App for PrimeVisualizerApp {
                     });
                 }
 
+                if self.config.visualization.supports_twin_primes() {
+                    ui.separator();
+                    ui.horizontal(|ui| {
+                        ui.label("Highlight Twin Primes");
+                        ui.checkbox(&mut self.config.show_twin_primes, "");
+                    });
+                    ui.horizontal(|ui| {
+                        ui.label("Highlight Cousin Primes");
+                        ui.checkbox(&mut self.config.show_cousin_primes, "");
+                    });
+                    ui.horizontal(|ui| {
+                        ui.label("Highlight Sexy Primes");
+                        ui.checkbox(&mut self.config.show_sexy_primes, "");
+                    });
+                }
+
                 ui.separator();
                 ui.label("Prime Color");
                 ui.color_edit_button_srgba(&mut self.config.prime_color);
 
                 ui.label("Non-Prime Color");
                 ui.color_edit_button_srgba(&mut self.config.non_prime_color);
+
+                if self.config.show_twin_primes {
+                    ui.label("Twin Color");
+                    ui.color_edit_button_srgba(&mut self.config.twin_color);
+                }
+
+                if self.config.show_cousin_primes {
+                    ui.label("Cousin Color");
+                    ui.color_edit_button_srgba(&mut self.config.cousin_color);
+                }
+
+                if self.config.show_sexy_primes {
+                    ui.label("Sexy Color");
+                    ui.color_edit_button_srgba(&mut self.config.sexy_color);
+                }
 
                 ui.label("Background Color");
                 ui.color_edit_button_srgba(&mut self.config.background_color);
