@@ -1,5 +1,5 @@
 use eframe::egui;
-use primes::sieve_of_eratosthenes;
+use primes::generate_primes;
 use std::collections::HashSet;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -12,10 +12,6 @@ enum VisualizationType {
 }
 
 impl VisualizationType {
-    fn uses_cell_spacing(self) -> bool {
-        matches!(self, Self::UlamSpiral | Self::SacksSpiral | Self::Grid)
-    }
-
     fn uses_modulo(self) -> bool {
         matches!(self, Self::PrimeWheel)
     }
@@ -42,9 +38,8 @@ impl std::fmt::Display for VisualizationType {
 #[derive(Clone)]
 struct VisualizerConfig {
     max_number: usize,
-    prime_size: f32,
-    non_prime_size: f32,
-    cell_spacing: f32,
+    prime_size: usize,
+    non_prime_size: usize,
     modulo: usize,
     show_numbers: bool,
     prime_color: egui::Color32,
@@ -57,11 +52,10 @@ impl Default for VisualizerConfig {
     fn default() -> Self {
         Self {
             max_number: 10000,
-            prime_size: 2.0,
-            non_prime_size: 1.0,
-            cell_spacing: 20.0,
+            prime_size: 1,
+            non_prime_size: 1,
             modulo: 30,
-            show_numbers: true,
+            show_numbers: false,
             prime_color: egui::Color32::from_rgba_unmultiplied(255, 200, 50, 255),
             non_prime_color: egui::Color32::from_rgba_unmultiplied(100, 100, 100, 255),
             background_color: egui::Color32::from_rgba_unmultiplied(20, 20, 30, 255),
@@ -73,21 +67,23 @@ impl Default for VisualizerConfig {
 struct PrimeVisualizerApp {
     config: VisualizerConfig,
     primes: HashSet<usize>,
+    max_pixels: usize,
 }
 
 impl PrimeVisualizerApp {
     fn new(config: VisualizerConfig) -> Self {
-        let primes = sieve_of_eratosthenes(config.max_number);
+        let primes = generate_primes(config.max_number, false, None, None, None);
         let primes_set: HashSet<usize> = primes.into_iter().collect();
 
         Self {
             config,
             primes: primes_set,
+            max_pixels: 1_000_000,
         }
     }
 
     fn regenerate_primes(&mut self) {
-        self.primes = sieve_of_eratosthenes(self.config.max_number)
+        self.primes = generate_primes(self.config.max_number, false, None, None, None)
             .into_iter()
             .collect();
     }
@@ -170,21 +166,32 @@ impl PrimeVisualizerApp {
 
     fn draw_number(&self, n: usize, x: f32, y: f32, painter: &egui::Painter) {
         let is_prime = self.primes.contains(&n);
+
         let size = if is_prime {
-            self.config.prime_size
+            self.config.prime_size as f32
         } else {
-            self.config.non_prime_size
+            self.config.non_prime_size as f32
         };
+
+        // Skip if size is zero
+        if size == 0.0 {
+            return;
+        }
+
         let color = if is_prime {
             self.config.prime_color
         } else {
             self.config.non_prime_color
         };
 
-        let circle_radius = size / 2.0;
-        painter.circle_filled(egui::Pos2::new(x, y), circle_radius, color);
+        // Always use circle for consistent rendering
+        let radius = size / 2.0;
+        painter.circle_filled(egui::Pos2::new(x, y), radius.max(0.5), color);
 
-        if self.config.show_numbers && size >= 6.0 {
+        // Auto-hide text when there are too many numbers
+        let show_text = self.config.show_numbers && size >= 6.0 && self.config.max_number <= 10000;
+
+        if show_text {
             let text = format!("{}", n);
             let font_id = egui::FontId::proportional(size * 0.6);
             painter.text(
@@ -239,12 +246,11 @@ impl PrimeVisualizerApp {
         let max_ring = (self.config.max_number / self.config.modulo) as f32 + 2.0;
 
         let available = rect.width().min(rect.height()) / 2.0 - 20.0;
-        let ring_spacing = if max_ring > 0.0 {
+        let scale = if max_ring > 0.0 {
             available / max_ring
         } else {
             available
         };
-        let scale = ring_spacing.min(self.config.cell_spacing);
 
         let center_x = rect.center().x;
         let center_y = rect.center().y;
@@ -297,12 +303,13 @@ impl PrimeVisualizerApp {
         }
 
         let available = rect.width().min(rect.height()) / 2.0 - 20.0;
+
+        // Scale to always fit within bounds
         let scale = if max_coord > 0.0 {
             available / max_coord
         } else {
             1.0
         };
-        let scale = scale.min(self.config.cell_spacing);
 
         let center_x = rect.center().x;
         let center_y = rect.center().y;
@@ -330,7 +337,6 @@ impl PrimeVisualizerApp {
 
         let available = rect.width().min(rect.height()) / 2.0 - 20.0;
         let scale = if max_r > 0.0 { available / max_r } else { 1.0 };
-        let scale = scale.min(self.config.cell_spacing);
 
         let center_x = rect.center().x;
         let center_y = rect.center().y;
@@ -354,8 +360,7 @@ impl PrimeVisualizerApp {
         let available_width = rect.width() - 40.0;
         let available_height = rect.height() - 40.0;
 
-        let auto_scale = available_width.min(available_height) / side as f32;
-        let scale = auto_scale.min(self.config.cell_spacing);
+        let scale = available_width.min(available_height) / side as f32;
 
         let start_x = rect.left() + 20.0 + scale / 2.0;
         let start_y = rect.top() + 20.0 + scale / 2.0;
@@ -393,6 +398,16 @@ impl PrimeVisualizerApp {
 
 impl eframe::App for PrimeVisualizerApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        // Get available canvas size for max_number limit
+        let screen_rect = ctx.available_rect();
+        let pixels = (screen_rect.width() * screen_rect.height()) as usize;
+        self.max_pixels = (pixels / 2).max(100);
+
+        // Clamp max_number if it exceeds canvas pixels
+        if self.config.max_number > self.max_pixels {
+            self.config.max_number = self.max_pixels;
+        }
+
         egui::SidePanel::left("controls")
             .default_width(280.0)
             .show(ctx, |ui| {
@@ -433,22 +448,17 @@ impl eframe::App for PrimeVisualizerApp {
                 ui.separator();
 
                 ui.label("Max Number:");
-                ui.add(egui::Slider::new(&mut self.config.max_number, 100..=100000).step_by(100.0));
+                ui.add(
+                    egui::Slider::new(&mut self.config.max_number, 100..=self.max_pixels)
+                        .step_by(100.0),
+                );
 
                 ui.separator();
                 ui.label("Prime Size:");
-                ui.add(egui::Slider::new(&mut self.config.prime_size, 2.0..=50.0));
+                ui.add(egui::Slider::new(&mut self.config.prime_size, 1..=50));
 
                 ui.label("Non-Prime Size:");
-                ui.add(egui::Slider::new(
-                    &mut self.config.non_prime_size,
-                    1.0..=30.0,
-                ));
-
-                if self.config.visualization.uses_cell_spacing() {
-                    ui.label("Cell Spacing:");
-                    ui.add(egui::Slider::new(&mut self.config.cell_spacing, 2.0..=50.0));
-                }
+                ui.add(egui::Slider::new(&mut self.config.non_prime_size, 0..=30));
 
                 if self.config.visualization.uses_modulo() {
                     ui.label("Modulo:");

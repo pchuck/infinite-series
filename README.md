@@ -39,6 +39,26 @@ make run-release-quiet  # Count primes < 1M
 make test             # Run tests
 ```
 
+### Rust GUI (Prime Visualizer)
+```bash
+cd rust
+cargo run --bin primes_gui    # Run GUI
+```
+
+The GUI provides interactive visualizations of prime number distributions:
+
+| Visualization | Description |
+|--------------|-------------|
+| **Ulam Spiral** | Classic diagonal prime pattern - primes form distinctive diagonal lines (Stanislaw Ulam, 1963) |
+| **Sacks Spiral** | Archimedean spiral (radius = sqrt(n)) - reveals curved patterns in prime distribution (Robert Sacks, 1994, numberspiral.com) |
+| **Grid** | Square grid layout starting from top-left - simple Cartesian view |
+| **Row** | Single horizontal number line - shows distribution along a line |
+| **Prime Wheel** | Concentric rings by modulo - primes cluster on spokes coprime to the modulus |
+
+**Parameters:**
+- **Cell Spacing** - Controls dot size/spacing (Ulam Spiral, Sacks Spiral, Grid)
+- **Modulo** - Ring modulus (Prime Wheel: try 6, 30, 210 to see different prime patterns)
+
 ### Go
 ```bash
 cd golang && make help
@@ -230,7 +250,8 @@ infinite-series/
     ├── Cargo.toml
     └── src/
         ├── lib.rs              # Core implementation (9 tests)
-        ├── main.rs             # CLI entry point (1 test)
+        ├── primes_cli.rs       # CLI entry point (1 test)
+        ├── primes_gui.rs       # GUI visualization (eframe/egui)
         └── progress.rs         # Progress bar
 ```
 
@@ -250,6 +271,8 @@ infinite-series/
 
 ### Rust
 - Requires: Rust 1.75+
-- Only external dependency: `clap` for CLI parsing
+- Two binaries: `primes_cli` (CLI) and `primes_gui` (interactive visualization)
+- CLI: only external dependency is `clap` for argument parsing
+- GUI: uses `eframe`/`egui` for cross-platform graphics
 - Custom ANSI progress bar with rate display
 - Uses `thread::scope` for safe scoped parallelism with zero-copy data sharing
