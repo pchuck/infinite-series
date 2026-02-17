@@ -12,13 +12,21 @@ enum VisualizationType {
     PrimeWheel,
     PrimeDensity,
     RiemannZeta,
+    HexagonalLattice,
+    TriangularLattice,
 }
 
 impl VisualizationType {
     fn uses_point_size(self) -> bool {
         matches!(
             self,
-            Self::UlamSpiral | Self::SacksSpiral | Self::Grid | Self::Row | Self::PrimeWheel
+            Self::UlamSpiral
+                | Self::SacksSpiral
+                | Self::Grid
+                | Self::Row
+                | Self::PrimeWheel
+                | Self::HexagonalLattice
+                | Self::TriangularLattice
         )
     }
 
@@ -41,6 +49,8 @@ impl std::fmt::Display for VisualizationType {
             VisualizationType::PrimeWheel => write!(f, "Prime Wheel"),
             VisualizationType::PrimeDensity => write!(f, "Prime Density"),
             VisualizationType::RiemannZeta => write!(f, "Riemann Zeta"),
+            VisualizationType::HexagonalLattice => write!(f, "Hexagonal Lattice"),
+            VisualizationType::TriangularLattice => write!(f, "Triangular Lattice"),
         }
     }
 }
@@ -228,6 +238,8 @@ impl PrimeVisualizerApp {
             VisualizationType::PrimeWheel => self.draw_prime_wheel(ui, rect),
             VisualizationType::PrimeDensity => self.draw_prime_density(ui, rect),
             VisualizationType::RiemannZeta => self.draw_riemann_zeta(ui, rect),
+            VisualizationType::HexagonalLattice => self.draw_hexagonal_spiral(ui, rect),
+            VisualizationType::TriangularLattice => self.draw_triangle_spiral(ui, rect),
         }
     }
 
@@ -545,6 +557,195 @@ impl PrimeVisualizerApp {
         );
     }
 
+    fn generate_triangle_spiral_positions(max_n: usize) -> Vec<(usize, f32, f32)> {
+        let mut positions = Vec::with_capacity(max_n);
+
+        if max_n == 0 {
+            return positions;
+        }
+
+        let mut x = 0i32;
+        let mut y = 0i32;
+
+        let tri_directions: [(i32, i32); 3] = [
+            (2, 0),   // East (0°)
+            (-1, 2),  // 120° from East
+            (-1, -2), // 240° from East
+        ];
+
+        let mut steps_in_direction = 1;
+        let mut steps_since_turn = 0;
+        let mut turn_count = 0;
+        let mut dir_idx = 0;
+
+        for n in 1..=max_n {
+            positions.push((n, x as f32, y as f32));
+
+            if n == max_n {
+                break;
+            }
+
+            x += tri_directions[dir_idx].0;
+            y += tri_directions[dir_idx].1;
+            steps_since_turn += 1;
+
+            if steps_since_turn == steps_in_direction {
+                steps_since_turn = 0;
+                dir_idx = (dir_idx + 1) % 3;
+                turn_count += 1;
+                if turn_count % 2 == 0 {
+                    steps_in_direction += 1;
+                }
+            }
+        }
+
+        positions
+    }
+
+    fn draw_triangle_spiral(&self, ui: &mut egui::Ui, rect: egui::Rect) {
+        let positions = Self::generate_triangle_spiral_positions(self.config.max_number);
+
+        if positions.is_empty() {
+            return;
+        }
+
+        let mut min_x = f32::MAX;
+        let mut max_x = f32::MIN;
+        let mut min_y = f32::MAX;
+        let mut max_y = f32::MIN;
+        for (_, x, y) in &positions {
+            min_x = min_x.min(*x);
+            max_x = max_x.max(*x);
+            min_y = min_y.min(*y);
+            max_y = max_y.max(*y);
+        }
+
+        let range_x = max_x - min_x;
+        let range_y = max_y - min_y;
+
+        let margin = 20.0;
+        let available_width = rect.width() - 2.0 * margin;
+        let available_height = rect.height() - 2.0 * margin;
+
+        let scale_x = if range_x > 0.0 {
+            available_width / range_x
+        } else {
+            1.0
+        };
+        let scale_y = if range_y > 0.0 {
+            available_height / range_y
+        } else {
+            1.0
+        };
+        let scale = scale_x.min(scale_y);
+
+        let center_x = rect.center().x;
+        let center_y = rect.center().y;
+        let painter = ui.painter();
+
+        for (n, x, y) in &positions {
+            let screen_x = center_x + (*x - (min_x + max_x) / 2.0) * scale;
+            let screen_y = center_y - (*y - (min_y + max_y) / 2.0) * scale;
+            self.draw_number(*n, screen_x, screen_y, painter);
+        }
+    }
+
+    fn generate_hexagonal_spiral_positions(max_n: usize) -> Vec<(usize, f32, f32)> {
+        let mut positions = Vec::with_capacity(max_n);
+
+        if max_n == 0 {
+            return positions;
+        }
+
+        let mut x = 0i32;
+        let mut y = 0i32;
+
+        let hex_directions: [(i32, i32); 6] = [
+            (2, 0),   // East
+            (1, 2),   // Southeast (60°)
+            (-1, 2),  // Southwest (120°)
+            (-2, 0),  // West (180°)
+            (-1, -2), // Northwest (240°)
+            (1, -2),  // Northeast (300°)
+        ];
+
+        let mut steps_in_direction = 1;
+        let mut steps_since_turn = 0;
+        let mut turn_count = 0;
+        let mut dir_idx = 0;
+
+        for n in 1..=max_n {
+            positions.push((n, x as f32, y as f32));
+
+            if n == max_n {
+                break;
+            }
+
+            x += hex_directions[dir_idx].0;
+            y += hex_directions[dir_idx].1;
+            steps_since_turn += 1;
+
+            if steps_since_turn == steps_in_direction {
+                steps_since_turn = 0;
+                dir_idx = (dir_idx + 1) % 6;
+                turn_count += 1;
+                if turn_count % 2 == 0 {
+                    steps_in_direction += 1;
+                }
+            }
+        }
+
+        positions
+    }
+
+    fn draw_hexagonal_spiral(&self, ui: &mut egui::Ui, rect: egui::Rect) {
+        let positions = Self::generate_hexagonal_spiral_positions(self.config.max_number);
+
+        if positions.is_empty() {
+            return;
+        }
+
+        let mut min_x = f32::MAX;
+        let mut max_x = f32::MIN;
+        let mut min_y = f32::MAX;
+        let mut max_y = f32::MIN;
+        for (_, x, y) in &positions {
+            min_x = min_x.min(*x);
+            max_x = max_x.max(*x);
+            min_y = min_y.min(*y);
+            max_y = max_y.max(*y);
+        }
+
+        let range_x = max_x - min_x;
+        let range_y = max_y - min_y;
+
+        let margin = 20.0;
+        let available_width = rect.width() - 2.0 * margin;
+        let available_height = rect.height() - 2.0 * margin;
+
+        let scale_x = if range_x > 0.0 {
+            available_width / range_x
+        } else {
+            1.0
+        };
+        let scale_y = if range_y > 0.0 {
+            available_height / range_y
+        } else {
+            1.0
+        };
+        let scale = scale_x.min(scale_y);
+
+        let center_x = rect.center().x;
+        let center_y = rect.center().y;
+        let painter = ui.painter();
+
+        for (n, x, y) in &positions {
+            let screen_x = center_x + (*x - (min_x + max_x) / 2.0) * scale;
+            let screen_y = center_y - (*y - (min_y + max_y) / 2.0) * scale;
+            self.draw_number(*n, screen_x, screen_y, painter);
+        }
+    }
+
     fn draw_ulam_spiral(&self, ui: &mut egui::Ui, rect: egui::Rect) {
         let positions = Self::generate_ulam_spiral_positions(self.config.max_number);
 
@@ -707,6 +908,16 @@ impl eframe::App for PrimeVisualizerApp {
                             &mut self.config.visualization,
                             VisualizationType::RiemannZeta,
                             "Riemann Zeta",
+                        );
+                        ui.selectable_value(
+                            &mut self.config.visualization,
+                            VisualizationType::HexagonalLattice,
+                            "Hexagonal Spiral",
+                        );
+                        ui.selectable_value(
+                            &mut self.config.visualization,
+                            VisualizationType::TriangularLattice,
+                            "Triangle Spiral",
                         );
                     });
 

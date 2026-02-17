@@ -56,6 +56,8 @@ The GUI provides interactive visualizations of prime number distributions:
 | **Prime Wheel** | Concentric rings by modulo - primes cluster on spokes coprime to the modulus |
 | **Prime Density** | Graph of π(x) vs x/ln(x) - visualizes the Prime Number Theorem (prime counting function vs approximation) |
 | **Riemann Zeta** | Critical strip plot showing non-trivial zeros on the critical line σ=0.5 - visualizes the connection between prime distribution and the Riemann Hypothesis |
+| **Hexagonal Lattice** | Hexagonal lattice spiral - symmetric 6-direction spiral on hexagonal grid (60° intervals) |
+| **Triangular Lattice** | Triangular lattice spiral - symmetric 3-direction spiral on triangular grid (120° intervals) |
 
 **Parameters:**
 - **Prime Size** / **Non-Prime Size** - Controls dot sizes (Ulam Spiral, Sacks Spiral, Grid, Row, Prime Wheel)
