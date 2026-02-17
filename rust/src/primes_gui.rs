@@ -2,8 +2,31 @@ use eframe::egui;
 use primes::sieve_of_eratosthenes;
 use std::collections::HashSet;
 
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum VisualizationType {
+    UlamSpiral,
+    Grid,
+    Row,
+}
+
+impl Default for VisualizationType {
+    fn default() -> Self {
+        Self::UlamSpiral
+    }
+}
+
+impl std::fmt::Display for VisualizationType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            VisualizationType::UlamSpiral => write!(f, "Ulam Spiral"),
+            VisualizationType::Grid => write!(f, "Grid"),
+            VisualizationType::Row => write!(f, "Row"),
+        }
+    }
+}
+
 #[derive(Clone)]
-struct SpiralConfig {
+struct VisualizerConfig {
     max_number: usize,
     prime_size: f32,
     non_prime_size: f32,
@@ -12,9 +35,10 @@ struct SpiralConfig {
     prime_color: egui::Color32,
     non_prime_color: egui::Color32,
     background_color: egui::Color32,
+    visualization: VisualizationType,
 }
 
-impl Default for SpiralConfig {
+impl Default for VisualizerConfig {
     fn default() -> Self {
         Self {
             max_number: 10000,
@@ -25,25 +49,24 @@ impl Default for SpiralConfig {
             prime_color: egui::Color32::from_rgba_unmultiplied(255, 200, 50, 255),
             non_prime_color: egui::Color32::from_rgba_unmultiplied(100, 100, 100, 255),
             background_color: egui::Color32::from_rgba_unmultiplied(20, 20, 30, 255),
+            visualization: VisualizationType::UlamSpiral,
         }
     }
 }
 
-struct PrimeSpiralApp {
-    config: SpiralConfig,
+struct PrimeVisualizerApp {
+    config: VisualizerConfig,
     primes: HashSet<usize>,
-    needs_redraw: bool,
 }
 
-impl PrimeSpiralApp {
-    fn new(config: SpiralConfig) -> Self {
+impl PrimeVisualizerApp {
+    fn new(config: VisualizerConfig) -> Self {
         let primes = sieve_of_eratosthenes(config.max_number);
         let primes_set: HashSet<usize> = primes.into_iter().collect();
 
         Self {
             config,
             primes: primes_set,
-            needs_redraw: true,
         }
     }
 
@@ -53,7 +76,7 @@ impl PrimeSpiralApp {
             .collect();
     }
 
-    fn generate_spiral_positions(max_n: usize) -> Vec<(usize, f32, f32)> {
+    fn generate_ulam_spiral_positions(max_n: usize) -> Vec<(usize, f32, f32)> {
         let mut positions = Vec::with_capacity(max_n);
 
         if max_n == 0 {
@@ -101,8 +124,63 @@ impl PrimeSpiralApp {
         positions
     }
 
-    fn draw_spiral(&self, ui: &mut egui::Ui, rect: egui::Rect) {
-        let positions = Self::generate_spiral_positions(self.config.max_number);
+    fn generate_grid_positions(max_n: usize) -> Vec<(usize, f32, f32)> {
+        let side = (max_n as f32).sqrt() as usize + 1;
+        (1..=max_n)
+            .map(|n| {
+                let row = (n - 1) / side;
+                let col = (n - 1) % side;
+                (n, col as f32, row as f32)
+            })
+            .collect()
+    }
+
+    fn generate_row_positions(max_n: usize) -> Vec<(usize, f32, f32)> {
+        (1..=max_n).map(|n| (n, n as f32, 0.0)).collect()
+    }
+
+    fn draw_number(&self, n: usize, x: f32, y: f32, painter: &egui::Painter) {
+        let is_prime = self.primes.contains(&n);
+        let size = if is_prime {
+            self.config.prime_size
+        } else {
+            self.config.non_prime_size
+        };
+        let color = if is_prime {
+            self.config.prime_color
+        } else {
+            self.config.non_prime_color
+        };
+
+        let circle_radius = size / 2.0;
+        painter.circle_filled(egui::Pos2::new(x, y), circle_radius, color);
+
+        if self.config.show_numbers && size >= 6.0 {
+            let text = format!("{}", n);
+            let font_id = egui::FontId::proportional(size * 0.6);
+            painter.text(
+                egui::Pos2::new(x, y),
+                egui::Align2::CENTER_CENTER,
+                text,
+                font_id,
+                self.config.background_color,
+            );
+        }
+    }
+
+    fn draw_visualization(&self, ui: &mut egui::Ui, rect: egui::Rect) {
+        let painter = ui.painter();
+        painter.rect_filled(rect, 0.0, self.config.background_color);
+
+        match self.config.visualization {
+            VisualizationType::UlamSpiral => self.draw_ulam_spiral(ui, rect),
+            VisualizationType::Grid => self.draw_grid(ui, rect),
+            VisualizationType::Row => self.draw_row(ui, rect),
+        }
+    }
+
+    fn draw_ulam_spiral(&self, ui: &mut egui::Ui, rect: egui::Rect) {
+        let positions = Self::generate_ulam_spiral_positions(self.config.max_number);
 
         if positions.is_empty() {
             return;
@@ -132,49 +210,93 @@ impl PrimeSpiralApp {
 
         let center_x = rect.center().x;
         let center_y = rect.center().y;
-
         let painter = ui.painter();
 
         for (n, x, y) in &positions {
             let screen_x = center_x + *x * scale;
             let screen_y = center_y + *y * scale;
+            self.draw_number(*n, screen_x, screen_y, painter);
+        }
+    }
 
-            let is_prime = self.primes.contains(n);
-            let size = if is_prime {
-                self.config.prime_size
-            } else {
-                self.config.non_prime_size
-            };
-            let color = if is_prime {
-                self.config.prime_color
-            } else {
-                self.config.non_prime_color
-            };
+    fn draw_grid(&self, ui: &mut egui::Ui, rect: egui::Rect) {
+        let positions = Self::generate_grid_positions(self.config.max_number);
 
-            let circle_radius = size / 2.0;
-            painter.circle_filled(egui::Pos2::new(screen_x, screen_y), circle_radius, color);
+        if positions.is_empty() {
+            return;
+        }
 
-            if self.config.show_numbers && size >= 6.0 {
-                let text = format!("{}", n);
-                let font_id = egui::FontId::proportional(size * 0.6);
-                painter.text(
-                    egui::Pos2::new(screen_x, screen_y),
-                    egui::Align2::CENTER_CENTER,
-                    text,
-                    font_id,
-                    self.config.background_color,
-                );
-            }
+        let side = (self.config.max_number as f32).sqrt() as usize + 1;
+        let available_width = rect.width() - 40.0;
+        let available_height = rect.height() - 40.0;
+
+        let scale_x = available_width / side as f32;
+        let scale_y = available_height / side as f32;
+        let scale = scale_x.min(scale_y).min(self.config.cell_spacing * 2.0);
+
+        let start_x = rect.left() + 20.0 + scale / 2.0;
+        let start_y = rect.top() + 20.0 + scale / 2.0;
+        let painter = ui.painter();
+
+        for (n, x, y) in &positions {
+            let screen_x = start_x + *x * scale;
+            let screen_y = start_y + *y * scale;
+            self.draw_number(*n, screen_x, screen_y, painter);
+        }
+    }
+
+    fn draw_row(&self, ui: &mut egui::Ui, rect: egui::Rect) {
+        let positions = Self::generate_row_positions(self.config.max_number);
+
+        if positions.is_empty() {
+            return;
+        }
+
+        let max_x = self.config.max_number as f32;
+
+        let available_width = rect.width() - 40.0;
+        let scale = available_width / max_x;
+
+        let center_y = rect.center().y;
+        let start_x = rect.left() + 20.0 + scale / 2.0;
+        let painter = ui.painter();
+
+        for (n, x, _) in &positions {
+            let screen_x = start_x + *x * scale;
+            self.draw_number(*n, screen_x, center_y, painter);
         }
     }
 }
 
-impl eframe::App for PrimeSpiralApp {
+impl eframe::App for PrimeVisualizerApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::SidePanel::left("controls")
             .default_width(280.0)
             .show(ctx, |ui| {
-                ui.heading("Prime Spiral Settings");
+                ui.heading("Prime Visualizer");
+                ui.separator();
+
+                ui.label("Visualization:");
+                egui::ComboBox::from_id_salt("viz_type")
+                    .selected_text(format!("{}", self.config.visualization))
+                    .show_ui(ui, |ui| {
+                        ui.selectable_value(
+                            &mut self.config.visualization,
+                            VisualizationType::UlamSpiral,
+                            "Ulam Spiral",
+                        );
+                        ui.selectable_value(
+                            &mut self.config.visualization,
+                            VisualizationType::Grid,
+                            "Grid",
+                        );
+                        ui.selectable_value(
+                            &mut self.config.visualization,
+                            VisualizationType::Row,
+                            "Row",
+                        );
+                    });
+
                 ui.separator();
 
                 ui.label("Max Number:");
@@ -214,7 +336,6 @@ impl eframe::App for PrimeSpiralApp {
 
                 if ui.button("Apply Changes").clicked() {
                     self.regenerate_primes();
-                    self.needs_redraw = true;
                 }
 
                 ui.separator();
@@ -229,16 +350,13 @@ impl eframe::App for PrimeSpiralApp {
             });
 
         egui::CentralPanel::default().show(ctx, |ui| {
-            let rect = ui.available_rect_before_wrap();
-            let painter = ui.painter();
-            painter.rect_filled(rect, 0.0, self.config.background_color);
-            self.draw_spiral(ui, rect);
+            self.draw_visualization(ui, ui.available_rect_before_wrap());
         });
     }
 }
 
 fn main() -> eframe::Result<()> {
-    let config = SpiralConfig::default();
+    let config = VisualizerConfig::default();
 
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
@@ -248,8 +366,8 @@ fn main() -> eframe::Result<()> {
     };
 
     eframe::run_native(
-        "Prime Spiral Visualization",
+        "Prime Visualizer",
         options,
-        Box::new(|_cc| Ok(Box::new(PrimeSpiralApp::new(config)))),
+        Box::new(|_cc| Ok(Box::new(PrimeVisualizerApp::new(config)))),
     )
 }
