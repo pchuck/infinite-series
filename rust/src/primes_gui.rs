@@ -5,8 +5,20 @@ use std::collections::HashSet;
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum VisualizationType {
     UlamSpiral,
+    SacksSpiral,
     Grid,
     Row,
+    PrimeWheel,
+}
+
+impl VisualizationType {
+    fn uses_cell_spacing(self) -> bool {
+        matches!(self, Self::UlamSpiral | Self::SacksSpiral | Self::Grid)
+    }
+
+    fn uses_modulo(self) -> bool {
+        matches!(self, Self::PrimeWheel)
+    }
 }
 
 impl Default for VisualizationType {
@@ -19,8 +31,10 @@ impl std::fmt::Display for VisualizationType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             VisualizationType::UlamSpiral => write!(f, "Ulam Spiral"),
+            VisualizationType::SacksSpiral => write!(f, "Sacks Spiral"),
             VisualizationType::Grid => write!(f, "Grid"),
             VisualizationType::Row => write!(f, "Row"),
+            VisualizationType::PrimeWheel => write!(f, "Prime Wheel"),
         }
     }
 }
@@ -31,6 +45,7 @@ struct VisualizerConfig {
     prime_size: f32,
     non_prime_size: f32,
     cell_spacing: f32,
+    modulo: usize,
     show_numbers: bool,
     prime_color: egui::Color32,
     non_prime_color: egui::Color32,
@@ -42,9 +57,10 @@ impl Default for VisualizerConfig {
     fn default() -> Self {
         Self {
             max_number: 10000,
-            prime_size: 12.0,
-            non_prime_size: 6.0,
+            prime_size: 2.0,
+            non_prime_size: 1.0,
             cell_spacing: 20.0,
+            modulo: 30,
             show_numbers: true,
             prime_color: egui::Color32::from_rgba_unmultiplied(255, 200, 50, 255),
             non_prime_color: egui::Color32::from_rgba_unmultiplied(100, 100, 100, 255),
@@ -139,6 +155,19 @@ impl PrimeVisualizerApp {
         (1..=max_n).map(|n| (n, n as f32, 0.0)).collect()
     }
 
+    fn generate_sacks_spiral_positions(max_n: usize) -> Vec<(usize, f32, f32)> {
+        (1..=max_n)
+            .map(|n| {
+                let n_f = n as f32;
+                let r = n_f.sqrt();
+                let theta = n_f * 0.5;
+                let x = r * theta.cos();
+                let y = r * theta.sin();
+                (n, x, y)
+            })
+            .collect()
+    }
+
     fn draw_number(&self, n: usize, x: f32, y: f32, painter: &egui::Painter) {
         let is_prime = self.primes.contains(&n);
         let size = if is_prime {
@@ -174,9 +203,15 @@ impl PrimeVisualizerApp {
 
         match self.config.visualization {
             VisualizationType::UlamSpiral => self.draw_ulam_spiral(ui, rect),
+            VisualizationType::SacksSpiral => self.draw_sacks_spiral(ui, rect),
             VisualizationType::Grid => self.draw_grid(ui, rect),
             VisualizationType::Row => self.draw_row(ui, rect),
+            VisualizationType::PrimeWheel => self.draw_prime_wheel(ui, rect),
         }
+    }
+
+    fn draw_prime_wheel(&self, _ui: &mut egui::Ui, _rect: egui::Rect) {
+        // TODO: Implement prime wheel visualization
     }
 
     fn draw_ulam_spiral(&self, ui: &mut egui::Ui, rect: egui::Rect) {
@@ -186,27 +221,46 @@ impl PrimeVisualizerApp {
             return;
         }
 
-        let mut min_x = f32::MAX;
-        let mut max_x = f32::MIN;
-        let mut min_y = f32::MAX;
-        let mut max_y = f32::MIN;
-
+        let mut max_coord = 0.0f32;
         for (_, x, y) in &positions {
-            min_x = min_x.min(*x);
-            max_x = max_x.max(*x);
-            min_y = min_y.min(*y);
-            max_y = max_y.max(*y);
+            max_coord = max_coord.max(x.abs()).max(y.abs());
         }
 
-        let range_x = (max_x - min_x).max(1.0);
-        let range_y = (max_y - min_y).max(1.0);
+        let available = rect.width().min(rect.height()) / 2.0 - 20.0;
+        let scale = if max_coord > 0.0 {
+            available / max_coord
+        } else {
+            1.0
+        };
+        let scale = scale.min(self.config.cell_spacing);
 
-        let available_width = rect.width() - 40.0;
-        let available_height = rect.height() - 40.0;
+        let center_x = rect.center().x;
+        let center_y = rect.center().y;
+        let painter = ui.painter();
 
-        let scale_x = available_width / range_x;
-        let scale_y = available_height / range_y;
-        let scale = scale_x.min(scale_y).min(self.config.cell_spacing * 2.0);
+        for (n, x, y) in &positions {
+            let screen_x = center_x + *x * scale;
+            let screen_y = center_y + *y * scale;
+            self.draw_number(*n, screen_x, screen_y, painter);
+        }
+    }
+
+    fn draw_sacks_spiral(&self, ui: &mut egui::Ui, rect: egui::Rect) {
+        let positions = Self::generate_sacks_spiral_positions(self.config.max_number);
+
+        if positions.is_empty() {
+            return;
+        }
+
+        let mut max_r = 0.0f32;
+        for (_, x, y) in &positions {
+            let r = (x * x + y * y).sqrt();
+            max_r = max_r.max(r);
+        }
+
+        let available = rect.width().min(rect.height()) / 2.0 - 20.0;
+        let scale = if max_r > 0.0 { available / max_r } else { 1.0 };
+        let scale = scale.min(self.config.cell_spacing);
 
         let center_x = rect.center().x;
         let center_y = rect.center().y;
@@ -230,9 +284,8 @@ impl PrimeVisualizerApp {
         let available_width = rect.width() - 40.0;
         let available_height = rect.height() - 40.0;
 
-        let scale_x = available_width / side as f32;
-        let scale_y = available_height / side as f32;
-        let scale = scale_x.min(scale_y).min(self.config.cell_spacing * 2.0);
+        let auto_scale = available_width.min(available_height) / side as f32;
+        let scale = auto_scale.min(self.config.cell_spacing);
 
         let start_x = rect.left() + 20.0 + scale / 2.0;
         let start_y = rect.top() + 20.0 + scale / 2.0;
@@ -287,6 +340,11 @@ impl eframe::App for PrimeVisualizerApp {
                         );
                         ui.selectable_value(
                             &mut self.config.visualization,
+                            VisualizationType::SacksSpiral,
+                            "Sacks Spiral",
+                        );
+                        ui.selectable_value(
+                            &mut self.config.visualization,
                             VisualizationType::Grid,
                             "Grid",
                         );
@@ -294,6 +352,11 @@ impl eframe::App for PrimeVisualizerApp {
                             &mut self.config.visualization,
                             VisualizationType::Row,
                             "Row",
+                        );
+                        ui.selectable_value(
+                            &mut self.config.visualization,
+                            VisualizationType::PrimeWheel,
+                            "Prime Wheel",
                         );
                     });
 
@@ -312,8 +375,15 @@ impl eframe::App for PrimeVisualizerApp {
                     1.0..=30.0,
                 ));
 
-                ui.label("Cell Spacing:");
-                ui.add(egui::Slider::new(&mut self.config.cell_spacing, 5.0..=50.0));
+                if self.config.visualization.uses_cell_spacing() {
+                    ui.label("Cell Spacing:");
+                    ui.add(egui::Slider::new(&mut self.config.cell_spacing, 5.0..=50.0));
+                }
+
+                if self.config.visualization.uses_modulo() {
+                    ui.label("Modulo:");
+                    ui.add(egui::Slider::new(&mut self.config.modulo, 2..=210).step_by(2.0));
+                }
 
                 ui.separator();
 
