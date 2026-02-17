@@ -2,24 +2,27 @@ use eframe::egui;
 use primes::generate_primes;
 use std::collections::HashSet;
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, Default)]
 enum VisualizationType {
+    #[default]
     UlamSpiral,
     SacksSpiral,
     Grid,
     Row,
     PrimeWheel,
+    PrimeDensity,
 }
 
 impl VisualizationType {
     fn uses_modulo(self) -> bool {
         matches!(self, Self::PrimeWheel)
     }
-}
 
-impl Default for VisualizationType {
-    fn default() -> Self {
-        Self::UlamSpiral
+    fn uses_point_size(self) -> bool {
+        matches!(
+            self,
+            Self::UlamSpiral | Self::SacksSpiral | Self::Grid | Self::Row | Self::PrimeWheel
+        )
     }
 }
 
@@ -31,6 +34,7 @@ impl std::fmt::Display for VisualizationType {
             VisualizationType::Grid => write!(f, "Grid"),
             VisualizationType::Row => write!(f, "Row"),
             VisualizationType::PrimeWheel => write!(f, "Prime Wheel"),
+            VisualizationType::PrimeDensity => write!(f, "Prime Density"),
         }
     }
 }
@@ -214,6 +218,7 @@ impl PrimeVisualizerApp {
             VisualizationType::Grid => self.draw_grid(ui, rect),
             VisualizationType::Row => self.draw_row(ui, rect),
             VisualizationType::PrimeWheel => self.draw_prime_wheel(ui, rect),
+            VisualizationType::PrimeDensity => self.draw_prime_density(ui, rect),
         }
     }
 
@@ -286,6 +291,104 @@ impl PrimeVisualizerApp {
                     egui::Pos2::new(end_x, end_y),
                 ],
                 egui::Stroke::new(1.0, egui::Color32::from_rgba_unmultiplied(50, 50, 50, 100)),
+            );
+        }
+    }
+
+    fn draw_prime_density(&self, ui: &mut egui::Ui, rect: egui::Rect) {
+        let max_n = self.config.max_number;
+        if max_n < 10 {
+            return;
+        }
+
+        let primes = generate_primes(max_n, false, None, None, None);
+        let prime_count = primes.len();
+
+        let intervals = 100_usize.max(max_n / 100);
+        let interval_size = max_n / intervals;
+
+        let mut pi_x: Vec<(f32, f32)> = Vec::with_capacity(intervals + 1);
+        let mut x_ln_x: Vec<(f32, f32)> = Vec::with_capacity(intervals + 1);
+
+        let mut count = 0;
+        let mut prime_idx = 0;
+
+        for i in 0..=intervals {
+            let x = i * interval_size;
+            if x < 2 {
+                pi_x.push((x as f32, 0.0));
+                x_ln_x.push((x as f32, 0.0));
+                continue;
+            }
+
+            while prime_idx < prime_count && primes[prime_idx] <= x {
+                count += 1;
+                prime_idx += 1;
+            }
+
+            let ln_x = (x as f64).ln().max(1.0) as f32;
+            let x_ln_x_val = x as f32 / ln_x;
+
+            pi_x.push((x as f32, count as f32));
+            x_ln_x.push((x as f32, x_ln_x_val));
+        }
+
+        let max_y = pi_x.last().map(|(_, y)| *y).unwrap_or(1.0).max(1.0);
+
+        let margin = 50.0;
+        let graph_left = rect.left() + margin;
+        let graph_right = rect.right() - margin;
+        let graph_top = rect.top() + margin;
+        let graph_bottom = rect.bottom() - margin;
+        let graph_width = graph_right - graph_left;
+        let graph_height = graph_bottom - graph_top;
+
+        let painter = ui.painter();
+
+        painter.line_segment(
+            [
+                egui::Pos2::new(graph_left, graph_top),
+                egui::Pos2::new(graph_left, graph_bottom),
+            ],
+            egui::Stroke::new(2.0, egui::Color32::GRAY),
+        );
+        painter.line_segment(
+            [
+                egui::Pos2::new(graph_left, graph_bottom),
+                egui::Pos2::new(graph_right, graph_bottom),
+            ],
+            egui::Stroke::new(2.0, egui::Color32::GRAY),
+        );
+
+        let max_x = max_n as f32;
+
+        for i in 0..x_ln_x.len() - 1 {
+            let (x1, y1) = x_ln_x[i];
+            let (x2, y2) = x_ln_x[i + 1];
+
+            let px1 = graph_left + (x1 / max_x) * graph_width;
+            let py1 = graph_bottom - (y1 / max_y) * graph_height;
+            let px2 = graph_left + (x2 / max_x) * graph_width;
+            let py2 = graph_bottom - (y2 / max_y) * graph_height;
+
+            painter.line_segment(
+                [egui::Pos2::new(px1, py1), egui::Pos2::new(px2, py2)],
+                egui::Stroke::new(2.0, self.config.non_prime_color),
+            );
+        }
+
+        for i in 0..pi_x.len() - 1 {
+            let (x1, y1) = pi_x[i];
+            let (x2, y2) = pi_x[i + 1];
+
+            let px1 = graph_left + (x1 / max_x) * graph_width;
+            let py1 = graph_bottom - (y1 / max_y) * graph_height;
+            let px2 = graph_left + (x2 / max_x) * graph_width;
+            let py2 = graph_bottom - (y2 / max_y) * graph_height;
+
+            painter.line_segment(
+                [egui::Pos2::new(px1, py1), egui::Pos2::new(px2, py2)],
+                egui::Stroke::new(2.0, self.config.prime_color),
             );
         }
     }
@@ -443,6 +546,11 @@ impl eframe::App for PrimeVisualizerApp {
                             VisualizationType::PrimeWheel,
                             "Prime Wheel",
                         );
+                        ui.selectable_value(
+                            &mut self.config.visualization,
+                            VisualizationType::PrimeDensity,
+                            "Prime Density",
+                        );
                     });
 
                 ui.separator();
@@ -454,23 +562,30 @@ impl eframe::App for PrimeVisualizerApp {
                 );
 
                 ui.separator();
-                ui.label("Prime Size:");
-                ui.add(egui::Slider::new(&mut self.config.prime_size, 1..=50));
 
-                ui.label("Non-Prime Size:");
-                ui.add(egui::Slider::new(&mut self.config.non_prime_size, 0..=30));
+                let show_point_controls = self.config.visualization.uses_point_size();
+
+                if show_point_controls {
+                    ui.label("Prime Size:");
+                    ui.add(egui::Slider::new(&mut self.config.prime_size, 1..=50));
+
+                    ui.label("Non-Prime Size:");
+                    ui.add(egui::Slider::new(&mut self.config.non_prime_size, 0..=30));
+                }
 
                 if self.config.visualization.uses_modulo() {
                     ui.label("Modulo:");
                     ui.add(egui::Slider::new(&mut self.config.modulo, 2..=210).step_by(2.0));
                 }
 
-                ui.separator();
+                if show_point_controls {
+                    ui.separator();
 
-                ui.horizontal(|ui| {
-                    ui.label("Show Numbers");
-                    ui.checkbox(&mut self.config.show_numbers, "");
-                });
+                    ui.horizontal(|ui| {
+                        ui.label("Show Numbers");
+                        ui.checkbox(&mut self.config.show_numbers, "");
+                    });
+                }
 
                 ui.separator();
                 ui.label("Prime Color");
