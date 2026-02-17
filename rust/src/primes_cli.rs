@@ -171,15 +171,11 @@ fn format_number(n: usize) -> String {
     }
 
     let mut result = String::with_capacity(len + len / 3);
-    let offset = len % 3;
-    if offset > 0 {
-        result.push_str(&s[..offset]);
-    }
-    for i in (offset..len).step_by(3) {
-        if !result.is_empty() {
+    for (i, ch) in s.chars().enumerate() {
+        if i > 0 && (len - i).is_multiple_of(3) {
             result.push(',');
         }
-        result.push_str(&s[i..i + 3]);
+        result.push(ch);
     }
     result
 }
