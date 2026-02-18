@@ -17,6 +17,7 @@ enum VisualizationType {
     FermatsSpiral,
     SacksMobiusSpiral,
     UlamMobiusSpiral,
+    PrimeDensityGradient,
 }
 
 impl VisualizationType {
@@ -33,6 +34,7 @@ impl VisualizationType {
                 | Self::FermatsSpiral
                 | Self::SacksMobiusSpiral
                 | Self::UlamMobiusSpiral
+                | Self::PrimeDensityGradient
         )
     }
 
@@ -48,6 +50,7 @@ impl VisualizationType {
                 | Self::FermatsSpiral
                 | Self::SacksMobiusSpiral
                 | Self::UlamMobiusSpiral
+                | Self::PrimeDensityGradient
         )
     }
 
@@ -57,6 +60,10 @@ impl VisualizationType {
 
     fn uses_num_zeros(self) -> bool {
         matches!(self, Self::RiemannZeta)
+    }
+
+    fn uses_grid_size(self) -> bool {
+        matches!(self, Self::PrimeDensityGradient)
     }
 }
 
@@ -75,6 +82,7 @@ impl std::fmt::Display for VisualizationType {
             VisualizationType::FermatsSpiral => write!(f, "Fermat's Spiral"),
             VisualizationType::SacksMobiusSpiral => write!(f, "Sacks Mobius Spiral"),
             VisualizationType::UlamMobiusSpiral => write!(f, "Ulam Mobius Spiral"),
+            VisualizationType::PrimeDensityGradient => write!(f, "Prime Density Gradient"),
         }
     }
 }
@@ -97,6 +105,7 @@ struct VisualizerConfig {
     cousin_color: egui::Color32,
     show_sexy_primes: bool,
     sexy_color: egui::Color32,
+    grid_size: usize,
 }
 
 impl Default for VisualizerConfig {
@@ -118,6 +127,7 @@ impl Default for VisualizerConfig {
             cousin_color: egui::Color32::from_rgba_unmultiplied(255, 120, 120, 255),
             show_sexy_primes: false,
             sexy_color: egui::Color32::from_rgba_unmultiplied(255, 180, 180, 255),
+            grid_size: 40,
         }
     }
 }
@@ -300,6 +310,7 @@ impl PrimeVisualizerApp {
             VisualizationType::FermatsSpiral => self.draw_fermats_spiral(ui, rect),
             VisualizationType::SacksMobiusSpiral => self.draw_sacks_mobius_spiral(ui, rect),
             VisualizationType::UlamMobiusSpiral => self.draw_ulam_mobius_spiral(ui, rect),
+            VisualizationType::PrimeDensityGradient => self.draw_prime_density_gradient(ui, rect),
         }
     }
 
@@ -1061,6 +1072,81 @@ impl PrimeVisualizerApp {
         }
     }
 
+    fn draw_prime_density_gradient(&self, ui: &mut egui::Ui, rect: egui::Rect) {
+        let primes = generate_primes(self.config.max_number, false, None, None, None);
+
+        if primes.is_empty() {
+            return;
+        }
+
+        let margin = 10.0;
+        let graph_left = rect.left() + margin;
+        let graph_right = rect.right() - margin;
+        let graph_top = rect.top() + margin;
+        let graph_bottom = rect.bottom() - margin;
+        let graph_width = graph_right - graph_left;
+        let graph_height = graph_bottom - graph_top;
+
+        let painter = ui.painter();
+        painter.rect_filled(
+            egui::Rect::from_min_size(
+                egui::Pos2::new(graph_left, graph_top),
+                egui::vec2(graph_width, graph_height),
+            ),
+            0.0,
+            self.config.background_color,
+        );
+
+        let grid_size = self.config.grid_size;
+        let cell_width = graph_width / grid_size as f32;
+        let cell_height = graph_height / grid_size as f32;
+
+        let mut density_grid = vec![0.0_f32; grid_size * grid_size];
+
+        for &p in &primes {
+            let x_frac = p as f32 / self.config.max_number as f32;
+            let y_frac = (p * p % self.config.max_number) as f32 / self.config.max_number as f32;
+
+            let grid_x = ((x_frac * grid_size as f32) as usize).min(grid_size - 1);
+            let grid_y = ((y_frac * grid_size as f32) as usize).min(grid_size - 1);
+
+            let idx = grid_y * grid_size + grid_x;
+            density_grid[idx] += 1.0;
+        }
+
+        let max_density = density_grid.iter().cloned().fold(0.0_f32, f32::max);
+
+        for gy in 0..grid_size {
+            for gx in 0..grid_size {
+                let idx = gy * grid_size + gx;
+                let density = density_grid[idx];
+                let normalized = if max_density > 0.0 {
+                    density / max_density
+                } else {
+                    0.0
+                };
+
+                let r = (self.config.prime_color.r() as f32 * normalized) as u8;
+                let g = (self.config.prime_color.g() as f32 * normalized) as u8;
+                let b = (self.config.prime_color.b() as f32 * normalized) as u8;
+
+                let color = egui::Color32::from_rgba_unmultiplied(r, g, b, 255);
+
+                let x = graph_left + gx as f32 * cell_width;
+                let y = graph_top + gy as f32 * cell_height;
+
+                painter.rect_filled(
+                    egui::Rect::from_min_size(
+                        egui::Pos2::new(x, y),
+                        egui::vec2(cell_width, cell_height),
+                    ),
+                    0.0,
+                    color,
+                );
+            }
+        }
+    }
+
     fn draw_ulam_spiral(&self, ui: &mut egui::Ui, rect: egui::Rect) {
         let positions = Self::generate_ulam_spiral_positions(self.config.max_number);
 
@@ -1249,6 +1335,11 @@ impl eframe::App for PrimeVisualizerApp {
                             VisualizationType::UlamMobiusSpiral,
                             "Ulam Mobius Spiral",
                         );
+                        ui.selectable_value(
+                            &mut self.config.visualization,
+                            VisualizationType::PrimeDensityGradient,
+                            "Prime Density Gradient",
+                        );
                     });
 
                 ui.separator();
@@ -1279,6 +1370,11 @@ impl eframe::App for PrimeVisualizerApp {
                 if self.config.visualization.uses_num_zeros() {
                     ui.label("Zeros:");
                     ui.add(egui::Slider::new(&mut self.config.num_zeros, 1..=20));
+                }
+
+                if self.config.visualization.uses_grid_size() {
+                    ui.label("Grid Size:");
+                    ui.add(egui::Slider::new(&mut self.config.grid_size, 10..=100).step_by(5.0));
                 }
 
                 if show_point_controls {
