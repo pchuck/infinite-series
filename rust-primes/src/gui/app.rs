@@ -1,0 +1,236 @@
+use eframe::egui;
+use primes::generate_primes;
+use std::collections::HashSet;
+
+use crate::gui::config::VisualizerConfig;
+use crate::gui::types::VisualizationType;
+use crate::gui::visualizations as viz;
+
+pub struct PrimeVisualizerApp {
+    pub config: VisualizerConfig,
+    pub primes: HashSet<usize>,
+    pub primes_vec: Vec<usize>,
+    cached_max_number: usize,
+    pub hovered_number: Option<usize>,
+}
+
+impl PrimeVisualizerApp {
+    pub fn new(config: VisualizerConfig, _ctx: &egui::Context) -> Self {
+        let max_number = config.max_number;
+        let primes_vec = generate_primes(max_number, false, None, None, None);
+        let primes_set: HashSet<usize> = primes_vec.iter().copied().collect();
+
+        Self {
+            config,
+            primes: primes_set,
+            primes_vec,
+            cached_max_number: max_number,
+            hovered_number: None,
+        }
+    }
+
+    pub fn regenerate_primes(&mut self) {
+        if self.config.max_number != self.cached_max_number {
+            self.primes_vec = generate_primes(self.config.max_number, false, None, None, None);
+            self.primes = self.primes_vec.iter().copied().collect();
+            self.cached_max_number = self.config.max_number;
+        }
+    }
+
+    pub fn draw_visualization(&mut self, ui: &mut egui::Ui, rect: egui::Rect) {
+        let painter = ui.painter();
+        painter.rect_filled(rect, 0.0, self.config.background_color);
+
+        let mouse_pos = ui.input(|i| i.pointer.hover_pos());
+        self.hovered_number = None;
+
+        if let Some(mouse_pos) = mouse_pos {
+            if self.config.visualization.supports_hover() {
+                self.hovered_number = Self::get_hovered(self, mouse_pos, rect);
+            }
+        }
+
+        match self.config.visualization {
+            VisualizationType::UlamSpiral => viz::draw_ulam(self, ui, rect),
+            VisualizationType::SacksSpiral => viz::draw_sacks(self, ui, rect),
+            VisualizationType::Grid => viz::draw_grid(self, ui, rect),
+            VisualizationType::Row => viz::draw_row(self, ui, rect),
+            VisualizationType::PrimeWheel => viz::draw_prime_wheel(self, ui, rect),
+            VisualizationType::PrimeDensity => viz::draw_prime_density(self, ui, rect),
+            VisualizationType::RiemannZeta => viz::draw_riemann(self, ui, rect),
+            VisualizationType::HexagonalLattice => viz::draw_hexagonal(self, ui, rect),
+            VisualizationType::TriangularLattice => viz::draw_triangular(self, ui, rect),
+            VisualizationType::FermatsSpiral => viz::draw_fermats(self, ui, rect),
+            VisualizationType::SacksMobiusSpiral => viz::draw_sacks_mobius(self, ui, rect),
+            VisualizationType::UlamMobiusSpiral => viz::draw_ulam_mobius(self, ui, rect),
+            VisualizationType::PrimeDensityGradient => viz::draw_density_gradient(self, ui, rect),
+        }
+    }
+
+    fn get_hovered(
+        app: &PrimeVisualizerApp,
+        mouse_pos: egui::Pos2,
+        rect: egui::Rect,
+    ) -> Option<usize> {
+        match app.config.visualization {
+            VisualizationType::UlamSpiral => viz::find_hovered_ulam(app, mouse_pos, rect),
+            VisualizationType::SacksSpiral => viz::find_hovered_sacks(app, mouse_pos, rect),
+            VisualizationType::Grid => viz::find_hovered_grid(app, mouse_pos, rect),
+            VisualizationType::Row => viz::find_hovered_row(app, mouse_pos, rect),
+            VisualizationType::FermatsSpiral => viz::find_hovered_fermats(app, mouse_pos, rect),
+            VisualizationType::HexagonalLattice => {
+                viz::find_hovered_hexagonal(app, mouse_pos, rect)
+            }
+            VisualizationType::TriangularLattice => {
+                viz::find_hovered_triangular(app, mouse_pos, rect)
+            }
+            _ => None,
+        }
+    }
+}
+
+impl eframe::App for PrimeVisualizerApp {
+    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        egui::SidePanel::left("controls")
+            .min_width(250.0)
+            .show(ctx, |ui| {
+                ui.heading("Prime Visualizer");
+
+                ui.separator();
+
+                ui.label("Visualization:");
+                egui::ComboBox::from_id_salt("viz_type")
+                    .selected_text(format!("{}", self.config.visualization))
+                    .show_ui(ui, |ui| {
+                        for viz_type in [
+                            VisualizationType::UlamSpiral,
+                            VisualizationType::SacksSpiral,
+                            VisualizationType::Grid,
+                            VisualizationType::Row,
+                            VisualizationType::PrimeWheel,
+                            VisualizationType::PrimeDensity,
+                            VisualizationType::RiemannZeta,
+                            VisualizationType::HexagonalLattice,
+                            VisualizationType::TriangularLattice,
+                            VisualizationType::FermatsSpiral,
+                            VisualizationType::SacksMobiusSpiral,
+                            VisualizationType::UlamMobiusSpiral,
+                            VisualizationType::PrimeDensityGradient,
+                        ] {
+                            ui.selectable_value(
+                                &mut self.config.visualization,
+                                viz_type,
+                                format!("{}", viz_type),
+                            );
+                        }
+                    });
+
+                ui.separator();
+                ui.label(self.config.visualization.description());
+
+                ui.separator();
+
+                ui.add_enabled_ui(true, |ui| {
+                    ui.label("Max Number:");
+                    ui.add(egui::Slider::new(&mut self.config.max_number, 100..=100000).text("n"));
+                });
+
+                ui.separator();
+                ui.label("Display");
+
+                ui.label("Prime size:");
+                ui.add(egui::Slider::new(&mut self.config.prime_size, 1..=20));
+
+                ui.label("Non-prime size:");
+                ui.add(egui::Slider::new(&mut self.config.non_prime_size, 0..=10));
+
+                ui.checkbox(&mut self.config.show_numbers, "Show numbers");
+
+                ui.separator();
+                ui.label("Colors");
+
+                ui.label("Prime:");
+                ui.color_edit_button_srgba(&mut self.config.prime_color);
+
+                ui.label("Non-prime:");
+                ui.color_edit_button_srgba(&mut self.config.non_prime_color);
+
+                ui.label("Background:");
+                ui.color_edit_button_srgba(&mut self.config.background_color);
+
+                if self.config.visualization == VisualizationType::PrimeWheel {
+                    ui.separator();
+                    ui.label("Prime Wheel");
+                    ui.add(egui::Slider::new(&mut self.config.modulo, 2..=60).text("Modulo"));
+                }
+
+                if self.config.visualization == VisualizationType::PrimeDensityGradient {
+                    ui.separator();
+                    ui.label("Density Grid");
+                    ui.add(
+                        egui::Slider::new(&mut self.config.grid_size, 10..=100).text("Grid size"),
+                    );
+                }
+
+                if self.config.visualization == VisualizationType::RiemannZeta {
+                    ui.separator();
+                    ui.label("Riemann Zeta");
+                    ui.add(
+                        egui::Slider::new(&mut self.config.num_zeros, 1..=20).text("Zeros to show"),
+                    );
+                }
+
+                if self.config.visualization.supports_twin_primes() {
+                    ui.separator();
+                    ui.label("Prime Pairs");
+
+                    ui.checkbox(&mut self.config.show_twin_primes, "Twin primes");
+                    if self.config.show_twin_primes {
+                        ui.color_edit_button_srgba(&mut self.config.twin_color);
+                    }
+
+                    ui.checkbox(&mut self.config.show_cousin_primes, "Cousin primes");
+                    if self.config.show_cousin_primes {
+                        ui.color_edit_button_srgba(&mut self.config.cousin_color);
+                    }
+
+                    ui.checkbox(&mut self.config.show_sexy_primes, "Sexy primes");
+                    if self.config.show_sexy_primes {
+                        ui.color_edit_button_srgba(&mut self.config.sexy_color);
+                    }
+                }
+
+                ui.separator();
+                if ui.button("Reset to Defaults").clicked() {
+                    self.config = VisualizerConfig::default();
+                }
+            });
+
+        self.regenerate_primes();
+
+        egui::CentralPanel::default().show(ctx, |ui| {
+            let rect = ui.available_rect_before_wrap();
+            self.draw_visualization(ui, rect);
+
+            if let Some(hovered) = self.hovered_number {
+                let is_prime = self.primes.contains(&hovered);
+                let text = if is_prime {
+                    format!("{} (prime)", hovered)
+                } else {
+                    format!("{}", hovered)
+                };
+                ui.painter().text(
+                    egui::Pos2::new(rect.left() + 5.0, rect.bottom() - 20.0),
+                    egui::Align2::LEFT_BOTTOM,
+                    text,
+                    egui::FontId::proportional(14.0),
+                    if is_prime {
+                        self.config.prime_color
+                    } else {
+                        self.config.non_prime_color
+                    },
+                );
+            }
+        });
+    }
+}
