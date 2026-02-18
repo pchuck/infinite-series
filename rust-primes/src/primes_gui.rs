@@ -188,6 +188,38 @@ impl PrimeVisualizerApp {
         }
     }
 
+    /// Calculate bounding box (min/max x and y) from a list of positions.
+    fn calculate_bounds(positions: &[(usize, f32, f32)]) -> (f32, f32, f32, f32) {
+        let mut min_x = f32::MAX;
+        let mut max_x = f32::MIN;
+        let mut min_y = f32::MAX;
+        let mut max_y = f32::MIN;
+        for (_, x, y) in positions {
+            min_x = min_x.min(*x);
+            max_x = max_x.max(*x);
+            min_y = min_y.min(*y);
+            max_y = max_y.max(*y);
+        }
+        (min_x, max_x, min_y, max_y)
+    }
+
+    /// Calculate the scale factor to fit content within available area with margin.
+    fn calculate_scale(rect: egui::Rect, range_x: f32, range_y: f32, margin: f32) -> f32 {
+        let available_width = rect.width() - 2.0 * margin;
+        let available_height = rect.height() - 2.0 * margin;
+        let scale_x = if range_x > 0.0 {
+            available_width / range_x
+        } else {
+            1.0
+        };
+        let scale_y = if range_y > 0.0 {
+            available_height / range_y
+        } else {
+            1.0
+        };
+        scale_x.min(scale_y)
+    }
+
     fn generate_ulam_spiral_positions(max_n: usize) -> Vec<(usize, f32, f32)> {
         let mut positions = Vec::with_capacity(max_n);
 
@@ -734,35 +766,12 @@ impl PrimeVisualizerApp {
             return;
         }
 
-        let mut min_x = f32::MAX;
-        let mut max_x = f32::MIN;
-        let mut min_y = f32::MAX;
-        let mut max_y = f32::MIN;
-        for (_, x, y) in &positions {
-            min_x = min_x.min(*x);
-            max_x = max_x.max(*x);
-            min_y = min_y.min(*y);
-            max_y = max_y.max(*y);
-        }
-
+        let (min_x, max_x, min_y, max_y) = Self::calculate_bounds(&positions);
         let range_x = max_x - min_x;
         let range_y = max_y - min_y;
 
         let margin = 20.0;
-        let available_width = rect.width() - 2.0 * margin;
-        let available_height = rect.height() - 2.0 * margin;
-
-        let scale_x = if range_x > 0.0 {
-            available_width / range_x
-        } else {
-            1.0
-        };
-        let scale_y = if range_y > 0.0 {
-            available_height / range_y
-        } else {
-            1.0
-        };
-        let scale = scale_x.min(scale_y);
+        let scale = Self::calculate_scale(rect, range_x, range_y, margin);
 
         let center_x = rect.center().x;
         let center_y = rect.center().y;
@@ -830,35 +839,12 @@ impl PrimeVisualizerApp {
             return;
         }
 
-        let mut min_x = f32::MAX;
-        let mut max_x = f32::MIN;
-        let mut min_y = f32::MAX;
-        let mut max_y = f32::MIN;
-        for (_, x, y) in &positions {
-            min_x = min_x.min(*x);
-            max_x = max_x.max(*x);
-            min_y = min_y.min(*y);
-            max_y = max_y.max(*y);
-        }
-
+        let (min_x, max_x, min_y, max_y) = Self::calculate_bounds(&positions);
         let range_x = max_x - min_x;
         let range_y = max_y - min_y;
 
         let margin = 20.0;
-        let available_width = rect.width() - 2.0 * margin;
-        let available_height = rect.height() - 2.0 * margin;
-
-        let scale_x = if range_x > 0.0 {
-            available_width / range_x
-        } else {
-            1.0
-        };
-        let scale_y = if range_y > 0.0 {
-            available_height / range_y
-        } else {
-            1.0
-        };
-        let scale = scale_x.min(scale_y);
+        let scale = Self::calculate_scale(rect, range_x, range_y, margin);
 
         let center_x = rect.center().x;
         let center_y = rect.center().y;
@@ -881,35 +867,12 @@ impl PrimeVisualizerApp {
             return None;
         }
 
-        let mut min_x = f32::MAX;
-        let mut max_x = f32::MIN;
-        let mut min_y = f32::MAX;
-        let mut max_y = f32::MIN;
-        for (_, x, y) in &positions {
-            min_x = min_x.min(*x);
-            max_x = max_x.max(*x);
-            min_y = min_y.min(*y);
-            max_y = max_y.max(*y);
-        }
-
+        let (min_x, max_x, min_y, max_y) = Self::calculate_bounds(&positions);
         let range_x = max_x - min_x;
         let range_y = max_y - min_y;
 
         let margin = 20.0;
-        let available_width = rect.width() - 2.0 * margin;
-        let available_height = rect.height() - 2.0 * margin;
-
-        let scale_x = if range_x > 0.0 {
-            available_width / range_x
-        } else {
-            1.0
-        };
-        let scale_y = if range_y > 0.0 {
-            available_height / range_y
-        } else {
-            1.0
-        };
-        let scale = scale_x.min(scale_y);
+        let scale = Self::calculate_scale(rect, range_x, range_y, margin);
 
         let center_x = rect.center().x;
         let center_y = rect.center().y;
@@ -944,35 +907,12 @@ impl PrimeVisualizerApp {
             return None;
         }
 
-        let mut min_x = f32::MAX;
-        let mut max_x = f32::MIN;
-        let mut min_y = f32::MAX;
-        let mut max_y = f32::MIN;
-        for (_, x, y) in &positions {
-            min_x = min_x.min(*x);
-            max_x = max_x.max(*x);
-            min_y = min_y.min(*y);
-            max_y = max_y.max(*y);
-        }
-
+        let (min_x, max_x, min_y, max_y) = Self::calculate_bounds(&positions);
         let range_x = max_x - min_x;
         let range_y = max_y - min_y;
 
         let margin = 20.0;
-        let available_width = rect.width() - 2.0 * margin;
-        let available_height = rect.height() - 2.0 * margin;
-
-        let scale_x = if range_x > 0.0 {
-            available_width / range_x
-        } else {
-            1.0
-        };
-        let scale_y = if range_y > 0.0 {
-            available_height / range_y
-        } else {
-            1.0
-        };
-        let scale = scale_x.min(scale_y);
+        let scale = Self::calculate_scale(rect, range_x, range_y, margin);
 
         let center_x = rect.center().x;
         let center_y = rect.center().y;
@@ -1190,35 +1130,12 @@ impl PrimeVisualizerApp {
             })
             .collect();
 
-        let mut min_x = f32::MAX;
-        let mut max_x = f32::MIN;
-        let mut min_y = f32::MAX;
-        let mut max_y = f32::MIN;
-        for (_, x, y) in &positions {
-            min_x = min_x.min(*x);
-            max_x = max_x.max(*x);
-            min_y = min_y.min(*y);
-            max_y = max_y.max(*y);
-        }
-
+        let (min_x, max_x, min_y, max_y) = Self::calculate_bounds(&positions);
         let range_x = max_x - min_x;
         let range_y = max_y - min_y;
 
         let margin = 20.0;
-        let available_width = rect.width() - 2.0 * margin;
-        let available_height = rect.height() - 2.0 * margin;
-
-        let scale_x = if range_x > 0.0 {
-            available_width / range_x
-        } else {
-            1.0
-        };
-        let scale_y = if range_y > 0.0 {
-            available_height / range_y
-        } else {
-            1.0
-        };
-        let scale = scale_x.min(scale_y);
+        let scale = Self::calculate_scale(rect, range_x, range_y, margin);
 
         let center_x = rect.center().x;
         let center_y = rect.center().y;

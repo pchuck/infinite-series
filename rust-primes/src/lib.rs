@@ -13,6 +13,21 @@ use std::sync::Arc;
 pub const DEFAULT_SEGMENT_SIZE: usize = 1_000_000;
 pub const PARALLEL_THRESHOLD: usize = 100_000_000;
 
+/// Estimate the number of primes up to n using the Prime Number Theorem.
+/// Returns a safe capacity for Vec::with_capacity (at least 1).
+pub fn estimate_prime_count(n: usize) -> usize {
+    if n <= 2 {
+        return 1;
+    }
+    let ln_n = (n as f64).ln();
+    let estimated = if ln_n > 1.0 {
+        (n as f64 / ln_n) as usize
+    } else {
+        n
+    };
+    estimated.max(1)
+}
+
 /// Process a single segment using odd-only sieve.
 /// Shared helper used by both sequential and parallel segmented sieves.
 ///
@@ -118,14 +133,7 @@ pub fn sieve_of_eratosthenes(n: usize) -> Vec<usize> {
     }
 
     // Extract primes with safe capacity estimation
-    // Using Prime Number Theorem: π(n) ≈ n / ln(n)
-    let ln_n = (n as f64).ln();
-    let estimated_capacity = if ln_n > 1.0 {
-        (n as f64 / ln_n) as usize
-    } else {
-        n
-    };
-    let mut primes = Vec::with_capacity(estimated_capacity.max(1));
+    let mut primes = Vec::with_capacity(estimate_prime_count(n));
     primes.push(2);
     for (i, &is_p) in sieve.iter().enumerate() {
         if is_p {
@@ -155,13 +163,7 @@ pub fn segmented_sieve(
 
     let segments = n.div_ceil(segment_size);
     // Safe capacity estimation using Prime Number Theorem: π(n) ≈ n / ln(n)
-    let ln_n = (n as f64).ln();
-    let estimated_capacity = if ln_n > 1.0 {
-        (n as f64 / ln_n) as usize
-    } else {
-        n
-    };
-    let mut primes = Vec::with_capacity(estimated_capacity.max(1));
+    let mut primes = Vec::with_capacity(estimate_prime_count(n));
 
     // Reusable buffer for segments
     let mut is_prime = vec![true; segment_size];
@@ -259,16 +261,14 @@ pub fn parallel_segmented_sieve(
 
         // Workers process contiguous segment ranges, so results are already
         // in order. Just concatenate worker vectors in order.
-        // Safe capacity estimation using Prime Number Theorem: π(n) ≈ n / ln(n)
-        let ln_n = (n as f64).ln();
-        let estimated_capacity = if ln_n > 1.0 {
-            (n as f64 / ln_n) as usize
-        } else {
-            n
-        };
-        let mut all_primes = Vec::with_capacity(estimated_capacity.max(1));
+        let mut all_primes = Vec::with_capacity(estimate_prime_count(n));
         for handle in handles {
-            all_primes.extend(handle.join().unwrap());
+            match handle.join() {
+                Ok(worker_primes) => all_primes.extend(worker_primes),
+                Err(_) => {
+                    eprintln!("[ERROR] Worker thread panicked during prime generation");
+                }
+            }
         }
 
         all_primes
