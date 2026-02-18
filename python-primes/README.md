@@ -1,6 +1,6 @@
-# Number Generators
+# Python Prime Generators
 
-A Python project containing optimized number generation utilities with comprehensive test coverage.
+A Python project containing optimized prime generation utilities.
 
 ## Features
 
@@ -18,6 +18,18 @@ No external dependencies required for basic usage. Uses only Python standard lib
 
 Optional dependency:
 - `tqdm>=4.65.0` - For progress bars (install with `pip install tqdm`)
+
+
+## Quick Start
+
+```bash
+make help
+make run-progress     # With progress bar
+make run-progress-parallel  # Parallel + progress
+make test             # Run tests
+make lint             # Run ruff linter
+```
+
 
 ## Usage
 

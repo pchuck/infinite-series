@@ -4,17 +4,25 @@ A high-performance prime number generator implemented in Go, ported from the Pyt
 
 ## Features
 
-- **Three algorithms**: Classic Sieve, Segmented Sieve, and Parallel Segmented Sieve
+- **Algorithms**: Classic Sieve, Segmented Sieve, and Parallel Segmented Sieve
 - **Auto-algorithm selection**: Automatically chooses optimal algorithm based on input size
 - **Memory-efficient**: Segmented sieve reduces memory from O(n) to O(sqrt(n))
 - **Parallel processing**: Multi-core CPU utilization for very large inputs
 - **Progress bar**: Lightweight custom progress indicator
 - **No external dependencies**: Uses only Go standard library
 
+## Quick Start
+```bash
+make help
+make build            # Build binary
+make run-progress     # With progress bar
+make run-progress-parallel N=10000000  # Parallel + progress
+make test             # Run tests
+```
+
 ## Installation
 
 ```bash
-cd golang
 go build -o primes ./cmd/primes
 ```
 
@@ -56,7 +64,7 @@ package main
 
 import (
     "fmt"
-    "github.com/pchuck/infinite-series/golang/prime"
+    "github.com/pchuck/infinite-series/golang-prime"
 )
 
 func main() {

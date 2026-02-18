@@ -2,13 +2,14 @@
 
 ## Overview
 
-This project infinite series sub-projects, including:
+This project contains infinite series generators and visualizers, including:
 
-* A high-performance parallel prime generator in Rust, with reference implementations also in Python and Go
-* A very fast parallel primality tester implemented in Rust: [Rust-Miller-Rabin](./rust-miller-rabin/README.md)
-* A fast prime number series generator and visualizer implemented in Rust: [Rust-Primes](./rust-primes/README.md)
+* A high-performance parallel prime generator in Rust [rust-primes](./rust-primes/README.md), with reference implementations in Python [python-primes](./python-primes) and Go [golang-primes](./golang-primes/README.md)
+* A very fast parallelized Miller-Rabin primality tester in Rust: [rust-miller-rabin](./rust-miller-rabin/README.md)
+* An optimized prime generator and visualizer implemented in Rust: [rust-primes visualizer](./rust-primes/README.md)
 
 ![Rust Prime Number Visualizer Screenshot](rust-primes/resources/rust_prime_visualizer_sacks_spiral_screenshot.png)
+
 
 ## Implementations
 
@@ -16,19 +17,22 @@ All prime generators are implemented with consistent APIs and comparable algorit
 
 | Language | Directory | Algorithm | Parallelism |
 |----------|-----------|-----------|-------------|
-| Python   | `python-primes/` | Classic/Segmented/Parallel Sieve | `multiprocessing.Pool` |
-| Go       | `golang-primes/` | Classic/Segmented/Parallel Sieve | Goroutines + channels  |
-| Rust     | `rust-primes/`   | Classic/Segmented/Parallel Sieve | `thread::scope`        |
+| Python   | [`python-primes/`](./python-primes/README.md) | Classic/Segmented/Parallel Sieve | `multiprocessing.Pool` |
+| Go       | [`golang-primes/`](./golang-primes/README.md) | Classic/Segmented/Parallel Sieve | Goroutines + channels  |
+| Rust     | [`rust-primes/`](./rust-primes/README.md)     | Classic/Segmented/Parallel Sieve | `thread::scope`        |
+
 
 ## Quick Start
 
-### Rust GUI (Prime Visualizer)
+### Prime Visualizer (GUI)
 ```bash
 cd rust-primes
 cargo run --bin primes_gui
 ```
 
-### CLI Comparison (Prime Generators)
+### Prime Generators (CLI and Libraries)
+
+#### Performance Comparison (Rust vs Go vs Python)
 
 ```bash
 make compare    # Run all implementations (10M primes)
@@ -37,56 +41,27 @@ make test       # Run all tests
 make clean      # Clean build artifacts
 ```
 
-## Running Individual Prime Generator Implementations
-
-### Rust
-```bash
-cd rust-primes && make help
-make release            # Build optimized
-make run-release        # Run (n=1000)
-make run-release-quiet  # Count primes < 1M
-make test               # Test
-```
-
-### Go
-```bash
-cd golang-primes && make help
-make build            # Build binary
-make run-progress     # With progress bar
-make run-progress-parallel N=10000000  # Parallel + progress
-make test             # Run tests
-```
-
-### Python
-```bash
-cd python-primes && make help
-make run-progress     # With progress bar
-make run-progress-parallel  # Parallel + progress
-make test             # Run tests
-make lint             # Run ruff linter
-```
-
 ## CLI Usage Examples
 
 ### Generate primes < 1000
 ```bash
-./primes 1000                          # Go
-python prime_generator.py 1000         # Python
-./target/release/primes -n 1000        # Rust
+cd golang-primes; ./primes 1000                          # Go
+cd python-primes; python prime_generator.py 1000         # Python
+cd rust-primes;   ./target/release/primes -n 1000        # Rust
 ```
 
 ### Count primes < 10M (quiet mode)
 ```bash
-./primes --quiet 10000000                       # Go
-python prime_generator.py 10000000 --quiet      # Python
-./target/release/primes -n 10000000 --quiet     # Rust
+cd golang-primes; ./primes --quiet 10000000                       # Go
+cd python-primes; python prime_generator.py 10000000 --quiet      # Python
+cd rust-primes;   ./target/release/primes -n 10000000 --quiet     # Rust
 ```
 
 ### With progress bar (10M)
 ```bash
-./primes --progress 10000000                    # Go
-python prime_generator.py 10000000 --progress   # Python
-./target/release/primes -n 10000000 -P          # Rust
+cd golang-primes; ./primes --progress 10000000                    # Go
+cd python-primes; python prime_generator.py 10000000 --progress   # Python
+cd rust-primes;   ./target/release/primes -n 10000000 -P          # Rust
 ```
 
 ### Parallel processing (100M)
@@ -95,6 +70,7 @@ python prime_generator.py 10000000 --progress   # Python
 python prime_generator.py 100000000 --parallel --progress       # Python
 ./target/release/primes -n 100000000 -p -P                      # Rust
 ```
+
 
 ## Algorithm Selection
 
@@ -106,7 +82,7 @@ Each implementation auto-selects the best algorithm based on input size:
 | 1M <= n < 100M | Segmented Sieve (odd-only) | O(sqrt(n) + segment/2) |
 | n >= 100M | Parallel Segmented Sieve (odd-only) | O(sqrt(n) + segment/2) per worker |
 
-All algorithms skip even numbers, halving both memory usage and composite-marking work compared to a full sieve.
+
 
 ## Performance Optimizations
 
@@ -200,6 +176,7 @@ Testing environment: AMD Ryzen 9 7900X 12-Core Processor
 - **Go**: Simpler concurrency model, faster compilation, easier debugging, goroutines are lightweight
 - **Both**: 7-8x faster than Python on large inputs
 
+
 ## Comparison
 
 | Feature | Python | Go | Rust |
@@ -211,6 +188,7 @@ Testing environment: AMD Ryzen 9 7900X 12-Core Processor
 | Compilation | Interpreted | Compiled | Compiled |
 | Concurrency | Process-based | True parallel | True parallel |
 | Type safety | Optional (mypy) | Native | Native |
+
 
 ## Project Structure
 
@@ -243,6 +221,7 @@ infinite-series/
         ├── primes_gui.rs       # GUI visualization (eframe/egui)
         └── progress.rs         # Progress bar
 ```
+
 
 ## Language-Specific Notes
 

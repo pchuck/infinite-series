@@ -41,6 +41,17 @@ Prime distribution visualizations including:
 
 ## Quick Start
 
+### Make
+```bash
+make help
+make release            # Build optimized
+make run-release        # Run (n=1000)
+make run-release-quiet  # Count primes < 1M
+make test               # Test
+```
+
+### Cargo
+
 ```bash
 # Build
 cargo build
