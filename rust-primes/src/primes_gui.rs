@@ -134,12 +134,12 @@ impl Default for VisualizerConfig {
     fn default() -> Self {
         Self {
             max_number: 10000,
-            prime_size: 1,
+            prime_size: 2,
             non_prime_size: 1,
             modulo: 30,
             show_numbers: false,
-            prime_color: egui::Color32::from_rgba_unmultiplied(255, 200, 50, 255),
-            non_prime_color: egui::Color32::from_rgba_unmultiplied(100, 100, 100, 255),
+            prime_color: egui::Color32::from_rgba_unmultiplied(255, 220, 80, 255),
+            non_prime_color: egui::Color32::from_rgba_unmultiplied(60, 60, 70, 180),
             background_color: egui::Color32::from_rgba_unmultiplied(20, 20, 30, 255),
             visualization: VisualizationType::UlamSpiral,
             num_zeros: 10,
@@ -157,6 +157,7 @@ impl Default for VisualizerConfig {
 struct PrimeVisualizerApp {
     config: VisualizerConfig,
     primes: HashSet<usize>,
+    primes_vec: Vec<usize>,
     max_pixels: usize,
     cached_max_number: usize,
 }
@@ -164,12 +165,13 @@ struct PrimeVisualizerApp {
 impl PrimeVisualizerApp {
     fn new(config: VisualizerConfig) -> Self {
         let max_number = config.max_number;
-        let primes = generate_primes(max_number, false, None, None, None);
-        let primes_set: HashSet<usize> = primes.into_iter().collect();
+        let primes_vec = generate_primes(max_number, false, None, None, None);
+        let primes_set: HashSet<usize> = primes_vec.iter().copied().collect();
 
         Self {
             config,
             primes: primes_set,
+            primes_vec,
             max_pixels: 1_000_000,
             cached_max_number: max_number,
         }
@@ -178,9 +180,8 @@ impl PrimeVisualizerApp {
     fn regenerate_primes(&mut self) {
         // Only regenerate if max_number has actually changed
         if self.config.max_number != self.cached_max_number {
-            self.primes = generate_primes(self.config.max_number, false, None, None, None)
-                .into_iter()
-                .collect();
+            self.primes_vec = generate_primes(self.config.max_number, false, None, None, None);
+            self.primes = self.primes_vec.iter().copied().collect();
             self.cached_max_number = self.config.max_number;
         }
     }
@@ -422,8 +423,7 @@ impl PrimeVisualizerApp {
             return;
         }
 
-        let primes = generate_primes(max_n, false, None, None, None);
-        let prime_count = primes.len();
+        let prime_count = self.primes_vec.len();
 
         let intervals = 100_usize.max(max_n / 100);
         let interval_size = max_n / intervals;
@@ -442,7 +442,7 @@ impl PrimeVisualizerApp {
                 continue;
             }
 
-            while prime_idx < prime_count && primes[prime_idx] <= x {
+            while prime_idx < prime_count && self.primes_vec[prime_idx] <= x {
                 count += 1;
                 prime_idx += 1;
             }
@@ -905,13 +905,12 @@ impl PrimeVisualizerApp {
     }
 
     fn draw_sacks_mobius_spiral(&self, ui: &mut egui::Ui, rect: egui::Rect) {
-        let primes_vec = generate_primes(self.config.max_number, false, None, None, None);
-
-        if primes_vec.len() < 2 {
+        if self.primes_vec.len() < 2 {
             return;
         }
 
-        let positions: Vec<(usize, f32, f32)> = primes_vec
+        let positions: Vec<(usize, f32, f32)> = self
+            .primes_vec
             .iter()
             .enumerate()
             .map(|(idx, &n)| {
@@ -944,7 +943,7 @@ impl PrimeVisualizerApp {
         for i in 0..positions.len() - 1 {
             let (_, x1, y1) = positions[i];
             let (_, x2, y2) = positions[i + 1];
-            let gap = (positions[i + 1].0 - positions[i].0) as usize;
+            let gap = positions[i + 1].0 - positions[i].0;
 
             let screen_x1 = center_x + x1 * scale;
             let screen_y1 = center_y - y1 * scale;
@@ -981,16 +980,15 @@ impl PrimeVisualizerApp {
     }
 
     fn draw_ulam_mobius_spiral(&self, ui: &mut egui::Ui, rect: egui::Rect) {
-        let primes_vec = generate_primes(self.config.max_number, false, None, None, None);
-
-        if primes_vec.len() < 2 {
+        if self.primes_vec.len() < 2 {
             return;
         }
 
         // Use Ulam spiral positions based on prime index (O(n) instead of O(n²))
         // Generate positions only up to the number of primes we have
-        let spiral_positions = Self::generate_ulam_spiral_positions(primes_vec.len());
-        let positions: Vec<(usize, f32, f32)> = primes_vec
+        let spiral_positions = Self::generate_ulam_spiral_positions(self.primes_vec.len());
+        let positions: Vec<(usize, f32, f32)> = self
+            .primes_vec
             .iter()
             .enumerate()
             .map(|(idx, &n)| {
@@ -1036,7 +1034,7 @@ impl PrimeVisualizerApp {
         for i in 0..positions.len() - 1 {
             let (_, x1, y1) = positions[i];
             let (_, x2, y2) = positions[i + 1];
-            let gap = (positions[i + 1].0 - positions[i].0) as usize;
+            let gap = positions[i + 1].0 - positions[i].0;
 
             let screen_x1 = center_x + (x1 - (min_x + max_x) / 2.0) * scale;
             let screen_y1 = center_y - (y1 - (min_y + max_y) / 2.0) * scale;
@@ -1073,9 +1071,7 @@ impl PrimeVisualizerApp {
     }
 
     fn draw_prime_density_gradient(&self, ui: &mut egui::Ui, rect: egui::Rect) {
-        let primes = generate_primes(self.config.max_number, false, None, None, None);
-
-        if primes.is_empty() {
+        if self.primes_vec.is_empty() {
             return;
         }
 
@@ -1103,7 +1099,7 @@ impl PrimeVisualizerApp {
 
         let mut density_grid = vec![0.0_f32; grid_size * grid_size];
 
-        for &p in &primes {
+        for &p in &self.primes_vec {
             let x_frac = p as f32 / self.config.max_number as f32;
             let y_frac = (p * p % self.config.max_number) as f32 / self.config.max_number as f32;
 

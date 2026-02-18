@@ -154,7 +154,14 @@ pub fn segmented_sieve(
     let base_primes_odd: Vec<usize> = all_base_primes.into_iter().filter(|&p| p > 2).collect();
 
     let segments = n.div_ceil(segment_size);
-    let mut primes = Vec::with_capacity(n / ((n as f64).ln() as usize).max(1));
+    // Safe capacity estimation using Prime Number Theorem: π(n) ≈ n / ln(n)
+    let ln_n = (n as f64).ln();
+    let estimated_capacity = if ln_n > 1.0 {
+        (n as f64 / ln_n) as usize
+    } else {
+        n
+    };
+    let mut primes = Vec::with_capacity(estimated_capacity.max(1));
 
     // Reusable buffer for segments
     let mut is_prime = vec![true; segment_size];
@@ -252,7 +259,14 @@ pub fn parallel_segmented_sieve(
 
         // Workers process contiguous segment ranges, so results are already
         // in order. Just concatenate worker vectors in order.
-        let mut all_primes = Vec::with_capacity(n / ((n as f64).ln() as usize).max(1));
+        // Safe capacity estimation using Prime Number Theorem: π(n) ≈ n / ln(n)
+        let ln_n = (n as f64).ln();
+        let estimated_capacity = if ln_n > 1.0 {
+            (n as f64 / ln_n) as usize
+        } else {
+            n
+        };
+        let mut all_primes = Vec::with_capacity(estimated_capacity.max(1));
         for handle in handles {
             all_primes.extend(handle.join().unwrap());
         }
