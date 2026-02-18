@@ -45,30 +45,30 @@ make clean      # Clean build artifacts
 
 ### Generate primes < 1000
 ```bash
-cd golang-primes; ./primes 1000                          # Go
-cd python-primes; python prime_generator.py 1000         # Python
-cd rust-primes;   ./target/release/primes -n 1000        # Rust
+cd golang-primes; ./primes 1000                         # Go
+cd python-primes; python prime_generator.py 1000        # Python
+cd rust-primes;   ./target/release/primes_cli -n 1000   # Rust
 ```
 
 ### Count primes < 10M (quiet mode)
 ```bash
-cd golang-primes; ./primes --quiet 10000000                       # Go
-cd python-primes; python prime_generator.py 10000000 --quiet      # Python
-cd rust-primes;   ./target/release/primes -n 10000000 --quiet     # Rust
+cd golang-primes; ./primes --quiet 10000000                         # Go
+cd python-primes; python prime_generator.py 10000000 --quiet        # Python
+cd rust-primes;   ./target/release/primes_cli -n 10000000 --quiet   # Rust
 ```
 
 ### With progress bar (10M)
 ```bash
 cd golang-primes; ./primes --progress 10000000                    # Go
 cd python-primes; python prime_generator.py 10000000 --progress   # Python
-cd rust-primes;   ./target/release/primes -n 10000000 -P          # Rust
+cd rust-primes;   ./target/release/primes_cli -n 10000000 -P      # Rust
 ```
 
 ### Parallel processing (100M)
 ```bash
-./primes --parallel --progress 100000000                        # Go
-python prime_generator.py 100000000 --parallel --progress       # Python
-./target/release/primes -n 100000000 -p -P                      # Rust
+cd golang-primes; ./primes --parallel --progress 100000000                    # Go
+cd python-primes; python prime_generator.py 100000000 --parallel --progress   # Python
+cd rust-primes;   ./target/release/primes_cli -n 100000000 -p -P              # Rust
 ```
 
 

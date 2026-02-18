@@ -9,7 +9,7 @@ benchmark:
 	@echo "=========================================="
 	@echo ""
 	@echo "Rust:"
-	@cd rust-primes && $(MAKE) run-release-parallel-progress N=$(COUNT)
+	@cd rust-primes && $(MAKE) run-release-parallel_cli N=$(COUNT)
 	@echo ""
 	@echo "Go:"
 	@cd golang-primes && $(MAKE) run-progress-parallel N=$(COUNT)
