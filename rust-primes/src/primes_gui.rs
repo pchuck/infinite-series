@@ -1053,6 +1053,20 @@ impl PrimeVisualizerApp {
         egui::Color32::from_rgba_unmultiplied(brightness, brightness, brightness, 255)
     }
 
+    fn gap_stroke_width(gap: usize) -> f32 {
+        if gap <= 4 {
+            2.5
+        } else if gap <= 6 {
+            2.0
+        } else if gap <= 10 {
+            1.5
+        } else if gap <= 20 {
+            1.0
+        } else {
+            0.5
+        }
+    }
+
     fn draw_sacks_mobius_spiral(&self, ui: &mut egui::Ui, rect: egui::Rect) {
         if self.primes_vec.len() < 2 {
             return;
@@ -1100,17 +1114,7 @@ impl PrimeVisualizerApp {
             let screen_y2 = center_y - y2 * scale;
 
             let color = Self::gap_color(gap);
-            let stroke_width = if gap <= 4 {
-                2.5
-            } else if gap <= 6 {
-                2.0
-            } else if gap <= 10 {
-                1.5
-            } else if gap <= 20 {
-                1.0
-            } else {
-                0.5
-            };
+            let stroke_width = Self::gap_stroke_width(gap);
 
             painter.line_segment(
                 [
@@ -1168,17 +1172,7 @@ impl PrimeVisualizerApp {
             let screen_y2 = center_y - (y2 - (min_y + max_y) / 2.0) * scale;
 
             let color = Self::gap_color(gap);
-            let stroke_width = if gap <= 4 {
-                2.5
-            } else if gap <= 6 {
-                2.0
-            } else if gap <= 10 {
-                1.5
-            } else if gap <= 20 {
-                1.0
-            } else {
-                0.5
-            };
+            let stroke_width = Self::gap_stroke_width(gap);
 
             painter.line_segment(
                 [
