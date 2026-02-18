@@ -15,6 +15,8 @@ enum VisualizationType {
     HexagonalLattice,
     TriangularLattice,
     FermatsSpiral,
+    SacksMobiusSpiral,
+    UlamMobiusSpiral,
 }
 
 impl VisualizationType {
@@ -29,6 +31,8 @@ impl VisualizationType {
                 | Self::HexagonalLattice
                 | Self::TriangularLattice
                 | Self::FermatsSpiral
+                | Self::SacksMobiusSpiral
+                | Self::UlamMobiusSpiral
         )
     }
 
@@ -42,6 +46,8 @@ impl VisualizationType {
                 | Self::HexagonalLattice
                 | Self::TriangularLattice
                 | Self::FermatsSpiral
+                | Self::SacksMobiusSpiral
+                | Self::UlamMobiusSpiral
         )
     }
 
@@ -67,6 +73,8 @@ impl std::fmt::Display for VisualizationType {
             VisualizationType::HexagonalLattice => write!(f, "Hexagonal Lattice"),
             VisualizationType::TriangularLattice => write!(f, "Triangular Lattice"),
             VisualizationType::FermatsSpiral => write!(f, "Fermat's Spiral"),
+            VisualizationType::SacksMobiusSpiral => write!(f, "Sacks Mobius Spiral"),
+            VisualizationType::UlamMobiusSpiral => write!(f, "Ulam Mobius Spiral"),
         }
     }
 }
@@ -290,6 +298,8 @@ impl PrimeVisualizerApp {
             VisualizationType::HexagonalLattice => self.draw_hexagonal_spiral(ui, rect),
             VisualizationType::TriangularLattice => self.draw_triangle_spiral(ui, rect),
             VisualizationType::FermatsSpiral => self.draw_fermats_spiral(ui, rect),
+            VisualizationType::SacksMobiusSpiral => self.draw_sacks_mobius_spiral(ui, rect),
+            VisualizationType::UlamMobiusSpiral => self.draw_ulam_mobius_spiral(ui, rect),
         }
     }
 
@@ -836,6 +846,221 @@ impl PrimeVisualizerApp {
         }
     }
 
+    fn gap_color(gap: usize) -> egui::Color32 {
+        let brightness = match gap {
+            2 => 255,
+            4 => 220,
+            6 => 180,
+            8 => 150,
+            10 => 120,
+            12 => 100,
+            14 => 85,
+            16 => 70,
+            _ if gap <= 20 => 60,
+            _ if gap <= 30 => 45,
+            _ if gap <= 50 => 30,
+            _ => 20,
+        };
+        egui::Color32::from_rgba_unmultiplied(brightness, brightness, brightness, 255)
+    }
+
+    fn draw_sacks_mobius_spiral(&self, ui: &mut egui::Ui, rect: egui::Rect) {
+        let primes_vec = generate_primes(self.config.max_number, false, None, None, None);
+
+        if primes_vec.len() < 2 {
+            return;
+        }
+
+        let positions: Vec<(usize, f32, f32)> = primes_vec
+            .iter()
+            .enumerate()
+            .map(|(idx, &n)| {
+                let idx_f = idx as f32;
+                let r = idx_f * 0.8; // linear radius increase
+                let theta = idx_f * 0.5; // fixed angle step
+                let x = r * theta.cos();
+                let y = r * theta.sin();
+                (n, x, y)
+            })
+            .collect();
+
+        let mut max_coord = 0.0f32;
+        for (_, x, y) in &positions {
+            max_coord = max_coord.max(x.abs()).max(y.abs());
+        }
+
+        let margin = 20.0;
+        let available = rect.width().min(rect.height()) / 2.0 - margin;
+        let scale = if max_coord > 0.0 {
+            available / max_coord
+        } else {
+            1.0
+        };
+
+        let center_x = rect.center().x;
+        let center_y = rect.center().y;
+        let painter = ui.painter();
+
+        for i in 0..positions.len() - 1 {
+            let (_, x1, y1) = positions[i];
+            let (_, x2, y2) = positions[i + 1];
+            let gap = (positions[i + 1].0 - positions[i].0) as usize;
+
+            let screen_x1 = center_x + x1 * scale;
+            let screen_y1 = center_y - y1 * scale;
+            let screen_x2 = center_x + x2 * scale;
+            let screen_y2 = center_y - y2 * scale;
+
+            let color = Self::gap_color(gap);
+            let stroke_width = if gap <= 4 {
+                2.5
+            } else if gap <= 6 {
+                2.0
+            } else if gap <= 10 {
+                1.5
+            } else if gap <= 20 {
+                1.0
+            } else {
+                0.5
+            };
+
+            painter.line_segment(
+                [
+                    egui::Pos2::new(screen_x1, screen_y1),
+                    egui::Pos2::new(screen_x2, screen_y2),
+                ],
+                egui::Stroke::new(stroke_width, color),
+            );
+        }
+
+        for (n, x, y) in &positions {
+            let screen_x = center_x + *x * scale;
+            let screen_y = center_y - *y * scale;
+            self.draw_number(*n, screen_x, screen_y, painter);
+        }
+    }
+
+    fn draw_ulam_mobius_spiral(&self, ui: &mut egui::Ui, rect: egui::Rect) {
+        let primes_vec = generate_primes(self.config.max_number, false, None, None, None);
+
+        if primes_vec.len() < 2 {
+            return;
+        }
+
+        // Use Ulam spiral positions but with prime index
+        let positions: Vec<(usize, f32, f32)> = primes_vec
+            .iter()
+            .enumerate()
+            .map(|(idx, &n)| {
+                let idx_i32 = idx as i32;
+                let mut x = 0i32;
+                let mut y = 0i32;
+                let mut dx = 1i32;
+                let mut dy = 0i32;
+                let mut steps_in_direction = 1;
+                let mut steps_since_turn = 0;
+                let mut turn_count = 0;
+
+                for i in 0..=idx_i32 {
+                    if i == idx_i32 {
+                        break;
+                    }
+                    x += dx;
+                    y += dy;
+                    steps_since_turn += 1;
+                    if steps_since_turn == steps_in_direction {
+                        steps_since_turn = 0;
+                        let (new_dx, new_dy) = match turn_count % 4 {
+                            0 => (0, 1),
+                            1 => (-1, 0),
+                            2 => (0, -1),
+                            _ => (1, 0),
+                        };
+                        dx = new_dx;
+                        dy = new_dy;
+                        turn_count += 1;
+                        if turn_count % 2 == 0 {
+                            steps_in_direction += 1;
+                        }
+                    }
+                }
+                (n, x as f32, y as f32)
+            })
+            .collect();
+
+        let mut min_x = f32::MAX;
+        let mut max_x = f32::MIN;
+        let mut min_y = f32::MAX;
+        let mut max_y = f32::MIN;
+        for (_, x, y) in &positions {
+            min_x = min_x.min(*x);
+            max_x = max_x.max(*x);
+            min_y = min_y.min(*y);
+            max_y = max_y.max(*y);
+        }
+
+        let range_x = max_x - min_x;
+        let range_y = max_y - min_y;
+
+        let margin = 20.0;
+        let available_width = rect.width() - 2.0 * margin;
+        let available_height = rect.height() - 2.0 * margin;
+
+        let scale_x = if range_x > 0.0 {
+            available_width / range_x
+        } else {
+            1.0
+        };
+        let scale_y = if range_y > 0.0 {
+            available_height / range_y
+        } else {
+            1.0
+        };
+        let scale = scale_x.min(scale_y);
+
+        let center_x = rect.center().x;
+        let center_y = rect.center().y;
+        let painter = ui.painter();
+
+        for i in 0..positions.len() - 1 {
+            let (_, x1, y1) = positions[i];
+            let (_, x2, y2) = positions[i + 1];
+            let gap = (positions[i + 1].0 - positions[i].0) as usize;
+
+            let screen_x1 = center_x + (x1 - (min_x + max_x) / 2.0) * scale;
+            let screen_y1 = center_y - (y1 - (min_y + max_y) / 2.0) * scale;
+            let screen_x2 = center_x + (x2 - (min_x + max_x) / 2.0) * scale;
+            let screen_y2 = center_y - (y2 - (min_y + max_y) / 2.0) * scale;
+
+            let color = Self::gap_color(gap);
+            let stroke_width = if gap <= 4 {
+                2.5
+            } else if gap <= 6 {
+                2.0
+            } else if gap <= 10 {
+                1.5
+            } else if gap <= 20 {
+                1.0
+            } else {
+                0.5
+            };
+
+            painter.line_segment(
+                [
+                    egui::Pos2::new(screen_x1, screen_y1),
+                    egui::Pos2::new(screen_x2, screen_y2),
+                ],
+                egui::Stroke::new(stroke_width, color),
+            );
+        }
+
+        for (n, x, y) in &positions {
+            let screen_x = center_x + (*x - (min_x + max_x) / 2.0) * scale;
+            let screen_y = center_y - (*y - (min_y + max_y) / 2.0) * scale;
+            self.draw_number(*n, screen_x, screen_y, painter);
+        }
+    }
+
     fn draw_ulam_spiral(&self, ui: &mut egui::Ui, rect: egui::Rect) {
         let positions = Self::generate_ulam_spiral_positions(self.config.max_number);
 
@@ -1013,6 +1238,16 @@ impl eframe::App for PrimeVisualizerApp {
                             &mut self.config.visualization,
                             VisualizationType::FermatsSpiral,
                             "Fermat's Spiral",
+                        );
+                        ui.selectable_value(
+                            &mut self.config.visualization,
+                            VisualizationType::SacksMobiusSpiral,
+                            "Sacks Mobius Spiral",
+                        );
+                        ui.selectable_value(
+                            &mut self.config.visualization,
+                            VisualizationType::UlamMobiusSpiral,
+                            "Ulam Mobius Spiral",
                         );
                     });
 

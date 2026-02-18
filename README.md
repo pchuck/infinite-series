@@ -59,9 +59,11 @@ The GUI provides interactive visualizations of prime number distributions:
 | **Hexagonal Lattice** | Hexagonal lattice spiral - symmetric 6-direction spiral on hexagonal grid (60° intervals) |
 | **Triangular Lattice** | Triangular lattice spiral - symmetric 3-direction spiral on triangular grid (120° intervals) |
 | **Fermat's Spiral** | Phyllotaxis spiral - golden angle placement (r = sqrt(n), theta = n * 137.5°), same pattern as sunflower seed arrangements |
+| **Sacks Mobius Spiral** | Archimedean spiral using prime index with gap-colored lines (white=close, gray=far) |
+| **Ulam Mobius Spiral** | Square-grid spiral using prime index with gap-colored lines (white=close, gray=far) |
 
 **Parameters:**
-- **Prime Size** / **Non-Prime Size** - Controls dot sizes (Ulam Spiral, Sacks Spiral, Grid, Row, Prime Wheel, Hexagonal Lattice, Triangular Lattice, Fermat's Spiral)
+- **Prime Size** / **Non-Prime Size** - Controls dot sizes (Ulam Spiral, Sacks Spiral, Grid, Row, Prime Wheel, Hexagonal Lattice, Triangular Lattice, Fermat's Spiral, Sacks Mobius Spiral, Ulam Mobius Spiral)
 - **Show Numbers** - Display numbers on the visualization (when zoomed in)
 - **Modulo** - Ring modulus (Prime Wheel: try 6, 30, 210 to see different prime patterns)
 - **Zeros** - Number of zeros to display (Riemann Zeta: 1-20)
