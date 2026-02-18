@@ -1,5 +1,6 @@
 use crate::gui::draw_number::draw_number;
 use crate::gui::HOVER_THRESHOLD_DEFAULT;
+use crate::gui::MARGIN_SMALL;
 use crate::gui::SACKS_THETA_MULTIPLIER;
 use eframe::egui;
 
@@ -29,7 +30,7 @@ pub fn draw(app: &crate::gui::app::PrimeVisualizerApp, ui: &mut egui::Ui, rect: 
         max_r = max_r.max(r);
     }
 
-    let available = rect.width().min(rect.height()) / 2.0 - 20.0;
+    let available = rect.width().min(rect.height()) / 2.0 - MARGIN_SMALL;
     let scale = if max_r > 0.0 { available / max_r } else { 1.0 };
 
     let center_x = rect.center().x;
@@ -59,7 +60,7 @@ pub fn find_hovered(
         max_r = max_r.max(r);
     }
 
-    let available = rect.width().min(rect.height()) / 2.0 - 20.0;
+    let available = rect.width().min(rect.height()) / 2.0 - MARGIN_SMALL;
     let scale = if max_r > 0.0 { available / max_r } else { 1.0 };
 
     let center_x = rect.center().x;

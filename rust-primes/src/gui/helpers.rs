@@ -1,5 +1,10 @@
 use eframe::egui;
 
+use crate::gui::{
+    STROKE_WIDTH_LARGE, STROKE_WIDTH_MEDIUM, STROKE_WIDTH_SMALL, STROKE_WIDTH_TINY,
+    STROKE_WIDTH_XLARGE,
+};
+
 pub fn calculate_bounds(positions: &[(usize, f32, f32)]) -> (f32, f32, f32, f32) {
     let mut min_x = f32::MAX;
     let mut max_x = f32::MIN;
@@ -50,14 +55,14 @@ pub fn gap_color(gap: usize) -> egui::Color32 {
 
 pub fn gap_stroke_width(gap: usize) -> f32 {
     if gap <= 4 {
-        2.5
+        STROKE_WIDTH_XLARGE
     } else if gap <= 6 {
-        2.0
+        STROKE_WIDTH_LARGE
     } else if gap <= 10 {
-        1.5
+        STROKE_WIDTH_MEDIUM
     } else if gap <= 20 {
-        1.0
+        STROKE_WIDTH_SMALL
     } else {
-        0.5
+        STROKE_WIDTH_TINY
     }
 }

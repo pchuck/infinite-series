@@ -1,5 +1,6 @@
 use crate::gui::draw_number::draw_number;
 use crate::gui::HOVER_THRESHOLD_DEFAULT;
+use crate::gui::MARGIN_SMALL;
 use eframe::egui;
 
 pub fn generate_positions(max_n: usize) -> Vec<(usize, f32, f32)> {
@@ -62,7 +63,7 @@ pub fn draw(app: &crate::gui::app::PrimeVisualizerApp, ui: &mut egui::Ui, rect: 
         max_coord = max_coord.max(x.abs()).max(y.abs());
     }
 
-    let available = rect.width().min(rect.height()) / 2.0 - 20.0;
+    let available = rect.width().min(rect.height()) / 2.0 - MARGIN_SMALL;
     let scale = if max_coord > 0.0 {
         available / max_coord
     } else {
@@ -95,7 +96,7 @@ pub fn find_hovered(
         max_coord = max_coord.max(x.abs()).max(y.abs());
     }
 
-    let available = rect.width().min(rect.height()) / 2.0 - 20.0;
+    let available = rect.width().min(rect.height()) / 2.0 - MARGIN_SMALL;
     let scale = if max_coord > 0.0 {
         available / max_coord
     } else {
