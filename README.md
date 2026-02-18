@@ -4,7 +4,7 @@
 
 This project contains infinite series generators and visualizers, including:
 
-* A high-performance parallel prime generator in Rust [rust-primes](./rust-primes/README.md), with reference implementations in Python [python-primes](./python-primes) and Go [golang-primes](./golang-primes/README.md)
+* A high-performance parallel prime generator in Rust [rust-primes](./rust-primes/README.md), <br> with reference implementations in Python [python-primes](./python-primes) and Go [golang-primes](./golang-primes/README.md)
 * A very fast parallelized Miller-Rabin primality tester in Rust: [rust-miller-rabin](./rust-miller-rabin/README.md)
 * An optimized prime generator and visualizer implemented in Rust: [rust-primes visualizer](./rust-primes/README.md)
 
