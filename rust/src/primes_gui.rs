@@ -65,6 +65,28 @@ impl VisualizationType {
     fn uses_grid_size(self) -> bool {
         matches!(self, Self::PrimeDensityGradient)
     }
+
+    fn description(self) -> &'static str {
+        match self {
+            Self::UlamSpiral => "Classic diagonal prime pattern on a square grid spiral",
+            Self::SacksSpiral => "Archimedean spiral (r = sqrt(n)) revealing curved patterns",
+            Self::Grid => "Simple Cartesian square grid layout",
+            Self::Row => "Single horizontal number line",
+            Self::PrimeWheel => "Concentric rings colored by modulo residue",
+            Self::PrimeDensity => "Graph of pi(x) vs x/ln(x) - Prime Number Theorem",
+            Self::RiemannZeta => "Critical strip showing non-trivial zeros on sigma=0.5",
+            Self::HexagonalLattice => "6-direction symmetric spiral on hexagonal grid",
+            Self::TriangularLattice => "3-direction symmetric spiral on triangular grid",
+            Self::FermatsSpiral => "Phyllotaxis spiral with golden angle (sunflower pattern)",
+            Self::SacksMobiusSpiral => {
+                "Archimedean spiral with gap-colored lines between consecutive primes"
+            }
+            Self::UlamMobiusSpiral => {
+                "Square-grid spiral with gap-colored lines between consecutive primes"
+            }
+            Self::PrimeDensityGradient => "Heatmap grid showing local prime density",
+        }
+    }
 }
 
 impl std::fmt::Display for VisualizationType {
@@ -1435,12 +1457,24 @@ impl eframe::App for PrimeVisualizerApp {
 
                 ui.separator();
                 ui.label(
-                    egui::RichText::new(format!("Total Primes: {}", self.primes.len())).small(),
+                    egui::RichText::new(format!("Total Primes: {}", self.primes.len()))
+                        .font(egui::FontId::proportional(12.0)),
                 );
 
                 ui.label(
                     egui::RichText::new(format!("Showing: 1 to {}", self.config.max_number))
-                        .small(),
+                        .font(egui::FontId::proportional(12.0)),
+                );
+
+                ui.separator();
+                ui.label(
+                    egui::RichText::new(format!(
+                        "{}:\n{}",
+                        self.config.visualization,
+                        self.config.visualization.description()
+                    ))
+                    .font(egui::FontId::proportional(12.0))
+                    .italics(),
                 );
             });
 
