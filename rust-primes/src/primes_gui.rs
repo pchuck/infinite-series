@@ -160,6 +160,7 @@ struct PrimeVisualizerApp {
     primes_vec: Vec<usize>,
     max_pixels: usize,
     cached_max_number: usize,
+    hovered_number: Option<usize>,
 }
 
 impl PrimeVisualizerApp {
@@ -174,6 +175,7 @@ impl PrimeVisualizerApp {
             primes_vec,
             max_pixels: 1_000_000,
             cached_max_number: max_number,
+            hovered_number: None,
         }
     }
 
@@ -323,9 +325,32 @@ impl PrimeVisualizerApp {
         }
     }
 
-    fn draw_visualization(&self, ui: &mut egui::Ui, rect: egui::Rect) {
+    fn draw_visualization(&mut self, ui: &mut egui::Ui, rect: egui::Rect) {
         let painter = ui.painter();
         painter.rect_filled(rect, 0.0, self.config.background_color);
+
+        // Get mouse position and find hovered number
+        let mouse_pos = ui.input(|i| i.pointer.hover_pos());
+        self.hovered_number = None;
+
+        if let Some(mouse_pos) = mouse_pos {
+            self.hovered_number = match self.config.visualization {
+                VisualizationType::UlamSpiral => self.find_hovered_ulam_spiral(mouse_pos, rect),
+                VisualizationType::Grid => self.find_hovered_grid(mouse_pos, rect),
+                VisualizationType::Row => self.find_hovered_row(mouse_pos, rect),
+                VisualizationType::SacksSpiral => self.find_hovered_sacks_spiral(mouse_pos, rect),
+                VisualizationType::FermatsSpiral => {
+                    self.find_hovered_fermats_spiral(mouse_pos, rect)
+                }
+                VisualizationType::HexagonalLattice => {
+                    self.find_hovered_hexagonal_spiral(mouse_pos, rect)
+                }
+                VisualizationType::TriangularLattice => {
+                    self.find_hovered_triangle_spiral(mouse_pos, rect)
+                }
+                _ => None, // Other visualizations don't support hover yet
+            };
+        }
 
         match self.config.visualization {
             VisualizationType::UlamSpiral => self.draw_ulam_spiral(ui, rect),
@@ -846,6 +871,174 @@ impl PrimeVisualizerApp {
         }
     }
 
+    fn find_hovered_hexagonal_spiral(
+        &self,
+        mouse_pos: egui::Pos2,
+        rect: egui::Rect,
+    ) -> Option<usize> {
+        let positions = Self::generate_hexagonal_spiral_positions(self.config.max_number);
+        if positions.is_empty() {
+            return None;
+        }
+
+        let mut min_x = f32::MAX;
+        let mut max_x = f32::MIN;
+        let mut min_y = f32::MAX;
+        let mut max_y = f32::MIN;
+        for (_, x, y) in &positions {
+            min_x = min_x.min(*x);
+            max_x = max_x.max(*x);
+            min_y = min_y.min(*y);
+            max_y = max_y.max(*y);
+        }
+
+        let range_x = max_x - min_x;
+        let range_y = max_y - min_y;
+
+        let margin = 20.0;
+        let available_width = rect.width() - 2.0 * margin;
+        let available_height = rect.height() - 2.0 * margin;
+
+        let scale_x = if range_x > 0.0 {
+            available_width / range_x
+        } else {
+            1.0
+        };
+        let scale_y = if range_y > 0.0 {
+            available_height / range_y
+        } else {
+            1.0
+        };
+        let scale = scale_x.min(scale_y);
+
+        let center_x = rect.center().x;
+        let center_y = rect.center().y;
+
+        let mut closest_n: Option<usize> = None;
+        let mut min_distance_sq = f32::INFINITY;
+
+        for (n, x, y) in &positions {
+            let screen_x = center_x + (*x - (min_x + max_x) / 2.0) * scale;
+            let screen_y = center_y - (*y - (min_y + max_y) / 2.0) * scale;
+
+            let dx = mouse_pos.x - screen_x;
+            let dy = mouse_pos.y - screen_y;
+            let distance_sq = dx * dx + dy * dy;
+
+            if distance_sq < min_distance_sq && distance_sq < (scale * 0.7).powi(2) {
+                min_distance_sq = distance_sq;
+                closest_n = Some(*n);
+            }
+        }
+
+        closest_n
+    }
+
+    fn find_hovered_triangle_spiral(
+        &self,
+        mouse_pos: egui::Pos2,
+        rect: egui::Rect,
+    ) -> Option<usize> {
+        let positions = Self::generate_triangle_spiral_positions(self.config.max_number);
+        if positions.is_empty() {
+            return None;
+        }
+
+        let mut min_x = f32::MAX;
+        let mut max_x = f32::MIN;
+        let mut min_y = f32::MAX;
+        let mut max_y = f32::MIN;
+        for (_, x, y) in &positions {
+            min_x = min_x.min(*x);
+            max_x = max_x.max(*x);
+            min_y = min_y.min(*y);
+            max_y = max_y.max(*y);
+        }
+
+        let range_x = max_x - min_x;
+        let range_y = max_y - min_y;
+
+        let margin = 20.0;
+        let available_width = rect.width() - 2.0 * margin;
+        let available_height = rect.height() - 2.0 * margin;
+
+        let scale_x = if range_x > 0.0 {
+            available_width / range_x
+        } else {
+            1.0
+        };
+        let scale_y = if range_y > 0.0 {
+            available_height / range_y
+        } else {
+            1.0
+        };
+        let scale = scale_x.min(scale_y);
+
+        let center_x = rect.center().x;
+        let center_y = rect.center().y;
+
+        let mut closest_n: Option<usize> = None;
+        let mut min_distance_sq = f32::INFINITY;
+
+        for (n, x, y) in &positions {
+            let screen_x = center_x + (*x - (min_x + max_x) / 2.0) * scale;
+            let screen_y = center_y - (*y - (min_y + max_y) / 2.0) * scale;
+
+            let dx = mouse_pos.x - screen_x;
+            let dy = mouse_pos.y - screen_y;
+            let distance_sq = dx * dx + dy * dy;
+
+            if distance_sq < min_distance_sq && distance_sq < (scale * 0.7).powi(2) {
+                min_distance_sq = distance_sq;
+                closest_n = Some(*n);
+            }
+        }
+
+        closest_n
+    }
+
+    fn find_hovered_fermats_spiral(
+        &self,
+        mouse_pos: egui::Pos2,
+        rect: egui::Rect,
+    ) -> Option<usize> {
+        let positions = Self::generate_fermats_spiral_positions(self.config.max_number);
+        if positions.is_empty() {
+            return None;
+        }
+
+        let mut max_r = 0.0f32;
+        for (_, x, y) in &positions {
+            let r = (x * x + y * y).sqrt();
+            max_r = max_r.max(r);
+        }
+
+        let available = rect.width().min(rect.height()) / 2.0 - 20.0;
+        let scale = if max_r > 0.0 { available / max_r } else { 1.0 };
+
+        let center_x = rect.center().x;
+        let center_y = rect.center().y;
+
+        let mut closest_n: Option<usize> = None;
+        let mut min_distance_sq = f32::INFINITY;
+
+        for (n, x, y) in &positions {
+            let screen_x = center_x + *x * scale;
+            let screen_y = center_y - *y * scale;
+
+            let dx = mouse_pos.x - screen_x;
+            let dy = mouse_pos.y - screen_y;
+            let distance_sq = dx * dx + dy * dy;
+
+            if distance_sq < min_distance_sq && distance_sq < (scale * 0.7).powi(2) {
+                min_distance_sq = distance_sq;
+                closest_n = Some(*n);
+            }
+        }
+
+        closest_n
+    }
+
     fn generate_fermats_spiral_positions(max_n: usize) -> Vec<(usize, f32, f32)> {
         (1..=max_n)
             .map(|n| {
@@ -1175,6 +1368,49 @@ impl PrimeVisualizerApp {
         }
     }
 
+    fn find_hovered_ulam_spiral(&self, mouse_pos: egui::Pos2, rect: egui::Rect) -> Option<usize> {
+        let positions = Self::generate_ulam_spiral_positions(self.config.max_number);
+        if positions.is_empty() {
+            return None;
+        }
+
+        let mut max_coord = 0.0f32;
+        for (_, x, y) in &positions {
+            max_coord = max_coord.max(x.abs()).max(y.abs());
+        }
+
+        let available = rect.width().min(rect.height()) / 2.0 - 20.0;
+        let scale = if max_coord > 0.0 {
+            available / max_coord
+        } else {
+            1.0
+        };
+
+        let center_x = rect.center().x;
+        let center_y = rect.center().y;
+
+        // Find closest point to mouse position
+        let mut closest_n: Option<usize> = None;
+        let mut min_distance_sq = f32::INFINITY;
+
+        for (n, x, y) in &positions {
+            let screen_x = center_x + *x * scale;
+            let screen_y = center_y + *y * scale;
+
+            let dx = mouse_pos.x - screen_x;
+            let dy = mouse_pos.y - screen_y;
+            let distance_sq = dx * dx + dy * dy;
+
+            // Use a reasonable threshold (scaled by the point spacing)
+            if distance_sq < min_distance_sq && distance_sq < (scale * 0.7).powi(2) {
+                min_distance_sq = distance_sq;
+                closest_n = Some(*n);
+            }
+        }
+
+        closest_n
+    }
+
     fn draw_sacks_spiral(&self, ui: &mut egui::Ui, rect: egui::Rect) {
         let positions = Self::generate_sacks_spiral_positions(self.config.max_number);
 
@@ -1246,6 +1482,113 @@ impl PrimeVisualizerApp {
             let screen_x = start_x + *x * scale;
             self.draw_number(*n, screen_x, center_y, painter);
         }
+    }
+
+    fn find_hovered_grid(&self, mouse_pos: egui::Pos2, rect: egui::Rect) -> Option<usize> {
+        let positions = Self::generate_grid_positions(self.config.max_number);
+        if positions.is_empty() {
+            return None;
+        }
+
+        let side = (self.config.max_number as f32).sqrt() as usize + 1;
+        let available_width = rect.width() - 40.0;
+        let available_height = rect.height() - 40.0;
+        let scale = available_width.min(available_height) / side as f32;
+
+        let start_x = rect.left() + 20.0 + scale / 2.0;
+        let start_y = rect.top() + 20.0 + scale / 2.0;
+
+        // Find closest point
+        let mut closest_n: Option<usize> = None;
+        let mut min_distance_sq = f32::INFINITY;
+
+        for (n, x, y) in &positions {
+            let screen_x = start_x + *x * scale;
+            let screen_y = start_y + *y * scale;
+
+            let dx = mouse_pos.x - screen_x;
+            let dy = mouse_pos.y - screen_y;
+            let distance_sq = dx * dx + dy * dy;
+
+            if distance_sq < min_distance_sq && distance_sq < (scale * 0.7).powi(2) {
+                min_distance_sq = distance_sq;
+                closest_n = Some(*n);
+            }
+        }
+
+        closest_n
+    }
+
+    fn find_hovered_row(&self, mouse_pos: egui::Pos2, rect: egui::Rect) -> Option<usize> {
+        let positions = Self::generate_row_positions(self.config.max_number);
+        if positions.is_empty() {
+            return None;
+        }
+
+        let max_x = self.config.max_number as f32;
+        let available_width = rect.width() - 40.0;
+        let scale = available_width / max_x;
+
+        let center_y = rect.center().y;
+        let start_x = rect.left() + 20.0 + scale / 2.0;
+
+        // Find closest point
+        let mut closest_n: Option<usize> = None;
+        let mut min_distance_sq = f32::INFINITY;
+
+        for (n, x, _) in &positions {
+            let screen_x = start_x + *x * scale;
+
+            let dx = mouse_pos.x - screen_x;
+            let dy = mouse_pos.y - center_y;
+            let distance_sq = dx * dx + dy * dy;
+
+            if distance_sq < min_distance_sq && distance_sq < (scale * 0.7).powi(2) {
+                min_distance_sq = distance_sq;
+                closest_n = Some(*n);
+            }
+        }
+
+        closest_n
+    }
+
+    fn find_hovered_sacks_spiral(&self, mouse_pos: egui::Pos2, rect: egui::Rect) -> Option<usize> {
+        let positions = Self::generate_sacks_spiral_positions(self.config.max_number);
+        if positions.is_empty() {
+            return None;
+        }
+
+        let mut max_r = 0.0f32;
+        for (_, x, y) in &positions {
+            let r = (x * x + y * y).sqrt();
+            max_r = max_r.max(r);
+        }
+
+        let available = rect.width().min(rect.height()) / 2.0 - 20.0;
+        let scale = if max_r > 0.0 { available / max_r } else { 1.0 };
+
+        let center_x = rect.center().x;
+        let center_y = rect.center().y;
+
+        // Find closest point
+        let mut closest_n: Option<usize> = None;
+        let mut min_distance_sq = f32::INFINITY;
+
+        for (n, x, y) in &positions {
+            let screen_x = center_x + *x * scale;
+            let screen_y = center_y + *y * scale;
+
+            let dx = mouse_pos.x - screen_x;
+            let dy = mouse_pos.y - screen_y;
+            let distance_sq = dx * dx + dy * dy;
+
+            if distance_sq < min_distance_sq && distance_sq < (scale * 0.7).powi(2) {
+                min_distance_sq = distance_sq;
+                closest_n = Some(*n);
+            }
+        }
+
+        closest_n
     }
 }
 
@@ -1439,6 +1782,21 @@ impl eframe::App for PrimeVisualizerApp {
                     egui::RichText::new(format!("Showing: 1 to {}", self.config.max_number))
                         .font(egui::FontId::proportional(12.0)),
                 );
+
+                // Show hovered number
+                if let Some(n) = self.hovered_number {
+                    let is_prime = self.primes.contains(&n);
+                    let prime_status = if is_prime { " (prime)" } else { "" };
+                    ui.label(
+                        egui::RichText::new(format!("Hovered: {}{}", n, prime_status))
+                            .font(egui::FontId::proportional(12.0))
+                            .color(if is_prime {
+                                self.config.prime_color
+                            } else {
+                                egui::Color32::GRAY
+                            }),
+                    );
+                }
 
                 ui.separator();
                 ui.label(
