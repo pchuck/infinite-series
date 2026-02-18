@@ -2,6 +2,14 @@ use eframe::egui;
 use primes::generate_primes;
 use std::collections::HashSet;
 
+const MARGIN_SMALL: f32 = 20.0;
+const MARGIN_LARGE: f32 = 40.0;
+const SACKS_THETA_MULTIPLIER: f32 = 0.5;
+const SACKS_MOBIUS_RADIUS_MULTIPLIER: f32 = 0.8;
+const GOLDEN_ANGLE: f32 = 2.39996_f32;
+const HOVER_THRESHOLD_DEFAULT: f32 = 0.7;
+const HOVER_THRESHOLD_LARGE: f32 = 1.5;
+
 #[derive(Clone, Copy, PartialEq, Eq, Default)]
 enum VisualizationType {
     #[default]
@@ -288,7 +296,7 @@ impl PrimeVisualizerApp {
             .map(|n| {
                 let n_f = n as f32;
                 let r = n_f.sqrt();
-                let theta = n_f * 0.5;
+                let theta = n_f * SACKS_THETA_MULTIPLIER;
                 let x = r * theta.cos();
                 let y = r * theta.sin();
                 (n, x, y)
@@ -429,7 +437,7 @@ impl PrimeVisualizerApp {
         let modulo = self.config.modulo as f32;
         let max_ring = (self.config.max_number / self.config.modulo) as f32 + 2.0;
 
-        let available = rect.width().min(rect.height()) / 2.0 - 20.0;
+        let available = rect.width().min(rect.height()) / 2.0 - MARGIN_SMALL;
         let scale = if max_ring > 0.0 {
             available / max_ring
         } else {
@@ -770,7 +778,7 @@ impl PrimeVisualizerApp {
         let range_x = max_x - min_x;
         let range_y = max_y - min_y;
 
-        let margin = 20.0;
+        let margin = MARGIN_SMALL;
         let scale = Self::calculate_scale(rect, range_x, range_y, margin);
 
         let center_x = rect.center().x;
@@ -843,7 +851,7 @@ impl PrimeVisualizerApp {
         let range_x = max_x - min_x;
         let range_y = max_y - min_y;
 
-        let margin = 20.0;
+        let margin = MARGIN_SMALL;
         let scale = Self::calculate_scale(rect, range_x, range_y, margin);
 
         let center_x = rect.center().x;
@@ -871,7 +879,7 @@ impl PrimeVisualizerApp {
         let range_x = max_x - min_x;
         let range_y = max_y - min_y;
 
-        let margin = 20.0;
+        let margin = MARGIN_SMALL;
         let scale = Self::calculate_scale(rect, range_x, range_y, margin);
 
         let center_x = rect.center().x;
@@ -889,7 +897,9 @@ impl PrimeVisualizerApp {
             let distance_sq = dx * dx + dy * dy;
 
             // Larger threshold for hexagonal (1.5x) due to non-uniform spacing from hex directions
-            if distance_sq < min_distance_sq && distance_sq < (scale * 1.5).powi(2) {
+            if distance_sq < min_distance_sq
+                && distance_sq < (scale * HOVER_THRESHOLD_LARGE).powi(2)
+            {
                 min_distance_sq = distance_sq;
                 closest_n = Some(*n);
             }
@@ -912,7 +922,7 @@ impl PrimeVisualizerApp {
         let range_x = max_x - min_x;
         let range_y = max_y - min_y;
 
-        let margin = 20.0;
+        let margin = MARGIN_SMALL;
         let scale = Self::calculate_scale(rect, range_x, range_y, margin);
 
         let center_x = rect.center().x;
@@ -930,7 +940,9 @@ impl PrimeVisualizerApp {
             let distance_sq = dx * dx + dy * dy;
 
             // Larger threshold for triangular (1.5x) due to non-uniform spacing from triangle directions
-            if distance_sq < min_distance_sq && distance_sq < (scale * 1.5).powi(2) {
+            if distance_sq < min_distance_sq
+                && distance_sq < (scale * HOVER_THRESHOLD_LARGE).powi(2)
+            {
                 min_distance_sq = distance_sq;
                 closest_n = Some(*n);
             }
@@ -955,7 +967,7 @@ impl PrimeVisualizerApp {
             max_r = max_r.max(r);
         }
 
-        let available = rect.width().min(rect.height()) / 2.0 - 20.0;
+        let available = rect.width().min(rect.height()) / 2.0 - MARGIN_SMALL;
         let scale = if max_r > 0.0 { available / max_r } else { 1.0 };
 
         let center_x = rect.center().x;
@@ -972,7 +984,9 @@ impl PrimeVisualizerApp {
             let dy = mouse_pos.y - screen_y;
             let distance_sq = dx * dx + dy * dy;
 
-            if distance_sq < min_distance_sq && distance_sq < (scale * 0.7).powi(2) {
+            if distance_sq < min_distance_sq
+                && distance_sq < (scale * HOVER_THRESHOLD_DEFAULT).powi(2)
+            {
                 min_distance_sq = distance_sq;
                 closest_n = Some(*n);
             }
@@ -986,7 +1000,7 @@ impl PrimeVisualizerApp {
             .map(|n| {
                 let n_f = n as f32;
                 let r = n_f.sqrt();
-                let theta = n_f * 2.39996_f32; // golden angle in radians
+                let theta = n_f * GOLDEN_ANGLE;
                 let x = r * theta.cos();
                 let y = r * theta.sin();
                 (n, x, y)
@@ -1007,7 +1021,7 @@ impl PrimeVisualizerApp {
             max_r = max_r.max(r);
         }
 
-        let available = rect.width().min(rect.height()) / 2.0 - 20.0;
+        let available = rect.width().min(rect.height()) / 2.0 - MARGIN_SMALL;
         let scale = if max_r > 0.0 { available / max_r } else { 1.0 };
 
         let center_x = rect.center().x;
@@ -1050,8 +1064,8 @@ impl PrimeVisualizerApp {
             .enumerate()
             .map(|(idx, &n)| {
                 let idx_f = idx as f32;
-                let r = idx_f * 0.8; // linear radius increase
-                let theta = idx_f * 0.5; // fixed angle step
+                let r = idx_f * SACKS_MOBIUS_RADIUS_MULTIPLIER;
+                let theta = idx_f * SACKS_THETA_MULTIPLIER;
                 let x = r * theta.cos();
                 let y = r * theta.sin();
                 (n, x, y)
@@ -1063,7 +1077,7 @@ impl PrimeVisualizerApp {
             max_coord = max_coord.max(x.abs()).max(y.abs());
         }
 
-        let margin = 20.0;
+        let margin = MARGIN_SMALL;
         let available = rect.width().min(rect.height()) / 2.0 - margin;
         let scale = if max_coord > 0.0 {
             available / max_coord
@@ -1136,7 +1150,7 @@ impl PrimeVisualizerApp {
         let range_x = max_x - min_x;
         let range_y = max_y - min_y;
 
-        let margin = 20.0;
+        let margin = MARGIN_SMALL;
         let scale = Self::calculate_scale(rect, range_x, range_y, margin);
 
         let center_x = rect.center().x;
@@ -1267,7 +1281,7 @@ impl PrimeVisualizerApp {
             max_coord = max_coord.max(x.abs()).max(y.abs());
         }
 
-        let available = rect.width().min(rect.height()) / 2.0 - 20.0;
+        let available = rect.width().min(rect.height()) / 2.0 - MARGIN_SMALL;
 
         // Scale to always fit within bounds
         let scale = if max_coord > 0.0 {
@@ -1298,7 +1312,7 @@ impl PrimeVisualizerApp {
             max_coord = max_coord.max(x.abs()).max(y.abs());
         }
 
-        let available = rect.width().min(rect.height()) / 2.0 - 20.0;
+        let available = rect.width().min(rect.height()) / 2.0 - MARGIN_SMALL;
         let scale = if max_coord > 0.0 {
             available / max_coord
         } else {
@@ -1321,7 +1335,9 @@ impl PrimeVisualizerApp {
             let distance_sq = dx * dx + dy * dy;
 
             // Use a reasonable threshold (scaled by the point spacing)
-            if distance_sq < min_distance_sq && distance_sq < (scale * 0.7).powi(2) {
+            if distance_sq < min_distance_sq
+                && distance_sq < (scale * HOVER_THRESHOLD_DEFAULT).powi(2)
+            {
                 min_distance_sq = distance_sq;
                 closest_n = Some(*n);
             }
@@ -1343,7 +1359,7 @@ impl PrimeVisualizerApp {
             max_r = max_r.max(r);
         }
 
-        let available = rect.width().min(rect.height()) / 2.0 - 20.0;
+        let available = rect.width().min(rect.height()) / 2.0 - MARGIN_SMALL;
         let scale = if max_r > 0.0 { available / max_r } else { 1.0 };
 
         let center_x = rect.center().x;
@@ -1365,13 +1381,13 @@ impl PrimeVisualizerApp {
         }
 
         let side = (self.config.max_number as f32).sqrt() as usize + 1;
-        let available_width = rect.width() - 40.0;
-        let available_height = rect.height() - 40.0;
+        let available_width = rect.width() - MARGIN_LARGE;
+        let available_height = rect.height() - MARGIN_LARGE;
 
         let scale = available_width.min(available_height) / side as f32;
 
-        let start_x = rect.left() + 20.0 + scale / 2.0;
-        let start_y = rect.top() + 20.0 + scale / 2.0;
+        let start_x = rect.left() + MARGIN_SMALL + scale / 2.0;
+        let start_y = rect.top() + MARGIN_SMALL + scale / 2.0;
         let painter = ui.painter();
 
         for (n, x, y) in &positions {
@@ -1410,12 +1426,12 @@ impl PrimeVisualizerApp {
         }
 
         let side = (self.config.max_number as f32).sqrt() as usize + 1;
-        let available_width = rect.width() - 40.0;
-        let available_height = rect.height() - 40.0;
+        let available_width = rect.width() - MARGIN_LARGE;
+        let available_height = rect.height() - MARGIN_LARGE;
         let scale = available_width.min(available_height) / side as f32;
 
-        let start_x = rect.left() + 20.0 + scale / 2.0;
-        let start_y = rect.top() + 20.0 + scale / 2.0;
+        let start_x = rect.left() + MARGIN_SMALL + scale / 2.0;
+        let start_y = rect.top() + MARGIN_SMALL + scale / 2.0;
 
         // Find closest point
         let mut closest_n: Option<usize> = None;
@@ -1429,7 +1445,9 @@ impl PrimeVisualizerApp {
             let dy = mouse_pos.y - screen_y;
             let distance_sq = dx * dx + dy * dy;
 
-            if distance_sq < min_distance_sq && distance_sq < (scale * 0.7).powi(2) {
+            if distance_sq < min_distance_sq
+                && distance_sq < (scale * HOVER_THRESHOLD_DEFAULT).powi(2)
+            {
                 min_distance_sq = distance_sq;
                 closest_n = Some(*n);
             }
@@ -1462,7 +1480,9 @@ impl PrimeVisualizerApp {
             let dy = mouse_pos.y - center_y;
             let distance_sq = dx * dx + dy * dy;
 
-            if distance_sq < min_distance_sq && distance_sq < (scale * 0.7).powi(2) {
+            if distance_sq < min_distance_sq
+                && distance_sq < (scale * HOVER_THRESHOLD_DEFAULT).powi(2)
+            {
                 min_distance_sq = distance_sq;
                 closest_n = Some(*n);
             }
@@ -1483,7 +1503,7 @@ impl PrimeVisualizerApp {
             max_r = max_r.max(r);
         }
 
-        let available = rect.width().min(rect.height()) / 2.0 - 20.0;
+        let available = rect.width().min(rect.height()) / 2.0 - MARGIN_SMALL;
         let scale = if max_r > 0.0 { available / max_r } else { 1.0 };
 
         let center_x = rect.center().x;
@@ -1501,7 +1521,9 @@ impl PrimeVisualizerApp {
             let dy = mouse_pos.y - screen_y;
             let distance_sq = dx * dx + dy * dy;
 
-            if distance_sq < min_distance_sq && distance_sq < (scale * 0.7).powi(2) {
+            if distance_sq < min_distance_sq
+                && distance_sq < (scale * HOVER_THRESHOLD_DEFAULT).powi(2)
+            {
                 min_distance_sq = distance_sq;
                 closest_n = Some(*n);
             }
