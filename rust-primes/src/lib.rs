@@ -117,8 +117,15 @@ pub fn sieve_of_eratosthenes(n: usize) -> Vec<usize> {
         current += 2;
     }
 
-    // Extract primes
-    let mut primes = Vec::with_capacity(n / ((n as f64).ln() as usize).max(1));
+    // Extract primes with safe capacity estimation
+    // Using Prime Number Theorem: π(n) ≈ n / ln(n)
+    let ln_n = (n as f64).ln();
+    let estimated_capacity = if ln_n > 1.0 {
+        (n as f64 / ln_n) as usize
+    } else {
+        n
+    };
+    let mut primes = Vec::with_capacity(estimated_capacity.max(1));
     primes.push(2);
     for (i, &is_p) in sieve.iter().enumerate() {
         if is_p {

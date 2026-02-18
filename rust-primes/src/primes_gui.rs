@@ -158,24 +158,31 @@ struct PrimeVisualizerApp {
     config: VisualizerConfig,
     primes: HashSet<usize>,
     max_pixels: usize,
+    cached_max_number: usize,
 }
 
 impl PrimeVisualizerApp {
     fn new(config: VisualizerConfig) -> Self {
-        let primes = generate_primes(config.max_number, false, None, None, None);
+        let max_number = config.max_number;
+        let primes = generate_primes(max_number, false, None, None, None);
         let primes_set: HashSet<usize> = primes.into_iter().collect();
 
         Self {
             config,
             primes: primes_set,
             max_pixels: 1_000_000,
+            cached_max_number: max_number,
         }
     }
 
     fn regenerate_primes(&mut self) {
-        self.primes = generate_primes(self.config.max_number, false, None, None, None)
-            .into_iter()
-            .collect();
+        // Only regenerate if max_number has actually changed
+        if self.config.max_number != self.cached_max_number {
+            self.primes = generate_primes(self.config.max_number, false, None, None, None)
+                .into_iter()
+                .collect();
+            self.cached_max_number = self.config.max_number;
+        }
     }
 
     fn generate_ulam_spiral_positions(max_n: usize) -> Vec<(usize, f32, f32)> {
@@ -980,44 +987,15 @@ impl PrimeVisualizerApp {
             return;
         }
 
-        // Use Ulam spiral positions but with prime index
+        // Use Ulam spiral positions based on prime index (O(n) instead of O(n²))
+        // Generate positions only up to the number of primes we have
+        let spiral_positions = Self::generate_ulam_spiral_positions(primes_vec.len());
         let positions: Vec<(usize, f32, f32)> = primes_vec
             .iter()
             .enumerate()
             .map(|(idx, &n)| {
-                let idx_i32 = idx as i32;
-                let mut x = 0i32;
-                let mut y = 0i32;
-                let mut dx = 1i32;
-                let mut dy = 0i32;
-                let mut steps_in_direction = 1;
-                let mut steps_since_turn = 0;
-                let mut turn_count = 0;
-
-                for i in 0..=idx_i32 {
-                    if i == idx_i32 {
-                        break;
-                    }
-                    x += dx;
-                    y += dy;
-                    steps_since_turn += 1;
-                    if steps_since_turn == steps_in_direction {
-                        steps_since_turn = 0;
-                        let (new_dx, new_dy) = match turn_count % 4 {
-                            0 => (0, 1),
-                            1 => (-1, 0),
-                            2 => (0, -1),
-                            _ => (1, 0),
-                        };
-                        dx = new_dx;
-                        dy = new_dy;
-                        turn_count += 1;
-                        if turn_count % 2 == 0 {
-                            steps_in_direction += 1;
-                        }
-                    }
-                }
-                (n, x as f32, y as f32)
+                let (_, x, y) = spiral_positions[idx];
+                (n, x, y)
             })
             .collect();
 

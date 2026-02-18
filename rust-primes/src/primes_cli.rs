@@ -49,7 +49,13 @@ fn main() {
             std::io::stderr().flush().unwrap();
             let mut input = String::new();
             std::io::stdin().read_line(&mut input).unwrap();
-            input.trim().parse().unwrap_or(0)
+            match input.trim().parse() {
+                Ok(v) => v,
+                Err(e) => {
+                    eprintln!("Error: Invalid input '{}': {}", input.trim(), e);
+                    std::process::exit(1);
+                }
+            }
         }
     };
 

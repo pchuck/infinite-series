@@ -35,7 +35,11 @@ impl ProgressBar {
     }
 
     pub fn update(&self, delta: usize) {
-        let mut state = self.state.lock().unwrap();
+        let mut state = self.state.lock().unwrap_or_else(|poisoned| {
+            // Recover from poisoned mutex - log warning and continue
+            eprintln!("[WARN] Progress bar mutex poisoned, recovering state");
+            poisoned.into_inner()
+        });
         state.completed += delta;
         let completed = state.completed;
 
