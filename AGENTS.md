@@ -5,32 +5,32 @@ This project implements high-performance prime number generators in Python, Go, 
 ## Build/Lint/Test Commands
 
 ### Rust
-- **Build debug**: `cd rust && cargo build`
-- **Build release**: `cd rust && cargo build --release`
-- **Run tests**: `cd rust && cargo test`
-- **Single test**: `cd rust && cargo test test_sieve_small`
-- **Lint**: `cd rust && cargo clippy`
-- **Format**: `cd rust && cargo fmt`
-- **Run application**: `cd rust && ./target/release/primes -n 1000000 --quiet`
+- **Build debug**: `cd rust-primes && cargo build`
+- **Build release**: `cd rust-primes && cargo build --release`
+- **Run tests**: `cd rust-primes && cargo test`
+- **Single test**: `cd rust-primes && cargo test test_sieve_small`
+- **Lint**: `cd rust-primes && cargo clippy`
+- **Format**: `cd rust-primes && cargo fmt`
+- **Run application**: `cd rust-primes && ./target/release/primes -n 1000000 --quiet`
 
 ### Go
-- **Build**: `cd golang && go build -o primes ./cmd/primes`
-- **Run tests**: `cd golang && go test ./...`
-- **Single test**: `cd golang && go test -run TestGeneratePrimes`
-- **Lint**: `cd golang && go vet ./...`
-- **Format**: `cd golang && go fmt ./...`
-- **Run application**: `cd golang && ./primes --quiet 1000000`
+- **Build**: `cd golang-primes && go build -o primes ./cmd/primes`
+- **Run tests**: `cd golang-primes && go test ./...`
+- **Single test**: `cd golang-primes && go test -run TestGeneratePrimes`
+- **Lint**: `cd golang-primes && go vet ./...`
+- **Format**: `cd golang-primes && go fmt ./...`
+- **Run application**: `cd golang-primes && ./primes --quiet 1000000`
 
 ### Python
-- **Run tests**: `cd python && python -m pytest test_generators.py -v`
-- **Single test**: `cd python && python -m pytest test_generators.py::TestGeneratePrimes::test_small_input -v`
-- **Type check**: `cd python && mypy prime_generator.py test_generators.py`
-- **Lint**: `cd python && ruff check .`
-- **Run application**: `cd python && python prime_generator.py 1000000 --quiet`
+- **Run tests**: `cd python-primes && python -m pytest test_generators.py -v`
+- **Single test**: `cd python-primes && python -m pytest test_generators.py::TestGeneratePrimes::test_small_input -v`
+- **Type check**: `cd python-primes && mypy prime_generator.py test_generators.py`
+- **Lint**: `cd python-primes && ruff check .`
+- **Run application**: `cd python-primes && python prime_generator.py 1000000 --quiet`
 
 ### Makefile (Rust)
-- **All targets**: `cd rust && make help`
-- **Quick benchmark**: `cd rust && make run-release-quiet`
+- **All targets**: `cd rust-primes && make help`
+- **Quick benchmark**: `cd rust-primes && make run-release-quiet`
 
 ## Code Style Guidelines
 

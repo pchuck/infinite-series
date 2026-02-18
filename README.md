@@ -1,77 +1,56 @@
-# Prime Number Generator: Python vs Go vs Rust
+# Infinite series generators and visualizers
 
 ## Overview
 
-High-performance prime number generators in Python, Go, and Rust with consistent APIs and comparable algorithms. All three implementations use odd-only segmented sieves for optimal memory and cache utilization.
+This project infinite series sub-projects, including:
+
+* A high-performance parallel prime generator in Rust, with reference implementations also in Python and Go
+* A very fast parallel primality tester implemented in Rust: [Rust-Miller-Rabin](./rust-miller-rabin/README.md)
+* A fast prime number series generator and visualizer implemented in Rust: [Rust-Primes](./rust-primes/README.md)
+
+![Rust Prime Number Visualizer Screenshot](rust-primes/resources/rust_prime_visualizer_sacks_spiral_screenshot.png)
 
 ## Implementations
 
+All prime generators are implemented with consistent APIs and comparable algorithms
+
 | Language | Directory | Algorithm | Parallelism |
 |----------|-----------|-----------|-------------|
-| Python | `python/` | Classic/Segmented/Parallel Sieve | `multiprocessing.Pool` |
-| Go | `golang/` | Classic/Segmented/Parallel Sieve | Goroutines + channels |
-| Rust | `rust/` | Classic/Segmented/Parallel Sieve | `thread::scope` |
+| Python   | `python-primes/` | Classic/Segmented/Parallel Sieve | `multiprocessing.Pool` |
+| Go       | `golang-primes/` | Classic/Segmented/Parallel Sieve | Goroutines + channels  |
+| Rust     | `rust-primes/`   | Classic/Segmented/Parallel Sieve | `thread::scope`        |
 
 ## Quick Start
 
+### Rust GUI (Prime Visualizer)
 ```bash
-# Run all implementations (10M primes)
-make compare
-
-# Build all
-make build
-
-# Run all tests
-make test
-
-# Clean build artifacts
-make clean
+cd rust-primes
+cargo run --bin primes_gui
 ```
 
-## Running Individual Implementations
+### CLI Comparison (Prime Generators)
+
+```bash
+make compare    # Run all implementations (10M primes)
+make build      # Build all
+make test       # Run all tests
+make clean      # Clean build artifacts
+```
+
+## Running Individual Prime Generator Implementations
 
 ### Rust
 ```bash
-cd rust && make help
-make release          # Build optimized
-make run-release      # Run (n=1000)
+cd rust-primes && make help
+make release            # Build optimized
+make run-release        # Run (n=1000)
 make run-release-quiet  # Count primes < 1M
-make test             # Run tests
+make test               # Test
 ```
-
-### Rust GUI (Prime Visualizer)
-```bash
-cd rust
-cargo run --bin primes_gui    # Run GUI
-```
-
-The GUI provides interactive visualizations of prime number distributions:
-
-| Visualization | Description |
-|--------------|-------------|
-| **Ulam Spiral** | Classic diagonal prime pattern - primes form distinctive diagonal lines (Stanislaw Ulam, 1963) |
-| **Sacks Spiral** | Archimedean spiral (radius = sqrt(n)) - reveals curved patterns in prime distribution (Robert Sacks, 1994, numberspiral.com) |
-| **Grid** | Square grid layout starting from top-left - simple Cartesian view |
-| **Row** | Single horizontal number line - shows distribution along a line |
-| **Prime Wheel** | Concentric rings by modulo - primes cluster on spokes coprime to the modulus |
-| **Prime Density** | Graph of π(x) vs x/ln(x) - visualizes the Prime Number Theorem (prime counting function vs approximation) |
-| **Riemann Zeta** | Critical strip plot showing non-trivial zeros on the critical line σ=0.5 - visualizes the connection between prime distribution and the Riemann Hypothesis |
-| **Hexagonal Lattice** | Hexagonal lattice spiral - symmetric 6-direction spiral on hexagonal grid (60° intervals) |
-| **Triangular Lattice** | Triangular lattice spiral - symmetric 3-direction spiral on triangular grid (120° intervals) |
-| **Fermat's Spiral** | Phyllotaxis spiral - golden angle placement (r = sqrt(n), theta = n * 137.5°), same pattern as sunflower seed arrangements |
-| **Sacks Mobius Spiral** | Archimedean spiral using prime index with gap-colored lines (white=close, gray=far) |
-| **Ulam Mobius Spiral** | Square-grid spiral using prime index with gap-colored lines (white=close, gray=far) |
-| **Prime Density Gradient** | Heatmap grid showing local prime density across the number space |
-
-**Parameters:**
-- **Prime Size** / **Non-Prime Size** - Controls dot sizes (Ulam Spiral, Sacks Spiral, Grid, Row, Prime Wheel, Hexagonal Lattice, Triangular Lattice, Fermat's Spiral, Sacks Mobius Spiral, Ulam Mobius Spiral, Prime Density Gradient)
-- **Show Numbers** - Display numbers on the visualization (when zoomed in)
-- **Modulo** - Ring modulus (Prime Wheel: try 6, 30, 210 to see different prime patterns)
-- **Zeros** - Number of zeros to display (Riemann Zeta: 1-20)
 
 ### Go
 ```bash
-cd golang && make help
+cd golang-primes && make help
 make build            # Build binary
 make run-progress     # With progress bar
 make run-progress-parallel N=10000000  # Parallel + progress
@@ -80,7 +59,7 @@ make test             # Run tests
 
 ### Python
 ```bash
-cd python && make help
+cd python-primes && make help
 make run-progress     # With progress bar
 make run-progress-parallel  # Parallel + progress
 make test             # Run tests
@@ -98,23 +77,23 @@ python prime_generator.py 1000         # Python
 
 ### Count primes < 10M (quiet mode)
 ```bash
-./primes --quiet 10000000              # Go
-python prime_generator.py 10000000 --quiet  # Python
-./target/release/primes -n 10000000 --quiet # Rust
+./primes --quiet 10000000                       # Go
+python prime_generator.py 10000000 --quiet      # Python
+./target/release/primes -n 10000000 --quiet     # Rust
 ```
 
 ### With progress bar (10M)
 ```bash
-./primes --progress 10000000           # Go
-python prime_generator.py 10000000 --progress  # Python
-./target/release/primes -n 10000000 -P # Rust
+./primes --progress 10000000                    # Go
+python prime_generator.py 10000000 --progress   # Python
+./target/release/primes -n 10000000 -P          # Rust
 ```
 
 ### Parallel processing (100M)
 ```bash
-./primes --parallel --progress 100000000           # Go
-python prime_generator.py 100000000 --parallel --progress  # Python
-./target/release/primes -n 100000000 -p -P         # Rust
+./primes --parallel --progress 100000000                        # Go
+python prime_generator.py 100000000 --parallel --progress       # Python
+./target/release/primes -n 100000000 -p -P                      # Rust
 ```
 
 ## Algorithm Selection
@@ -240,13 +219,13 @@ infinite-series/
 ├── Makefile              # Top-level orchestration
 ├── AGENTS.md             # Guidelines for AI agents
 ├── README.md             # This file
-├── python/
+├── python-primes/
 │   ├── Makefile
 │   ├── prime_generator.py      # Core implementation
 │   ├── test_generators.py      # Test suite (37 tests)
 │   ├── performance_comparison.py
 │   └── parallel_comparison.py
-├── golang/
+├── golang-primes/
 │   ├── Makefile
 │   ├── cmd/primes/main.go      # CLI entry point
 │   ├── prime/
@@ -255,7 +234,7 @@ infinite-series/
 │   │   └── primes_benchmark_test.go
 │   └── internal/progress/
 │       └── progress.go         # Progress bar
-└── rust/
+└── rust-primes/
     ├── Makefile
     ├── Cargo.toml
     └── src/

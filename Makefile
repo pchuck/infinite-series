@@ -9,31 +9,31 @@ benchmark:
 	@echo "=========================================="
 	@echo ""
 	@echo "Rust:"
-	@cd rust && $(MAKE) run-release-parallel-progress N=$(COUNT)
+	@cd rust-primes && $(MAKE) run-release-parallel-progress N=$(COUNT)
 	@echo ""
 	@echo "Go:"
-	@cd golang && $(MAKE) run-progress-parallel N=$(COUNT)
+	@cd golang-primes && $(MAKE) run-progress-parallel N=$(COUNT)
 	@echo ""
 	@echo "Python:"
-	@cd python && $(MAKE) run-progress-parallel N=$(COUNT)
+	@cd python-primes && $(MAKE) run-progress-parallel N=$(COUNT)
 
 build:
 	@echo "Building all implementations..."
-	@cd rust && $(MAKE) release
-	@cd golang && $(MAKE) build
+	@cd rust-primes && $(MAKE) release
+	@cd golang-primes && $(MAKE) build
 	@echo "All implementations built."
 
 test:
 	@echo "Running all tests..."
-	@cd rust && $(MAKE) test
-	@cd golang && $(MAKE) test
-	@cd python && $(MAKE) test
+	@cd rust-primes && $(MAKE) test
+	@cd golang-primes && $(MAKE) test
+	@cd python-primes && $(MAKE) test
 	@echo "All tests completed."
 
 clean:
 	@echo "Cleaning all build artifacts..."
-	@cd rust && $(MAKE) clean
-	@cd golang && $(MAKE) clean
+	@cd rust-primes && $(MAKE) clean
+	@cd golang-primes && $(MAKE) clean
 	@echo "Cleaned."
 
 help:
@@ -48,6 +48,6 @@ help:
 	@echo "  make clean            - Remove build artifacts"
 	@echo ""
 	@echo "Language-specific targets:"
-	@echo "  cd rust && make help"
-	@echo "  cd golang && make help"
-	@echo "  cd python && make help"
+	@echo "  cd rust-primes && make help"
+	@echo "  cd golang-primes && make help"
+	@echo "  cd python-primes && make help"
