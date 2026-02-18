@@ -1,0 +1,70 @@
+//! Number rendering for point-based visualizations
+
+use crate::gui::config::VisualizerConfig;
+use eframe::egui;
+use std::collections::HashSet;
+
+pub fn draw_number(
+    n: usize,
+    x: f32,
+    y: f32,
+    painter: &egui::Painter,
+    primes: &HashSet<usize>,
+    config: &VisualizerConfig,
+) {
+    let is_prime = primes.contains(&n);
+
+    let is_twin_prime = is_prime
+        && config.show_twin_primes
+        && (primes.contains(&(n + 2)) || (n > 2 && primes.contains(&(n - 2))));
+
+    let is_cousin_prime = is_prime
+        && config.show_cousin_primes
+        && !is_twin_prime
+        && (primes.contains(&(n + 4)) || (n > 4 && primes.contains(&(n - 4))));
+
+    let is_sexy_prime = is_prime
+        && config.show_sexy_primes
+        && !is_twin_prime
+        && !is_cousin_prime
+        && (primes.contains(&(n + 6)) || (n > 6 && primes.contains(&(n - 6))));
+
+    let size = if is_prime {
+        config.prime_size as f32
+    } else {
+        config.non_prime_size as f32
+    };
+
+    if size == 0.0 {
+        return;
+    }
+
+    let color = if is_twin_prime {
+        config.twin_color
+    } else if is_cousin_prime {
+        config.cousin_color
+    } else if is_sexy_prime {
+        config.sexy_color
+    } else if is_prime {
+        config.prime_color
+    } else {
+        config.non_prime_color
+    };
+
+    let radius = size / 2.0;
+    painter.circle_filled(egui::Pos2::new(x, y), radius.max(0.5), color);
+
+    let show_text = config.show_numbers && size >= 6.0 && config.max_number <= 10000;
+
+    if show_text {
+        let text = format!("{}", n);
+        let font_id = egui::FontId::proportional(size * 0.6);
+        painter.text(
+            egui::Pos2::new(x, y),
+            egui::Align2::CENTER_CENTER,
+            text,
+            font_id,
+            config.background_color,
+        );
+    }
+}

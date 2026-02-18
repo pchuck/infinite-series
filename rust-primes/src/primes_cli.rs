@@ -46,10 +46,22 @@ fn main() {
         Some(v) => v,
         None => {
             eprint!("Enter upper bound (n): ");
-            std::io::stderr().flush().unwrap();
+            if let Err(e) = std::io::stderr().flush() {
+                eprintln!("Error: Failed to flush stderr: {}", e);
+                std::process::exit(1);
+            }
             let mut input = String::new();
-            std::io::stdin().read_line(&mut input).unwrap();
-            input.trim().parse().unwrap_or(0)
+            if let Err(e) = std::io::stdin().read_line(&mut input) {
+                eprintln!("Error: Failed to read input: {}", e);
+                std::process::exit(1);
+            }
+            match input.trim().parse() {
+                Ok(v) => v,
+                Err(e) => {
+                    eprintln!("Error: Invalid input '{}': {}", input.trim(), e);
+                    std::process::exit(1);
+                }
+            }
         }
     };
 
