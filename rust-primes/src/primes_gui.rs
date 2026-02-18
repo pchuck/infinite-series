@@ -888,7 +888,8 @@ impl PrimeVisualizerApp {
             let dy = mouse_pos.y - screen_y;
             let distance_sq = dx * dx + dy * dy;
 
-            if distance_sq < min_distance_sq && distance_sq < (scale * 0.7).powi(2) {
+            // Larger threshold for hexagonal (1.5x) due to non-uniform spacing from hex directions
+            if distance_sq < min_distance_sq && distance_sq < (scale * 1.5).powi(2) {
                 min_distance_sq = distance_sq;
                 closest_n = Some(*n);
             }
@@ -928,7 +929,8 @@ impl PrimeVisualizerApp {
             let dy = mouse_pos.y - screen_y;
             let distance_sq = dx * dx + dy * dy;
 
-            if distance_sq < min_distance_sq && distance_sq < (scale * 0.7).powi(2) {
+            // Larger threshold for triangular (1.5x) due to non-uniform spacing from triangle directions
+            if distance_sq < min_distance_sq && distance_sq < (scale * 1.5).powi(2) {
                 min_distance_sq = distance_sq;
                 closest_n = Some(*n);
             }
