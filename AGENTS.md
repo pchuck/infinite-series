@@ -11,7 +11,7 @@ This project implements high-performance prime number generators in Python, Go, 
 - **Single test**: `cd rust-primes && cargo test test_sieve_small`
 - **Lint**: `cd rust-primes && cargo clippy`
 - **Format**: `cd rust-primes && cargo fmt`
-- **Run application**: `cd rust-primes && ./target/release/primes -n 1000000 --quiet`
+- **Run application**: `cd rust-primes && ./target/release/primes_cli -n 1000000 --quiet`
 
 ### Go
 - **Build**: `cd golang-primes && go build -o primes ./cmd/primes`
