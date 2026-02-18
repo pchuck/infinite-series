@@ -138,49 +138,15 @@ impl eframe::App for PrimeVisualizerApp {
                 ui.separator();
                 ui.label("Display");
 
-                ui.label("Prime size:");
-                ui.add(egui::Slider::new(&mut self.config.prime_size, 1..=20));
+                if self.config.visualization.uses_point_rendering() {
+                    ui.label("Prime size:");
+                    ui.add(egui::Slider::new(&mut self.config.prime_size, 1..=20));
 
-                ui.label("Non-prime size:");
-                ui.add(egui::Slider::new(&mut self.config.non_prime_size, 0..=10));
+                    ui.label("Non-prime size:");
+                    ui.add(egui::Slider::new(&mut self.config.non_prime_size, 0..=10));
 
-                ui.checkbox(&mut self.config.show_numbers, "Show numbers");
+                    ui.checkbox(&mut self.config.show_numbers, "Show numbers");
 
-                ui.separator();
-                ui.label("Colors");
-
-                ui.label("Prime:");
-                ui.color_edit_button_srgba(&mut self.config.prime_color);
-
-                ui.label("Non-prime:");
-                ui.color_edit_button_srgba(&mut self.config.non_prime_color);
-
-                ui.label("Background:");
-                ui.color_edit_button_srgba(&mut self.config.background_color);
-
-                if self.config.visualization == VisualizationType::PrimeWheel {
-                    ui.separator();
-                    ui.label("Prime Wheel");
-                    ui.add(egui::Slider::new(&mut self.config.modulo, 2..=60).text("Modulo"));
-                }
-
-                if self.config.visualization == VisualizationType::PrimeDensityGradient {
-                    ui.separator();
-                    ui.label("Density Grid");
-                    ui.add(
-                        egui::Slider::new(&mut self.config.grid_size, 10..=100).text("Grid size"),
-                    );
-                }
-
-                if self.config.visualization == VisualizationType::RiemannZeta {
-                    ui.separator();
-                    ui.label("Riemann Zeta");
-                    ui.add(
-                        egui::Slider::new(&mut self.config.num_zeros, 1..=20).text("Zeros to show"),
-                    );
-                }
-
-                if self.config.visualization.supports_twin_primes() {
                     ui.separator();
                     ui.label("Prime Pairs");
 
@@ -198,6 +164,40 @@ impl eframe::App for PrimeVisualizerApp {
                     if self.config.show_sexy_primes {
                         ui.color_edit_button_srgba(&mut self.config.sexy_color);
                     }
+                }
+
+                ui.separator();
+                ui.label("Colors");
+
+                ui.label("Prime:");
+                ui.color_edit_button_srgba(&mut self.config.prime_color);
+
+                ui.label("Non-prime:");
+                ui.color_edit_button_srgba(&mut self.config.non_prime_color);
+
+                ui.label("Background:");
+                ui.color_edit_button_srgba(&mut self.config.background_color);
+
+                if self.config.visualization.uses_modulo() {
+                    ui.separator();
+                    ui.label("Prime Wheel");
+                    ui.add(egui::Slider::new(&mut self.config.modulo, 2..=60).text("Modulo"));
+                }
+
+                if self.config.visualization.uses_grid_size() {
+                    ui.separator();
+                    ui.label("Density Grid");
+                    ui.add(
+                        egui::Slider::new(&mut self.config.grid_size, 10..=100).text("Grid size"),
+                    );
+                }
+
+                if self.config.visualization.uses_num_zeros() {
+                    ui.separator();
+                    ui.label("Riemann Zeta");
+                    ui.add(
+                        egui::Slider::new(&mut self.config.num_zeros, 1..=20).text("Zeros to show"),
+                    );
                 }
 
                 ui.separator();

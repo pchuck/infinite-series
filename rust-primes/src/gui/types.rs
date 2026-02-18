@@ -17,8 +17,7 @@ pub enum VisualizationType {
 }
 
 impl VisualizationType {
-    #[allow(dead_code)]
-    pub fn uses_point_size(self) -> bool {
+    pub fn uses_point_rendering(self) -> bool {
         matches!(
             self,
             Self::UlamSpiral
@@ -31,38 +30,17 @@ impl VisualizationType {
                 | Self::FermatsSpiral
                 | Self::SacksMobiusSpiral
                 | Self::UlamMobiusSpiral
-                | Self::PrimeDensityGradient
         )
     }
 
-    #[allow(dead_code)]
-    pub fn supports_twin_primes(self) -> bool {
-        matches!(
-            self,
-            Self::UlamSpiral
-                | Self::SacksSpiral
-                | Self::Grid
-                | Self::Row
-                | Self::HexagonalLattice
-                | Self::TriangularLattice
-                | Self::FermatsSpiral
-                | Self::SacksMobiusSpiral
-                | Self::UlamMobiusSpiral
-                | Self::PrimeDensityGradient
-        )
-    }
-
-    #[allow(dead_code)]
     pub fn uses_modulo(self) -> bool {
         matches!(self, Self::PrimeWheel)
     }
 
-    #[allow(dead_code)]
     pub fn uses_num_zeros(self) -> bool {
         matches!(self, Self::RiemannZeta)
     }
 
-    #[allow(dead_code)]
     pub fn uses_grid_size(self) -> bool {
         matches!(self, Self::PrimeDensityGradient)
     }
