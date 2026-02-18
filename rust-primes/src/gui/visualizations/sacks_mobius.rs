@@ -1,3 +1,5 @@
+//! Sacks Mobius spiral visualization
+
 use crate::gui::draw_number::draw_number;
 use crate::gui::helpers::{gap_color, gap_stroke_width};
 use crate::gui::MARGIN_SMALL;

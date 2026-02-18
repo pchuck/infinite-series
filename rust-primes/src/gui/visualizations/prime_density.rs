@@ -1,3 +1,5 @@
+//! Prime density graph visualization
+
 use crate::gui::MARGIN_SMALL;
 use eframe::egui;
 

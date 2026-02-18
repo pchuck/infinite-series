@@ -1,3 +1,5 @@
+//! Fermat's spiral visualization
+
 use crate::gui::draw_number::draw_number;
 use crate::gui::GOLDEN_ANGLE;
 use crate::gui::HOVER_THRESHOLD_DEFAULT;

@@ -1,3 +1,5 @@
+//! Number rendering for point-based visualizations
+
 use crate::gui::config::VisualizerConfig;
 use eframe::egui;
 use std::collections::HashSet;

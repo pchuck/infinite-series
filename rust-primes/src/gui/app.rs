@@ -1,3 +1,5 @@
+//! Main application and UI
+
 use eframe::egui;
 use primes::generate_primes;
 use std::collections::HashSet;

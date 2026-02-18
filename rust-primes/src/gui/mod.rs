@@ -1,3 +1,5 @@
+//! Prime visualization GUI modules
+
 pub mod app;
 pub mod config;
 pub mod draw_number;

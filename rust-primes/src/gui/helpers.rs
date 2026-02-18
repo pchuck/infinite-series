@@ -1,3 +1,5 @@
+//! Shared helper functions for visualizations
+
 use eframe::egui;
 
 use crate::gui::{

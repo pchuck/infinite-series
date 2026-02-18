@@ -1,3 +1,5 @@
+//! Prime wheel visualization
+
 use crate::gui::draw_number::draw_number;
 use crate::gui::MARGIN_SMALL;
 use eframe::egui;

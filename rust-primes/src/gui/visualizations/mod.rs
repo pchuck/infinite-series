@@ -1,3 +1,5 @@
+//! Individual visualization modules
+
 pub mod density_gradient;
 pub mod fermats;
 pub mod grid;

@@ -1,3 +1,5 @@
+//! Visualization configuration
+
 use crate::gui::VisualizationType;
 use eframe::egui;
 

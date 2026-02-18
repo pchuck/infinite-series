@@ -1,3 +1,5 @@
+//! Grid visualization
+
 use crate::gui::draw_number::draw_number;
 use crate::gui::HOVER_THRESHOLD_DEFAULT;
 use crate::gui::MARGIN_SMALL;

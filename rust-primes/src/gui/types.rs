@@ -1,3 +1,5 @@
+//! Visualization types and their UI properties
+
 #[derive(Clone, Copy, PartialEq, Eq, Default)]
 pub enum VisualizationType {
     #[default]

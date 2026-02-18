@@ -1,3 +1,5 @@
+//! Ulam Mobius spiral visualization
+
 use crate::gui::draw_number::draw_number;
 use crate::gui::helpers::{calculate_bounds, calculate_scale, gap_color, gap_stroke_width};
 use crate::gui::visualizations::ulam::generate_positions as generate_ulam_positions;

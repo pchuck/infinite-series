@@ -1,3 +1,5 @@
+//! Triangular lattice visualization
+
 use crate::gui::draw_number::draw_number;
 use crate::gui::helpers::{calculate_bounds, calculate_scale};
 use crate::gui::HOVER_THRESHOLD_LARGE;
