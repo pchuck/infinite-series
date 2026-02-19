@@ -10,6 +10,11 @@ clap = { version = "4.4", features = ["derive"] }
 eframe = "0.31"
 
 [dev-dependencies]
+criterion = { version = "0.5", features = ["html_reports"] }
+
+[[bench]]
+name = "prime_benchmarks"
+harness = false
 
 [profile.release]
 opt-level = 3

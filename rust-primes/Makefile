@@ -1,4 +1,4 @@
-.PHONY: all build release run run-release test clean help
+.PHONY: all build release run run-release test clean help bench bench-quick bench-report
 
 # Default target
 all: build
@@ -51,6 +51,29 @@ setup:
 	rustup update stable 2>/dev/null || true
 	@echo "Rust setup complete."
 
+bench:
+	cargo bench
+
+bench-quick:
+	@echo "Running quick benchmarks (n <= 1M)..."
+	cargo bench --bench prime_benchmarks -- --test n_100000 n_1000000
+
+bench-report:
+	@echo "Opening benchmark report..."
+	@if command -v xdg-open >/dev/null 2>&1; then \
+		xdg-open target/criterion/report/index.html; \
+	elif command -v open >/dev/null 2>&1; then \
+		open target/criterion/report/index.html; \
+	else \
+		echo "Report available at: target/criterion/report/index.html"; \
+	fi
+
+bench-save-baseline:
+	cargo bench --bench prime_benchmarks -- --save-baseline reference
+
+bench-check:
+	cargo bench --bench prime_benchmarks -- --baseline reference --noise-threshold 0.09
+
 help:
 	@echo "Rust Prime Generator - Makefile Targets"
 	@echo ""
@@ -63,6 +86,11 @@ help:
 	@echo "  make run-release-parallel_cli - Run parallel + progress(10M)"
 	@echo "  make test                     - Run all tests"
 	@echo "  make test-verbose             - Run tests with output"
+	@echo "  make bench                    - Run performance benchmarks"
+	@echo "  make bench-quick              - Run quick benchmarks (n <= 1M)"
+	@echo "  make bench-report             - Open benchmark HTML report"
+	@echo "  make bench-save-baseline      - Save benchmark baseline"
+	@echo "  make bench-check              - Run benchmark against baseline"
 	@echo "  make clean                    - Clean build artifacts"
 	@echo "  make rebuild                  - Clean and rebuild"
 	@echo "  make setup                    - Check/install Rust"
