@@ -7,6 +7,8 @@ use std::time::Instant;
 use primes::{generate_primes, DEFAULT_SEGMENT_SIZE, PARALLEL_THRESHOLD};
 use progress::ProgressBar;
 
+pub const DEFAULT_PROGRESS_SEGMENT_SIZE: usize = 100_000;
+
 mod progress;
 
 /// Prime Number Generator - High-performance CLI
@@ -84,7 +86,7 @@ fn main() {
     });
 
     let segment_size_for_progress = if args.progress && args.segment == DEFAULT_SEGMENT_SIZE {
-        100_000
+        DEFAULT_PROGRESS_SEGMENT_SIZE
     } else {
         args.segment
     };
