@@ -11,6 +11,8 @@ eframe = "0.31"
 
 [dev-dependencies]
 criterion = { version = "0.5", features = ["html_reports"] }
+assert_cmd = "2.0"
+predicates = "3.1"
 
 [[bench]]
 name = "prime_benchmarks"

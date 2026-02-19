@@ -39,6 +39,9 @@ test:
 test-verbose:
 	cargo test -- --nocapture
 
+test-integration:
+	cargo test --test cli_integration
+
 clean:
 	cargo clean
 
@@ -86,6 +89,7 @@ help:
 	@echo "  make run-release-parallel_cli - Run parallel + progress(10M)"
 	@echo "  make test                     - Run all tests"
 	@echo "  make test-verbose             - Run tests with output"
+	@echo "  make test-integration         - Run integration tests only"
 	@echo "  make bench                    - Run performance benchmarks"
 	@echo "  make bench-quick              - Run quick benchmarks (n <= 1M)"
 	@echo "  make bench-report             - Open benchmark HTML report"
