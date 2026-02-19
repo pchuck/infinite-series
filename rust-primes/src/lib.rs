@@ -266,7 +266,7 @@ pub fn parallel_segmented_sieve(
             match handle.join() {
                 Ok(worker_primes) => all_primes.extend(worker_primes),
                 Err(_) => {
-                    eprintln!("[ERROR] Worker thread panicked during prime generation");
+                    panic!("Worker thread panicked during prime generation");
                 }
             }
         }
