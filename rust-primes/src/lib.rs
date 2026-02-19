@@ -15,6 +15,7 @@ pub const PARALLEL_THRESHOLD: usize = 100_000_000;
 
 /// Estimate the number of primes up to n using the Prime Number Theorem.
 /// Returns a safe capacity for Vec::with_capacity (at least 1).
+#[must_use]
 pub fn estimate_prime_count(n: usize) -> usize {
     if n <= 2 {
         return 1;
@@ -102,6 +103,7 @@ fn sieve_segment_odd_only(
 
 /// Classic Sieve of Eratosthenes (odd-only)
 /// Best for n < 1,000,000
+#[must_use]
 pub fn sieve_of_eratosthenes(n: usize) -> Vec<usize> {
     if n <= 2 {
         return Vec::new();
@@ -147,6 +149,7 @@ pub fn sieve_of_eratosthenes(n: usize) -> Vec<usize> {
 /// Segmented Sieve of Eratosthenes (odd-only)
 /// Best for n >= 1,000,000
 /// Uses O(sqrt(n) + segment_size) memory
+#[must_use]
 pub fn segmented_sieve(
     n: usize,
     segment_size: usize,
@@ -193,6 +196,7 @@ pub fn segmented_sieve(
 /// Parallel Segmented Sieve (odd-only)
 /// Best for n >= 100,000,000
 /// Uses multiple threads for concurrent segment processing
+#[must_use]
 pub fn parallel_segmented_sieve(
     n: usize,
     workers: usize,
@@ -276,6 +280,7 @@ pub fn parallel_segmented_sieve(
 }
 
 /// Auto-select algorithm based on n
+#[must_use]
 pub fn generate_primes(
     n: usize,
     parallel: bool,
