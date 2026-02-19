@@ -32,7 +32,7 @@ struct Args {
     #[arg(short, long)]
     workers: Option<usize>,
 
-    /// Segment size for segmented sieve
+    /// Segment size for segmented sieve (must be > 0)
     #[arg(long, default_value = "1000000")]
     segment: usize,
 
@@ -43,6 +43,11 @@ struct Args {
 
 fn main() {
     let args = Args::parse();
+
+    if args.segment == 0 {
+        eprintln!("Error: --segment must be greater than 0");
+        std::process::exit(1);
+    }
 
     let n = match args.n {
         Some(v) => v,
