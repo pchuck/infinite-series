@@ -1,4 +1,4 @@
-# Rust Prime Number Generator and Visualizer
+# Rust Prime Number Generator
 
 ## Overview
 
@@ -35,10 +35,7 @@ make test               # Test
 cargo build
 
 # Run CLI
-cargo run --bin primes_cli -- -n 1000000 --quiet
-
-# Run GUI
-cargo run --bin primes_gui
+cargo run -- -n 1000000 --quiet
 
 # Run tests
 cargo test
@@ -48,16 +45,16 @@ cargo test
 
 ```bash
 # Generate primes < 1000
-cargo run --bin primes_cli -- 1000
+cargo run -- 1000
 
 # Count primes < 1M (quiet mode)
-cargo run --bin primes_cli -- -n 1000000 --quiet
+cargo run -- -n 1000000 --quiet
 
 # With progress bar
-cargo run --bin primes_cli -- -n 10000000 -P
+cargo run -- -n 10000000 -P
 
 # Parallel processing (for n >= 100M)
-cargo run --bin primes_cli -- -n 100000000 -p -P
+cargo run -- -n 100000000 -p -P
 ```
 
 ### CLI Options
@@ -71,9 +68,9 @@ cargo run --bin primes_cli -- -n 100000000 -p -P
 | `--segment` | Segment size for segmented sieve |
 | `-q, --quiet` | Only print count (no prime list) |
 
-## GUI Usage
+## GUI Visualization
 
-Run `cargo run --bin primes_gui` to launch the interactive visualization.
+For interactive visualization, see [../rust-gui](../rust-gui/README.md).
 
 ## Algorithm Selection
 
@@ -88,13 +85,12 @@ Auto-selects the best algorithm based on input size:
 ## Project Structure
 
 ```
-rust/
+rust-primes/
 ├── Cargo.toml
 ├── Makefile
 └── src/
     ├── lib.rs              # Core implementation (Sieve algorithms)
     ├── primes_cli.rs       # CLI entry point
-    ├── primes_gui.rs       # GUI visualization
     └── progress.rs         # Progress bar
 ```
 
@@ -106,10 +102,6 @@ cargo build
 
 # Release build (optimized)
 cargo build --release
-
-# Run specific binary
-cargo run --bin primes_cli
-cargo run --bin primes_gui
 ```
 
 ## Testing
