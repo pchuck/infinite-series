@@ -29,8 +29,14 @@ pub fn draw(app: &crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: egui
 
     let scale = available_width.min(available_height) / side as f32;
 
-    let start_x = rect.left() + MARGIN_SMALL + scale / 2.0;
-    let start_y = rect.top() + MARGIN_SMALL + scale / 2.0;
+    // Center the grid
+    let grid_width = side as f32 * scale;
+    let grid_height = side as f32 * scale;
+    let offset_x = (available_width - grid_width) / 2.0;
+    let offset_y = (available_height - grid_height) / 2.0;
+
+    let start_x = rect.left() + MARGIN_SMALL + offset_x + scale / 2.0;
+    let start_y = rect.top() + MARGIN_SMALL + offset_y + scale / 2.0;
     let painter = ui.painter();
 
     for (n, x, y) in &positions {
@@ -63,8 +69,14 @@ pub fn find_hovered(
     let available_height = rect.height() - 2.0 * MARGIN_SMALL;
     let scale = available_width.min(available_height) / side as f32;
 
-    let start_x = rect.left() + MARGIN_SMALL + scale / 2.0;
-    let start_y = rect.top() + MARGIN_SMALL + scale / 2.0;
+    // Center the grid (same as draw)
+    let grid_width = side as f32 * scale;
+    let grid_height = side as f32 * scale;
+    let offset_x = (available_width - grid_width) / 2.0;
+    let offset_y = (available_height - grid_height) / 2.0;
+
+    let start_x = rect.left() + MARGIN_SMALL + offset_x + scale / 2.0;
+    let start_y = rect.top() + MARGIN_SMALL + offset_y + scale / 2.0;
 
     let mut closest_n: Option<usize> = None;
     let mut min_distance_sq = f32::INFINITY;
