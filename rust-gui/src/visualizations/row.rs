@@ -20,12 +20,8 @@ pub fn draw(app: &crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: egui
     let available_width = rect.width() - 2.0 * MARGIN_SMALL;
     let scale = available_width / max_x;
 
-    // Center horizontally
-    let row_width = max_x * scale;
-    let offset_x = (available_width - row_width) / 2.0;
-
     let center_y = rect.center().y;
-    let start_x = rect.left() + MARGIN_SMALL + offset_x + scale / 2.0;
+    let start_x = rect.left() + MARGIN_SMALL + scale / 2.0;
     let painter = ui.painter();
 
     for (n, x, _) in &positions {
@@ -56,12 +52,8 @@ pub fn find_hovered(
     let available_width = rect.width() - 2.0 * MARGIN_SMALL;
     let scale = available_width / max_x;
 
-    // Center horizontally (same as draw)
-    let row_width = max_x * scale;
-    let offset_x = (available_width - row_width) / 2.0;
-
     let center_y = rect.center().y;
-    let start_x = rect.left() + MARGIN_SMALL + offset_x + scale / 2.0;
+    let start_x = rect.left() + MARGIN_SMALL + scale / 2.0;
 
     let mut closest_n: Option<usize> = None;
     let mut min_distance_sq = f32::INFINITY;
