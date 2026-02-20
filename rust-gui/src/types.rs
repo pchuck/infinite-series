@@ -5,6 +5,21 @@ pub enum SeriesType {
     #[default]
     Primes,
     Fibonacci,
+    Lucas,
+    Triangular,
+    Collatz,
+    PowersOf2,
+}
+
+impl SeriesType {
+    pub const ALL: &'static [SeriesType] = &[
+        SeriesType::Primes,
+        SeriesType::Fibonacci,
+        SeriesType::Lucas,
+        SeriesType::Triangular,
+        SeriesType::Collatz,
+        SeriesType::PowersOf2,
+    ];
 }
 
 impl std::fmt::Display for SeriesType {
@@ -12,6 +27,10 @@ impl std::fmt::Display for SeriesType {
         match self {
             SeriesType::Primes => write!(f, "Primes"),
             SeriesType::Fibonacci => write!(f, "Fibonacci"),
+            SeriesType::Lucas => write!(f, "Lucas"),
+            SeriesType::Triangular => write!(f, "Triangular"),
+            SeriesType::Collatz => write!(f, "Collatz"),
+            SeriesType::PowersOf2 => write!(f, "Powers of 2"),
         }
     }
 }
@@ -51,7 +70,7 @@ impl VisualizationType {
         VisualizationType::PrimeDensityGradient,
     ];
 
-    pub const FIBONACCI_COMPATIBLE: &'static [VisualizationType] = &[
+    pub const GENERAL: &'static [VisualizationType] = &[
         VisualizationType::UlamSpiral,
         VisualizationType::SacksSpiral,
         VisualizationType::Grid,
@@ -64,7 +83,11 @@ impl VisualizationType {
     pub fn available_for(series: SeriesType) -> &'static [VisualizationType] {
         match series {
             SeriesType::Primes => Self::ALL,
-            SeriesType::Fibonacci => Self::FIBONACCI_COMPATIBLE,
+            SeriesType::Fibonacci => Self::GENERAL,
+            SeriesType::Lucas => Self::GENERAL,
+            SeriesType::Triangular => Self::GENERAL,
+            SeriesType::Collatz => Self::GENERAL,
+            SeriesType::PowersOf2 => Self::GENERAL,
         }
     }
 

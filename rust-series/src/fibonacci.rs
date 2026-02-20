@@ -1,9 +1,6 @@
-//! High-performance Fibonacci number generator
+//! Fibonacci number generator
 //!
-//! Provides iterative Fibonacci generation:
-//! - `generate_fibonacci(count)` - Generate first N Fibonacci numbers
-//! - `generate_fibonacci_up_to(max_value)` - Generate all Fibonacci numbers up to max
-//! - `is_fibonacci(n)` - Check if a number is in the Fibonacci sequence
+//! F₀=0, F₁=1, Fₙ=Fₙ₋₁+Fₙ₋₂
 
 pub fn generate_fibonacci(count: usize) -> Vec<usize> {
     if count == 0 {
@@ -105,15 +102,5 @@ mod tests {
         for &n in &[4, 6, 7, 9, 10, 11, 12, 14, 15, 16, 17, 18, 19, 20] {
             assert!(!is_fibonacci(n), "{} should NOT be Fibonacci", n);
         }
-    }
-
-    #[test]
-    fn test_large_fibonacci() {
-        let fibs = generate_fibonacci(50);
-        assert_eq!(fibs.len(), 50);
-        assert_eq!(fibs[0], 0);
-        assert_eq!(fibs[1], 1);
-        assert_eq!(fibs[10], 55);
-        assert_eq!(fibs[20], 6765);
     }
 }

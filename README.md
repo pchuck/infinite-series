@@ -2,14 +2,26 @@
 
 ## Overview
 
-This project contains infinite series generators and visualizers, including:
+This project contains infinite series generators and visualizations, including:
 
-* An interactive visualizer for number sequences in Rust [rust-gui](./rust-gui/README.md)
+* An interactive visualizer for number sequences in Rust [rust-gui](./rust-gui/README.md) - supports primes, fibonacci, lucas, triangular, collatz, and powers of 2
 * A high-performance parallel prime generator in Rust [rust-primes](./rust-primes/README.md), with reference implementations in Python [python-primes](./python-primes) and Go [golang-primes](./golang-primes/README.md)
-* A Fibonacci number generator in Rust [rust-fibonacci](./rust-fibonacci/README.md)
+* An infinite series generator in Rust [rust-series](./rust-series/README.md) - fibonacci, lucas, triangular, collatz stopping times, and powers of 2
 * A fast parallelized Miller-Rabin primality tester in Rust [rust-miller-rabin](./rust-miller-rabin/README.md)
 
 ![Rust Number Sequence Visualizer Screenshot](rust-gui/resources/rust_prime_visualizer_sacks_spiral_screenshot.png)
+
+
+## Supported Series
+
+| Series | Formula | Sequence |
+|--------|---------|----------|
+| **Primes** | Numbers divisible only by 1 and themselves | 2, 3, 5, 7, 11, 13, 17, 19, 23, 29, ... |
+| **Fibonacci** | Fₙ = Fₙ₋₁ + Fₙ₋₂ | 0, 1, 1, 2, 3, 5, 8, 13, 21, 34, ... |
+| **Lucas** | Lₙ = Lₙ₋₁ + Lₙ₋₂ | 2, 1, 3, 4, 7, 11, 18, 29, 47, 76, ... |
+| **Triangular** | Tₙ = n(n+1)/2 | 0, 1, 3, 6, 10, 15, 21, 28, 36, 45, ... |
+| **Collatz** | Steps to reach 1 via 3n+1 | 0, 0, 1, 7, 2, 5, 8, 16, 3, 19, ... |
+| **Powers of 2** | 2ⁿ | 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, ... |
 
 
 ## Implementations
@@ -31,10 +43,14 @@ cd rust-gui
 cargo run
 ```
 
-### Fibonacci Generator (CLI)
+### Series Generator (CLI)
 ```bash
-cd rust-fibonacci
-cargo run -- -c 100
+cd rust-series
+cargo run -- -c 100 -s fib       # Fibonacci
+cargo run -- -c 100 -s lucas     # Lucas numbers
+cargo run -- -c 100 -s tri       # Triangular numbers
+cargo run -- -c 100 -s collatz   # Collatz stopping times
+cargo run -- -c 100 -s pow2      # Powers of 2
 ```
 
 ### Prime Generators (CLI and Libraries)
@@ -78,11 +94,15 @@ cd python-primes; python prime_generator.py 100000000 --parallel --progress   # 
 cd rust-primes;   ./target/release/primes_cli -n 100000000 -p -P              # Rust
 ```
 
-### Generate Fibonacci numbers
+### Generate infinite series
 ```bash
-cd rust-fibonacci; cargo run -- -c 100             # First 100 Fibonacci numbers
-cd rust-fibonacci; cargo run -- -c 100 --quiet     # Count only
-cd rust-fibonacci; cargo run -- -c 1000 --progress # With progress bar
+cd rust-series; cargo run -- -c 100 -s fib          # Fibonacci numbers
+cd rust-series; cargo run -- -c 100 -s lucas        # Lucas numbers
+cd rust-series; cargo run -- -c 100 -s tri          # Triangular numbers
+cd rust-series; cargo run -- -c 100 -s collatz      # Collatz stopping times
+cd rust-series; cargo run -- -c 100 -s pow2         # Powers of 2
+cd rust-series; cargo run -- -c 100 -s fib --quiet  # Count only
+cd rust-series; cargo run -- -c 1000 --progress     # With progress bar
 ```
 
 
@@ -230,15 +250,20 @@ infinite-series/
 │   ├── Makefile
 │   ├── Cargo.toml
 │   └── src/
-│       ├── lib.rs              # Core implementation (9 tests)
+│       ├── lib.rs              # Core implementation
 │       ├── primes_cli.rs       # CLI entry point
 │       └── progress.rs         # Progress bar
-├── rust-fibonacci/
+├── rust-series/
 │   ├── Makefile
 │   ├── Cargo.toml
 │   ├── README.md
 │   └── src/
-│       ├── lib.rs              # Fibonacci generator
+│       ├── lib.rs              # Re-exports all series
+│       ├── fibonacci.rs        # Fibonacci generator
+│       ├── lucas.rs            # Lucas generator
+│       ├── triangular.rs       # Triangular generator
+│       ├── collatz.rs          # Collatz stopping times
+│       ├── powers.rs           # Powers of 2 generator
 │       ├── main.rs             # CLI entry point
 │       └── progress.rs         # Progress bar
 ├── rust-gui/
@@ -277,7 +302,7 @@ infinite-series/
 ### Rust
 - Requires: Rust 1.75+
 - **rust-primes**: CLI for prime generation (`primes_cli`)
-- **rust-fibonacci**: CLI for Fibonacci generation (`fibonacci_cli`)
-- **rust-gui**: Interactive visualizer for primes and Fibonacci (`visualizer`)
+- **rust-series**: CLI for infinite series (`series_cli`) - fibonacci, lucas, triangular, collatz, powers of 2
+- **rust-gui**: Interactive visualizer for all series (`visualizer`)
 - Custom ANSI progress bar with rate display
 - Uses `thread::scope` for safe scoped parallelism with zero-copy data sharing

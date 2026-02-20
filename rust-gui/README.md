@@ -1,8 +1,8 @@
 # Number Sequence Visualizer
 
-An interactive infinte number sequence visualizer, implemented in rust and backed by high-performance parallel series generators.
+An interactive infinite number sequence visualizer, implemented in Rust and backed by high-performance parallel series generators.
 
-![Rust Number Sequence Visualizer Screenshot](resources/rust_prime_visualizer_sacks_spiral_screenshot.png)
+![Rust Number Sequence Visualizer Screenshot](./resources/rust_prime_visualizer_sacks_spiral_screenshot.png)
 
 ## Quick Start
 
@@ -24,6 +24,10 @@ cargo run
 |--------|-------------|
 | **Primes** | Prime numbers (2, 3, 5, 7, 11, ...) |
 | **Fibonacci** | Fibonacci sequence (0, 1, 1, 2, 3, 5, 8, ...) |
+| **Lucas** | Lucas sequence (2, 1, 3, 4, 7, 11, 18, ...) |
+| **Triangular** | Triangular numbers (0, 1, 3, 6, 10, 15, 21, ...) |
+| **Collatz** | Stopping times (0, 0, 1, 7, 2, 5, 8, 16, ...) |
+| **Powers of 2** | Powers of 2 (1, 2, 4, 8, 16, 32, 64, ...) |
 
 ## Visualizations
 
@@ -50,7 +54,7 @@ cargo run
 
 ## Controls
 
-- **Series Type**: Switch between Primes and Fibonacci
+- **Series Type**: Switch between Primes, Fibonacci, Lucas, Triangular, Collatz, and Powers of 2
 - **Visualization**: Select the visualization type
 - **Max Number**: Set the upper bound for the sequence
 - **Display**: Adjust point sizes, colors, and visibility options
@@ -100,7 +104,7 @@ rust-gui/
 
 - `eframe` - GUI framework
 - `primes` - Local path dependency (../rust-primes)
-- `fibonacci` - Local path dependency (../rust-fibonacci)
+- `series` - Local path dependency (../rust-series)
 
 ## Algorithms / Credits
 
@@ -115,10 +119,3 @@ rust-gui/
 * **Sacks Mobius Spiral** - Archimedean spiral using prime index with gap-colored lines (white=close, gray=far) 
 * **Ulam Mobius Spiral** - Square-grid spiral using prime index with gap-colored lines (white=close, gray=far) 
 * **Prime Density Gradient** - Heatmap grid showing local prime density across the number space 
-
-### GUI
-Prime distribution visualizations including:
-
-| Visualization | Description |
-|--------------|-------------|
-

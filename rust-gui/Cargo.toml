@@ -2,12 +2,12 @@
 name = "number-visualizer"
 version = "1.0.0"
 edition = "2021"
-description = "Interactive visualization of number sequences (primes, fibonacci)"
+description = "Interactive visualization of number sequences (primes, fibonacci, lucas, triangular, collatz, powers of 2)"
 
 [dependencies]
 eframe = "0.31"
 primes = { path = "../rust-primes" }
-fibonacci = { path = "../rust-fibonacci" }
+series = { path = "../rust-series" }
 
 [profile.release]
 opt-level = 3

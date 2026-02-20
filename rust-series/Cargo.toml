@@ -1,9 +1,9 @@
 [package]
-name = "fibonacci"
+name = "series"
 version = "1.0.0"
 edition = "2021"
-description = "High-performance Fibonacci number generator"
-authors = ["Fibonacci Generator"]
+description = "High-performance infinite series generators (fibonacci, lucas, triangular, collatz, powers of 2)"
+authors = ["Number Series Generator"]
 
 [dependencies]
 clap = { version = "4.4", features = ["derive"] }
@@ -14,5 +14,5 @@ lto = true
 codegen-units = 1
 
 [[bin]]
-name = "fibonacci_cli"
+name = "series_cli"
 path = "src/main.rs"

@@ -13,14 +13,18 @@ This project implements high-performance number sequence generators in Python, G
 - **Format**: `cd rust-primes && cargo fmt`
 - **Run application**: `cd rust-primes && ./target/release/primes_cli -n 1000000 --quiet`
 
-### Rust Fibonacci
-- **Build debug**: `cd rust-fibonacci && cargo build`
-- **Build release**: `cd rust-fibonacci && cargo build --release`
-- **Run tests**: `cd rust-fibonacci && cargo test`
-- **Lint**: `cd rust-fibonacci && cargo clippy`
-- **Format**: `cd rust-fibonacci && cargo fmt`
-- **Run application**: `cd rust-fibonacci && cargo run -- -c 100`
-- **Quiet mode**: `cd rust-fibonacci && cargo run -- -c 100 --quiet`
+### Rust Series (Fibonacci, Lucas, Triangular, Collatz, Powers of 2)
+- **Build debug**: `cd rust-series && cargo build`
+- **Build release**: `cd rust-series && cargo build --release`
+- **Run tests**: `cd rust-series && cargo test`
+- **Lint**: `cd rust-series && cargo clippy`
+- **Format**: `cd rust-series && cargo fmt`
+- **Run Fibonacci**: `cd rust-series && cargo run -- -c 100 -s fib`
+- **Run Lucas**: `cd rust-series && cargo run -- -c 100 -s lucas`
+- **Run Triangular**: `cd rust-series && cargo run -- -c 100 -s tri`
+- **Run Collatz**: `cd rust-series && cargo run -- -c 100 -s collatz`
+- **Run Powers of 2**: `cd rust-series && cargo run -- -c 100 -s pow2`
+- **Quiet mode**: `cd rust-series && cargo run -- -c 100 -s fib --quiet`
 
 ### Rust GUI (Visualizer)
 - **Build debug**: `cd rust-gui && cargo build`
@@ -48,9 +52,10 @@ This project implements high-performance number sequence generators in Python, G
 - **All targets**: `cd rust-primes && make help`
 - **Quick benchmark**: `cd rust-primes && make run-release-quiet`
 
-### Makefile (Rust Fibonacci)
-- **All targets**: `cd rust-fibonacci && make help`
-- **Quick run**: `cd rust-fibonacci && make run`
+### Makefile (Rust Series)
+- **All targets**: `cd rust-series && make help`
+- **Quick run**: `cd rust-series && make run S=fib`
+- **Quick run**: `cd rust-series && make run S=lucas`
 
 ## Code Style Guidelines
 

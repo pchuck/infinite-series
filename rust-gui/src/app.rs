@@ -1,8 +1,11 @@
 //! Main application and UI
 
 use eframe::egui;
-use fibonacci::generate_fibonacci_up_to;
 use primes::generate_primes;
+use series::{
+    generate_collatz_times_up_to, generate_fibonacci_up_to, generate_lucas_up_to,
+    generate_powers_of_2_up_to, generate_triangular_up_to,
+};
 use std::collections::HashSet;
 
 use crate::config::VisualizerConfig;
@@ -16,6 +19,14 @@ pub struct NumberVisualizerApp {
     pub primes_vec: Vec<usize>,
     pub fibs: HashSet<usize>,
     pub fibs_vec: Vec<usize>,
+    pub lucas: HashSet<usize>,
+    pub lucas_vec: Vec<usize>,
+    pub triangular: HashSet<usize>,
+    pub triangular_vec: Vec<usize>,
+    pub collatz: HashSet<usize>,
+    pub collatz_vec: Vec<usize>,
+    pub powers: HashSet<usize>,
+    pub powers_vec: Vec<usize>,
     cached_max_number: usize,
     cached_series_type: SeriesType,
     pub hovered_number: Option<usize>,
@@ -28,6 +39,14 @@ impl NumberVisualizerApp {
         let primes_set: HashSet<usize> = primes_vec.iter().copied().collect();
         let fibs_vec = generate_fibonacci_up_to(max_number);
         let fibs_set: HashSet<usize> = fibs_vec.iter().copied().collect();
+        let lucas_vec = generate_lucas_up_to(max_number);
+        let lucas_set: HashSet<usize> = lucas_vec.iter().copied().collect();
+        let triangular_vec = generate_triangular_up_to(max_number);
+        let triangular_set: HashSet<usize> = triangular_vec.iter().copied().collect();
+        let collatz_vec = generate_collatz_times_up_to(max_number);
+        let collatz_set: HashSet<usize> = collatz_vec.iter().copied().collect();
+        let powers_vec = generate_powers_of_2_up_to(max_number);
+        let powers_set: HashSet<usize> = powers_vec.iter().copied().collect();
 
         Self {
             config,
@@ -36,6 +55,14 @@ impl NumberVisualizerApp {
             primes_vec,
             fibs: fibs_set,
             fibs_vec,
+            lucas: lucas_set,
+            lucas_vec,
+            triangular: triangular_set,
+            triangular_vec,
+            collatz: collatz_set,
+            collatz_vec,
+            powers: powers_set,
+            powers_vec,
             cached_max_number: max_number,
             cached_series_type: SeriesType::default(),
             hovered_number: None,
@@ -54,10 +81,18 @@ impl NumberVisualizerApp {
             self.primes = self.primes_vec.iter().copied().collect();
             self.fibs_vec = generate_fibonacci_up_to(self.config.max_number);
             self.fibs = self.fibs_vec.iter().copied().collect();
+            self.lucas_vec = generate_lucas_up_to(self.config.max_number);
+            self.lucas = self.lucas_vec.iter().copied().collect();
+            self.triangular_vec = generate_triangular_up_to(self.config.max_number);
+            self.triangular = self.triangular_vec.iter().copied().collect();
+            self.collatz_vec = generate_collatz_times_up_to(self.config.max_number);
+            self.collatz = self.collatz_vec.iter().copied().collect();
+            self.powers_vec = generate_powers_of_2_up_to(self.config.max_number);
+            self.powers = self.powers_vec.iter().copied().collect();
             self.cached_max_number = self.config.max_number;
         }
 
-        if self.config.visualization.is_primes_only() && self.series_type == SeriesType::Fibonacci {
+        if self.config.visualization.is_primes_only() && self.series_type != SeriesType::Primes {
             self.config.visualization = VisualizationType::UlamSpiral;
         }
 
@@ -68,6 +103,10 @@ impl NumberVisualizerApp {
         match self.series_type {
             SeriesType::Primes => self.primes.contains(&n),
             SeriesType::Fibonacci => self.fibs.contains(&n),
+            SeriesType::Lucas => self.lucas.contains(&n),
+            SeriesType::Triangular => self.triangular.contains(&n),
+            SeriesType::Collatz => self.collatz.contains(&n),
+            SeriesType::PowersOf2 => self.powers.contains(&n),
         }
     }
 
@@ -75,6 +114,10 @@ impl NumberVisualizerApp {
         match self.series_type {
             SeriesType::Primes => &self.primes,
             SeriesType::Fibonacci => &self.fibs,
+            SeriesType::Lucas => &self.lucas,
+            SeriesType::Triangular => &self.triangular,
+            SeriesType::Collatz => &self.collatz,
+            SeriesType::PowersOf2 => &self.powers,
         }
     }
 
@@ -82,6 +125,10 @@ impl NumberVisualizerApp {
         match self.series_type {
             SeriesType::Primes => "prime",
             SeriesType::Fibonacci => "fibonacci",
+            SeriesType::Lucas => "lucas",
+            SeriesType::Triangular => "triangular",
+            SeriesType::Collatz => "collatz",
+            SeriesType::PowersOf2 => "power of 2",
         }
     }
 
@@ -150,10 +197,10 @@ impl eframe::App for NumberVisualizerApp {
                 egui::ComboBox::from_id_salt("series_type")
                     .selected_text(format!("{}", self.series_type))
                     .show_ui(ui, |ui| {
-                        for series in [SeriesType::Primes, SeriesType::Fibonacci] {
+                        for series in SeriesType::ALL {
                             ui.selectable_value(
                                 &mut self.series_type,
-                                series,
+                                *series,
                                 format!("{}", series),
                             );
                         }
