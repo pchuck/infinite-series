@@ -37,6 +37,8 @@ pub struct NumberVisualizerApp {
     cached_max_number: usize,
     cached_series_type: SeriesType,
     pub hovered_number: Option<usize>,
+    pub helix_rotation_x: f32,
+    pub helix_rotation_y: f32,
 }
 
 impl NumberVisualizerApp {
@@ -85,6 +87,8 @@ impl NumberVisualizerApp {
             cached_max_number: max_number,
             cached_series_type: SeriesType::default(),
             hovered_number: None,
+            helix_rotation_x: 0.4,
+            helix_rotation_y: 0.0,
         }
     }
 
@@ -193,6 +197,7 @@ impl NumberVisualizerApp {
             VisualizationType::SacksMobiusSpiral => viz::draw_sacks_mobius(self, ui, rect),
             VisualizationType::UlamMobiusSpiral => viz::draw_ulam_mobius(self, ui, rect),
             VisualizationType::PrimeDensityGradient => viz::draw_density_gradient(self, ui, rect),
+            VisualizationType::Helix3D => viz::draw_helix_3d(self, ui, rect),
         }
     }
 

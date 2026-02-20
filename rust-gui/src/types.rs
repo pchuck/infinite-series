@@ -60,6 +60,7 @@ pub enum VisualizationType {
     SacksMobiusSpiral,
     UlamMobiusSpiral,
     PrimeDensityGradient,
+    Helix3D,
 }
 
 impl VisualizationType {
@@ -77,6 +78,7 @@ impl VisualizationType {
         VisualizationType::SacksMobiusSpiral,
         VisualizationType::UlamMobiusSpiral,
         VisualizationType::PrimeDensityGradient,
+        VisualizationType::Helix3D,
     ];
 
     pub const GENERAL: &'static [VisualizationType] = &[
@@ -87,6 +89,7 @@ impl VisualizationType {
         VisualizationType::HexagonalLattice,
         VisualizationType::TriangularLattice,
         VisualizationType::FermatsSpiral,
+        VisualizationType::Helix3D,
     ];
 
     pub fn available_for(series: SeriesType) -> &'static [VisualizationType] {
@@ -128,6 +131,7 @@ impl VisualizationType {
                 | Self::FermatsSpiral
                 | Self::SacksMobiusSpiral
                 | Self::UlamMobiusSpiral
+                | Self::Helix3D
         )
     }
 
@@ -162,6 +166,7 @@ impl VisualizationType {
                 "Square-grid spiral with gap-colored lines between consecutive primes"
             }
             Self::PrimeDensityGradient => "Heatmap grid showing local prime density",
+            Self::Helix3D => "3D spiral helix with highlighted numbers spiking outward",
         }
     }
 
@@ -195,6 +200,7 @@ impl std::fmt::Display for VisualizationType {
             VisualizationType::SacksMobiusSpiral => write!(f, "Sacks Mobius Spiral"),
             VisualizationType::UlamMobiusSpiral => write!(f, "Ulam Mobius Spiral"),
             VisualizationType::PrimeDensityGradient => write!(f, "Prime Density Gradient"),
+            VisualizationType::Helix3D => write!(f, "3D Helix"),
         }
     }
 }

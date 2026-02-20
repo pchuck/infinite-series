@@ -3,6 +3,7 @@
 pub mod density_gradient;
 pub mod fermats;
 pub mod grid;
+pub mod helix_3d;
 pub mod hexagonal;
 pub mod prime_density;
 pub mod prime_wheel;
@@ -17,6 +18,7 @@ pub mod ulam_mobius;
 pub use density_gradient::draw as draw_density_gradient;
 pub use fermats::{draw as draw_fermats, find_hovered as find_hovered_fermats};
 pub use grid::{draw as draw_grid, find_hovered as find_hovered_grid};
+pub use helix_3d::draw as draw_helix_3d;
 pub use hexagonal::{draw as draw_hexagonal, find_hovered as find_hovered_hexagonal};
 pub use prime_density::draw as draw_prime_density;
 pub use prime_wheel::draw as draw_prime_wheel;
