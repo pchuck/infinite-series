@@ -1,8 +1,13 @@
-mod gui;
+mod app;
+mod config;
+mod draw_number;
+mod helpers;
+mod types;
+mod visualizations;
 
+use app::NumberVisualizerApp;
+use config::VisualizerConfig;
 use eframe::egui;
-use gui::app::PrimeVisualizerApp;
-use gui::config::VisualizerConfig;
 
 fn main() -> eframe::Result<()> {
     let options = eframe::NativeOptions {
@@ -13,10 +18,10 @@ fn main() -> eframe::Result<()> {
     };
 
     eframe::run_native(
-        "Prime Number Visualizer",
+        "Number Sequence Visualizer",
         options,
         Box::new(|cc: &eframe::CreationContext<'_>| {
-            Ok(Box::new(PrimeVisualizerApp::new(
+            Ok(Box::new(NumberVisualizerApp::new(
                 VisualizerConfig::default(),
                 &cc.egui_ctx,
             )))

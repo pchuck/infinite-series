@@ -1,9 +1,7 @@
 //! Hexagonal lattice visualization
 
-use crate::gui::draw_number::draw_number;
-use crate::gui::helpers::{calculate_bounds, calculate_scale};
-use crate::gui::HOVER_THRESHOLD_LARGE;
-use crate::gui::MARGIN_SMALL;
+use crate::draw_number::draw_number;
+use crate::helpers::{calculate_bounds, calculate_scale, HOVER_THRESHOLD_LARGE, MARGIN_SMALL};
 use eframe::egui;
 
 pub fn generate_positions(max_n: usize) -> Vec<(usize, f32, f32)> {
@@ -47,7 +45,7 @@ pub fn generate_positions(max_n: usize) -> Vec<(usize, f32, f32)> {
     positions
 }
 
-pub fn draw(app: &crate::gui::app::PrimeVisualizerApp, ui: &mut egui::Ui, rect: egui::Rect) {
+pub fn draw(app: &crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: egui::Rect) {
     let positions = generate_positions(app.config.max_number);
 
     if positions.is_empty() {
@@ -67,12 +65,20 @@ pub fn draw(app: &crate::gui::app::PrimeVisualizerApp, ui: &mut egui::Ui, rect: 
     for (n, x, y) in &positions {
         let screen_x = center_x + (*x - (min_x + max_x) / 2.0) * scale;
         let screen_y = center_y - (*y - (min_y + max_y) / 2.0) * scale;
-        draw_number(*n, screen_x, screen_y, painter, &app.primes, &app.config);
+        draw_number(
+            *n,
+            screen_x,
+            screen_y,
+            painter,
+            app.highlights(),
+            &app.config,
+            app.series_type,
+        );
     }
 }
 
 pub fn find_hovered(
-    app: &crate::gui::app::PrimeVisualizerApp,
+    app: &crate::app::NumberVisualizerApp,
     mouse_pos: egui::Pos2,
     rect: egui::Rect,
 ) -> Option<usize> {

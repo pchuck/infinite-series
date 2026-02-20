@@ -1,0 +1,19 @@
+[package]
+name = "number-visualizer"
+version = "1.0.0"
+edition = "2021"
+description = "Interactive visualization of number sequences (primes, fibonacci)"
+
+[dependencies]
+eframe = "0.31"
+primes = { path = "../rust-primes" }
+fibonacci = { path = "../rust-fibonacci" }
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+
+[[bin]]
+name = "visualizer"
+path = "src/main.rs"

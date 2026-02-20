@@ -1,9 +1,7 @@
-//! Sacks spiral visualization
+//! Fermat's spiral visualization
 
-use crate::gui::draw_number::draw_number;
-use crate::gui::HOVER_THRESHOLD_DEFAULT;
-use crate::gui::MARGIN_SMALL;
-use crate::gui::SACKS_THETA_MULTIPLIER;
+use crate::draw_number::draw_number;
+use crate::helpers::{GOLDEN_ANGLE, HOVER_THRESHOLD_DEFAULT, MARGIN_SMALL};
 use eframe::egui;
 
 pub fn generate_positions(max_n: usize) -> Vec<(usize, f32, f32)> {
@@ -11,7 +9,7 @@ pub fn generate_positions(max_n: usize) -> Vec<(usize, f32, f32)> {
         .map(|n| {
             let n_f = n as f32;
             let r = n_f.sqrt();
-            let theta = n_f * SACKS_THETA_MULTIPLIER;
+            let theta = n_f * GOLDEN_ANGLE;
             let x = r * theta.cos();
             let y = r * theta.sin();
             (n, x, y)
@@ -19,7 +17,7 @@ pub fn generate_positions(max_n: usize) -> Vec<(usize, f32, f32)> {
         .collect()
 }
 
-pub fn draw(app: &crate::gui::app::PrimeVisualizerApp, ui: &mut egui::Ui, rect: egui::Rect) {
+pub fn draw(app: &crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: egui::Rect) {
     let positions = generate_positions(app.config.max_number);
 
     if positions.is_empty() {
@@ -41,13 +39,21 @@ pub fn draw(app: &crate::gui::app::PrimeVisualizerApp, ui: &mut egui::Ui, rect: 
 
     for (n, x, y) in &positions {
         let screen_x = center_x + *x * scale;
-        let screen_y = center_y + *y * scale;
-        draw_number(*n, screen_x, screen_y, painter, &app.primes, &app.config);
+        let screen_y = center_y - *y * scale;
+        draw_number(
+            *n,
+            screen_x,
+            screen_y,
+            painter,
+            app.highlights(),
+            &app.config,
+            app.series_type,
+        );
     }
 }
 
 pub fn find_hovered(
-    app: &crate::gui::app::PrimeVisualizerApp,
+    app: &crate::app::NumberVisualizerApp,
     mouse_pos: egui::Pos2,
     rect: egui::Rect,
 ) -> Option<usize> {
@@ -73,7 +79,7 @@ pub fn find_hovered(
 
     for (n, x, y) in &positions {
         let screen_x = center_x + *x * scale;
-        let screen_y = center_y + *y * scale;
+        let screen_y = center_y - *y * scale;
 
         let dx = mouse_pos.x - screen_x;
         let dy = mouse_pos.y - screen_y;

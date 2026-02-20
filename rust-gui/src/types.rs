@@ -1,4 +1,20 @@
-//! Visualization types and their UI properties
+//! Series and visualization types
+
+#[derive(Clone, Copy, PartialEq, Eq, Default)]
+pub enum SeriesType {
+    #[default]
+    Primes,
+    Fibonacci,
+}
+
+impl std::fmt::Display for SeriesType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            SeriesType::Primes => write!(f, "Primes"),
+            SeriesType::Fibonacci => write!(f, "Fibonacci"),
+        }
+    }
+}
 
 #[derive(Clone, Copy, PartialEq, Eq, Default)]
 pub enum VisualizationType {
@@ -19,6 +35,51 @@ pub enum VisualizationType {
 }
 
 impl VisualizationType {
+    pub const ALL: &'static [VisualizationType] = &[
+        VisualizationType::UlamSpiral,
+        VisualizationType::SacksSpiral,
+        VisualizationType::Grid,
+        VisualizationType::Row,
+        VisualizationType::PrimeWheel,
+        VisualizationType::PrimeDensity,
+        VisualizationType::RiemannZeta,
+        VisualizationType::HexagonalLattice,
+        VisualizationType::TriangularLattice,
+        VisualizationType::FermatsSpiral,
+        VisualizationType::SacksMobiusSpiral,
+        VisualizationType::UlamMobiusSpiral,
+        VisualizationType::PrimeDensityGradient,
+    ];
+
+    pub const FIBONACCI_COMPATIBLE: &'static [VisualizationType] = &[
+        VisualizationType::UlamSpiral,
+        VisualizationType::SacksSpiral,
+        VisualizationType::Grid,
+        VisualizationType::Row,
+        VisualizationType::HexagonalLattice,
+        VisualizationType::TriangularLattice,
+        VisualizationType::FermatsSpiral,
+    ];
+
+    pub fn available_for(series: SeriesType) -> &'static [VisualizationType] {
+        match series {
+            SeriesType::Primes => Self::ALL,
+            SeriesType::Fibonacci => Self::FIBONACCI_COMPATIBLE,
+        }
+    }
+
+    pub fn is_primes_only(self) -> bool {
+        matches!(
+            self,
+            Self::PrimeWheel
+                | Self::PrimeDensity
+                | Self::RiemannZeta
+                | Self::SacksMobiusSpiral
+                | Self::UlamMobiusSpiral
+                | Self::PrimeDensityGradient
+        )
+    }
+
     pub fn uses_point_rendering(self) -> bool {
         matches!(
             self,
@@ -49,7 +110,7 @@ impl VisualizationType {
 
     pub fn description(self) -> &'static str {
         match self {
-            Self::UlamSpiral => "Classic diagonal prime pattern on a square grid spiral",
+            Self::UlamSpiral => "Classic diagonal pattern on a square grid spiral",
             Self::SacksSpiral => "Archimedean spiral (r = sqrt(n)) revealing curved patterns",
             Self::Grid => "Simple Cartesian square grid layout",
             Self::Row => "Single horizontal number line",

@@ -1,10 +1,10 @@
-# AGENTS.md - Prime Number Generator Project
+# AGENTS.md - Number Sequence Generator Project
 
-This project implements high-performance prime number generators in Python, Go, and Rust.
+This project implements high-performance number sequence generators in Python, Go, and Rust.
 
 ## Build/Lint/Test Commands
 
-### Rust
+### Rust Primes
 - **Build debug**: `cd rust-primes && cargo build`
 - **Build release**: `cd rust-primes && cargo build --release`
 - **Run tests**: `cd rust-primes && cargo test`
@@ -12,6 +12,22 @@ This project implements high-performance prime number generators in Python, Go, 
 - **Lint**: `cd rust-primes && cargo clippy`
 - **Format**: `cd rust-primes && cargo fmt`
 - **Run application**: `cd rust-primes && ./target/release/primes_cli -n 1000000 --quiet`
+
+### Rust Fibonacci
+- **Build debug**: `cd rust-fibonacci && cargo build`
+- **Build release**: `cd rust-fibonacci && cargo build --release`
+- **Run tests**: `cd rust-fibonacci && cargo test`
+- **Lint**: `cd rust-fibonacci && cargo clippy`
+- **Format**: `cd rust-fibonacci && cargo fmt`
+- **Run application**: `cd rust-fibonacci && cargo run -- -c 100`
+- **Quiet mode**: `cd rust-fibonacci && cargo run -- -c 100 --quiet`
+
+### Rust GUI (Visualizer)
+- **Build debug**: `cd rust-gui && cargo build`
+- **Build release**: `cd rust-gui && cargo build --release`
+- **Run application**: `cd rust-gui && cargo run`
+- **Lint**: `cd rust-gui && cargo clippy`
+- **Format**: `cd rust-gui && cargo fmt`
 
 ### Go
 - **Build**: `cd golang-primes && go build -o primes ./cmd/primes`
@@ -28,9 +44,13 @@ This project implements high-performance prime number generators in Python, Go, 
 - **Lint**: `cd python-primes && ruff check .`
 - **Run application**: `cd python-primes && python prime_generator.py 1000000 --quiet`
 
-### Makefile (Rust)
+### Makefile (Rust Primes)
 - **All targets**: `cd rust-primes && make help`
 - **Quick benchmark**: `cd rust-primes && make run-release-quiet`
+
+### Makefile (Rust Fibonacci)
+- **All targets**: `cd rust-fibonacci && make help`
+- **Quick run**: `cd rust-fibonacci && make run`
 
 ## Code Style Guidelines
 
@@ -128,7 +148,7 @@ def generate_primes(n: int) -> List[int]:
     return primes
 ```
 
-### Algorithm Selection
+### Algorithm Selection (Primes)
 - Classic Sieve: n < 1M
 - Segmented Sieve: 1M <= n < 100M
 - Parallel Segmented Sieve: n >= 100M

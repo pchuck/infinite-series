@@ -1,9 +1,9 @@
 //! Prime density graph visualization
 
-use crate::gui::MARGIN_SMALL;
+use crate::helpers::MARGIN_SMALL;
 use eframe::egui;
 
-pub fn draw(app: &crate::gui::app::PrimeVisualizerApp, ui: &mut egui::Ui, rect: egui::Rect) {
+pub fn draw(app: &crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: egui::Rect) {
     let max_n = app.config.max_number;
     if max_n < 10 {
         return;
@@ -79,7 +79,7 @@ pub fn draw(app: &crate::gui::app::PrimeVisualizerApp, ui: &mut egui::Ui, rect: 
 
         painter.line_segment(
             [egui::Pos2::new(px1, py1), egui::Pos2::new(px2, py2)],
-            egui::Stroke::new(2.0, app.config.non_prime_color),
+            egui::Stroke::new(2.0, app.config.non_highlight_color),
         );
     }
 
@@ -94,7 +94,7 @@ pub fn draw(app: &crate::gui::app::PrimeVisualizerApp, ui: &mut egui::Ui, rect: 
 
         painter.line_segment(
             [egui::Pos2::new(px1, py1), egui::Pos2::new(px2, py2)],
-            egui::Stroke::new(2.0, app.config.prime_color),
+            egui::Stroke::new(2.0, app.config.highlight_color),
         );
     }
 }

@@ -1,7 +1,8 @@
 //! Prime wheel visualization
 
-use crate::gui::draw_number::draw_number;
-use crate::gui::MARGIN_SMALL;
+use crate::draw_number::draw_number;
+use crate::helpers::MARGIN_SMALL;
+use crate::types::SeriesType;
 use eframe::egui;
 
 pub fn generate_positions(max_n: usize, modulo: usize) -> Vec<(usize, f32, f32)> {
@@ -21,7 +22,7 @@ pub fn generate_positions(max_n: usize, modulo: usize) -> Vec<(usize, f32, f32)>
         .collect()
 }
 
-pub fn draw(app: &crate::gui::app::PrimeVisualizerApp, ui: &mut egui::Ui, rect: egui::Rect) {
+pub fn draw(app: &crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: egui::Rect) {
     let positions = generate_positions(app.config.max_number, app.config.modulo);
 
     if positions.is_empty() {
@@ -52,7 +53,15 @@ pub fn draw(app: &crate::gui::app::PrimeVisualizerApp, ui: &mut egui::Ui, rect: 
 
         let screen_x = center_x + r * theta.cos();
         let screen_y = center_y + r * theta.sin();
-        draw_number(*n, screen_x, screen_y, painter, &app.primes, &app.config);
+        draw_number(
+            *n,
+            screen_x,
+            screen_y,
+            painter,
+            &app.primes,
+            &app.config,
+            SeriesType::Primes,
+        );
     }
 
     for spoke in 0..app.config.modulo {

@@ -1,9 +1,9 @@
 //! Prime density gradient visualization
 
-use crate::gui::MARGIN_SMALL;
+use crate::helpers::MARGIN_SMALL;
 use eframe::egui;
 
-pub fn draw(app: &crate::gui::app::PrimeVisualizerApp, ui: &mut egui::Ui, rect: egui::Rect) {
+pub fn draw(app: &crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: egui::Rect) {
     if app.primes_vec.is_empty() {
         return;
     }
@@ -55,9 +55,9 @@ pub fn draw(app: &crate::gui::app::PrimeVisualizerApp, ui: &mut egui::Ui, rect: 
                 0.0
             };
 
-            let r = (app.config.prime_color.r() as f32 * normalized) as u8;
-            let g = (app.config.prime_color.g() as f32 * normalized) as u8;
-            let b = (app.config.prime_color.b() as f32 * normalized) as u8;
+            let r = (app.config.highlight_color.r() as f32 * normalized) as u8;
+            let g = (app.config.highlight_color.g() as f32 * normalized) as u8;
+            let b = (app.config.highlight_color.b() as f32 * normalized) as u8;
 
             let color = egui::Color32::from_rgba_unmultiplied(r, g, b, 255);
 

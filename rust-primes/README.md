@@ -2,9 +2,7 @@
 
 ## Overview
 
-High-performance prime number generator with CLI and interactive visualizater GUI
-
-![Rust Prime Number Visualizer Screenshot](resources/rust_prime_visualizer_sacks_spiral_screenshot.png)
+A high-performance prime number generator with CLI.
 
 ## Key Features
 
@@ -17,26 +15,6 @@ High performance prime generation using a parallel segmented sieve and highly op
 | 1M | ~5ms | ~200M/s |
 | 10M | ~52ms | ~192M/s |
 | 100M | ~700ms | ~143M/s |
-
-
-### GUI
-Prime distribution visualizations including:
-
-| Visualization | Description |
-|--------------|-------------|
-| **Ulam Spiral** | Classic diagonal prime pattern - primes form distinctive diagonal lines (Stanislaw Ulam, 1963) |
-| **Sacks Spiral** | Archimedean spiral (radius = sqrt(n)) - reveals curved patterns in prime distribution (Robert Sacks, 1994, numberspiral.com) |
-| **Grid** | Square grid layout starting from top-left - simple Cartesian view |
-| **Row** | Single horizontal number line - shows distribution along a line |
-| **Prime Wheel** | Concentric rings by modulo - primes cluster on spokes coprime to the modulus |
-| **Prime Density** | Graph of π(x) vs x/ln(x) - visualizes the Prime Number Theorem (prime counting function vs approximation) |
-| **Riemann Zeta** | Critical strip plot showing non-trivial zeros on the critical line σ=0.5 - visualizes the connection between prime distribution and the Riemann Hypothesis |
-| **Hexagonal Lattice** | Hexagonal lattice spiral - symmetric 6-direction spiral on hexagonal grid (60° intervals) |
-| **Triangular Lattice** | Triangular lattice spiral - symmetric 3-direction spiral on triangular grid (120° intervals) |
-| **Fermat's Spiral** | Phyllotaxis spiral - golden angle placement (r = sqrt(n), theta = n * 137.5°), same pattern as sunflower seed arrangements |
-| **Sacks Mobius Spiral** | Archimedean spiral using prime index with gap-colored lines (white=close, gray=far) |
-| **Ulam Mobius Spiral** | Square-grid spiral using prime index with gap-colored lines (white=close, gray=far) |
-| **Prime Density Gradient** | Heatmap grid showing local prime density across the number space |
 
 
 ## Quick Start

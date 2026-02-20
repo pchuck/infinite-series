@@ -7,7 +7,6 @@ authors = ["Prime Generator"]
 
 [dependencies]
 clap = { version = "4.4", features = ["derive"] }
-eframe = "0.31"
 
 [dev-dependencies]
 criterion = { version = "0.5", features = ["html_reports"] }
@@ -26,7 +25,3 @@ codegen-units = 1
 [[bin]]
 name = "primes_cli"
 path = "src/primes_cli.rs"
-
-[[bin]]
-name = "primes_gui"
-path = "src/primes_gui.rs"

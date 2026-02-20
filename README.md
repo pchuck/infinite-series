@@ -4,11 +4,12 @@
 
 This project contains infinite series generators and visualizers, including:
 
-* A high-performance parallel prime generator in Rust [rust-primes](./rust-primes/README.md), <br> with reference implementations in Python [python-primes](./python-primes) and Go [golang-primes](./golang-primes/README.md)
-* A very fast parallelized Miller-Rabin primality tester in Rust: [rust-miller-rabin](./rust-miller-rabin/README.md)
-* An optimized prime generator and visualizer implemented in Rust: [rust-primes visualizer](./rust-primes/README.md)
+* An interactive visualizer for number sequences in Rust [rust-gui](./rust-gui/README.md)
+* A high-performance parallel prime generator in Rust [rust-primes](./rust-primes/README.md), with reference implementations in Python [python-primes](./python-primes) and Go [golang-primes](./golang-primes/README.md)
+* A Fibonacci number generator in Rust [rust-fibonacci](./rust-fibonacci/README.md)
+* A fast parallelized Miller-Rabin primality tester in Rust [rust-miller-rabin](./rust-miller-rabin/README.md)
 
-![Rust Prime Number Visualizer Screenshot](rust-primes/resources/rust_prime_visualizer_sacks_spiral_screenshot.png)
+![Rust Number Sequence Visualizer Screenshot](rust-gui/resources/rust_prime_visualizer_sacks_spiral_screenshot.png)
 
 
 ## Implementations
@@ -24,10 +25,16 @@ All prime generators are implemented with consistent APIs and comparable algorit
 
 ## Quick Start
 
-### Prime Visualizer (GUI)
+### Number Sequence Visualizer (GUI)
 ```bash
-cd rust-primes
-cargo run --bin primes_gui
+cd rust-gui
+cargo run
+```
+
+### Fibonacci Generator (CLI)
+```bash
+cd rust-fibonacci
+cargo run -- -c 100
 ```
 
 ### Prime Generators (CLI and Libraries)
@@ -69,6 +76,13 @@ cd rust-primes;   ./target/release/primes_cli -n 10000000 -P      # Rust
 cd golang-primes; ./primes --parallel --progress 100000000                    # Go
 cd python-primes; python prime_generator.py 100000000 --parallel --progress   # Python
 cd rust-primes;   ./target/release/primes_cli -n 100000000 -p -P              # Rust
+```
+
+### Generate Fibonacci numbers
+```bash
+cd rust-fibonacci; cargo run -- -c 100             # First 100 Fibonacci numbers
+cd rust-fibonacci; cargo run -- -c 100 --quiet     # Count only
+cd rust-fibonacci; cargo run -- -c 1000 --progress # With progress bar
 ```
 
 
@@ -212,14 +226,37 @@ infinite-series/
 │   │   └── primes_benchmark_test.go
 │   └── internal/progress/
 │       └── progress.go         # Progress bar
-└── rust-primes/
-    ├── Makefile
+├── rust-primes/
+│   ├── Makefile
+│   ├── Cargo.toml
+│   └── src/
+│       ├── lib.rs              # Core implementation (9 tests)
+│       ├── primes_cli.rs       # CLI entry point
+│       └── progress.rs         # Progress bar
+├── rust-fibonacci/
+│   ├── Makefile
+│   ├── Cargo.toml
+│   ├── README.md
+│   └── src/
+│       ├── lib.rs              # Fibonacci generator
+│       ├── main.rs             # CLI entry point
+│       └── progress.rs         # Progress bar
+├── rust-gui/
+│   ├── Makefile
+│   ├── Cargo.toml
+│   ├── README.md
+│   └── src/
+│       ├── main.rs             # Entry point
+│       ├── app.rs              # Main application
+│       ├── config.rs           # Visualization configuration
+│       ├── draw_number.rs      # Number rendering
+│       ├── helpers.rs          # Utility constants
+│       ├── types.rs            # Series and visualization types
+│       └── visualizations/     # All visualization implementations
+└── rust-miller-rabin/
     ├── Cargo.toml
     └── src/
-        ├── lib.rs              # Core implementation (9 tests)
-        ├── primes_cli.rs       # CLI entry point (1 test)
-        ├── primes_gui.rs       # GUI visualization (eframe/egui)
-        └── progress.rs         # Progress bar
+        └── ...
 ```
 
 
@@ -239,8 +276,8 @@ infinite-series/
 
 ### Rust
 - Requires: Rust 1.75+
-- Two binaries: `primes_cli` (CLI) and `primes_gui` (interactive visualization)
-- CLI: only external dependency is `clap` for argument parsing
-- GUI: uses `eframe`/`egui` for cross-platform graphics
+- **rust-primes**: CLI for prime generation (`primes_cli`)
+- **rust-fibonacci**: CLI for Fibonacci generation (`fibonacci_cli`)
+- **rust-gui**: Interactive visualizer for primes and Fibonacci (`visualizer`)
 - Custom ANSI progress bar with rate display
 - Uses `thread::scope` for safe scoped parallelism with zero-copy data sharing

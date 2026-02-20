@@ -1,17 +1,17 @@
 //! Visualization configuration
 
-use crate::gui::VisualizationType;
+use crate::types::VisualizationType;
 use eframe::egui;
 
 #[derive(Clone)]
 pub struct VisualizerConfig {
     pub max_number: usize,
-    pub prime_size: usize,
-    pub non_prime_size: usize,
+    pub highlight_size: usize,
+    pub non_highlight_size: usize,
     pub modulo: usize,
     pub show_numbers: bool,
-    pub prime_color: egui::Color32,
-    pub non_prime_color: egui::Color32,
+    pub highlight_color: egui::Color32,
+    pub non_highlight_color: egui::Color32,
     pub background_color: egui::Color32,
     pub visualization: VisualizationType,
     pub num_zeros: usize,
@@ -28,12 +28,12 @@ impl Default for VisualizerConfig {
     fn default() -> Self {
         Self {
             max_number: 10000,
-            prime_size: 2,
-            non_prime_size: 1,
+            highlight_size: 2,
+            non_highlight_size: 1,
             modulo: 30,
             show_numbers: false,
-            prime_color: egui::Color32::from_rgba_unmultiplied(255, 220, 80, 255),
-            non_prime_color: egui::Color32::from_rgba_unmultiplied(60, 60, 70, 180),
+            highlight_color: egui::Color32::from_rgba_unmultiplied(255, 220, 80, 255),
+            non_highlight_color: egui::Color32::from_rgba_unmultiplied(60, 60, 70, 180),
             background_color: egui::Color32::from_rgba_unmultiplied(20, 20, 30, 255),
             visualization: VisualizationType::UlamSpiral,
             num_zeros: 10,

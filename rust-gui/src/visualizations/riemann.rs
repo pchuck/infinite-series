@@ -1,9 +1,9 @@
 //! Riemann zeta visualization
 
-use crate::gui::MARGIN_SMALL;
+use crate::helpers::MARGIN_SMALL;
 use eframe::egui;
 
-pub fn draw(app: &crate::gui::app::PrimeVisualizerApp, ui: &mut egui::Ui, rect: egui::Rect) {
+pub fn draw(app: &crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: egui::Rect) {
     let graph_left = rect.left() + MARGIN_SMALL;
     let graph_right = rect.right() - MARGIN_SMALL;
     let graph_top = rect.top() + MARGIN_SMALL;
@@ -112,7 +112,11 @@ pub fn draw(app: &crate::gui::app::PrimeVisualizerApp, ui: &mut egui::Ui, rect: 
         let x = critical_line_x;
         let y = graph_bottom - (imag / max_imag) * graph_height;
 
-        painter.circle_filled(egui::Pos2::new(x, y), zero_radius, app.config.prime_color);
+        painter.circle_filled(
+            egui::Pos2::new(x, y),
+            zero_radius,
+            app.config.highlight_color,
+        );
 
         if i < 10 || num_zeros_to_show <= 20 {
             let label = format!("{:.1}", imag);
@@ -121,7 +125,7 @@ pub fn draw(app: &crate::gui::app::PrimeVisualizerApp, ui: &mut egui::Ui, rect: 
                 egui::Align2::LEFT_BOTTOM,
                 label,
                 egui::FontId::proportional(9.0),
-                app.config.prime_color,
+                app.config.highlight_color,
             );
         }
     }

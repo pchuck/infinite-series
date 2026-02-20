@@ -1,41 +1,87 @@
 //! Main application and UI
 
 use eframe::egui;
+use fibonacci::generate_fibonacci_up_to;
 use primes::generate_primes;
 use std::collections::HashSet;
 
-use crate::gui::config::VisualizerConfig;
-use crate::gui::types::VisualizationType;
-use crate::gui::visualizations as viz;
+use crate::config::VisualizerConfig;
+use crate::types::{SeriesType, VisualizationType};
+use crate::visualizations as viz;
 
-pub struct PrimeVisualizerApp {
+pub struct NumberVisualizerApp {
     pub config: VisualizerConfig,
+    pub series_type: SeriesType,
     pub primes: HashSet<usize>,
     pub primes_vec: Vec<usize>,
+    pub fibs: HashSet<usize>,
+    pub fibs_vec: Vec<usize>,
     cached_max_number: usize,
+    cached_series_type: SeriesType,
     pub hovered_number: Option<usize>,
 }
 
-impl PrimeVisualizerApp {
+impl NumberVisualizerApp {
     pub fn new(config: VisualizerConfig, _ctx: &egui::Context) -> Self {
         let max_number = config.max_number;
         let primes_vec = generate_primes(max_number, false, None, None, None);
         let primes_set: HashSet<usize> = primes_vec.iter().copied().collect();
+        let fibs_vec = generate_fibonacci_up_to(max_number);
+        let fibs_set: HashSet<usize> = fibs_vec.iter().copied().collect();
 
         Self {
             config,
+            series_type: SeriesType::default(),
             primes: primes_set,
             primes_vec,
+            fibs: fibs_set,
+            fibs_vec,
             cached_max_number: max_number,
+            cached_series_type: SeriesType::default(),
             hovered_number: None,
         }
     }
 
-    pub fn regenerate_primes(&mut self) {
+    pub fn regenerate_series(&mut self) {
+        if self.config.max_number == self.cached_max_number
+            && self.series_type == self.cached_series_type
+        {
+            return;
+        }
+
         if self.config.max_number != self.cached_max_number {
             self.primes_vec = generate_primes(self.config.max_number, false, None, None, None);
             self.primes = self.primes_vec.iter().copied().collect();
+            self.fibs_vec = generate_fibonacci_up_to(self.config.max_number);
+            self.fibs = self.fibs_vec.iter().copied().collect();
             self.cached_max_number = self.config.max_number;
+        }
+
+        if self.config.visualization.is_primes_only() && self.series_type == SeriesType::Fibonacci {
+            self.config.visualization = VisualizationType::UlamSpiral;
+        }
+
+        self.cached_series_type = self.series_type;
+    }
+
+    pub fn contains(&self, n: usize) -> bool {
+        match self.series_type {
+            SeriesType::Primes => self.primes.contains(&n),
+            SeriesType::Fibonacci => self.fibs.contains(&n),
+        }
+    }
+
+    pub fn highlights(&self) -> &HashSet<usize> {
+        match self.series_type {
+            SeriesType::Primes => &self.primes,
+            SeriesType::Fibonacci => &self.fibs,
+        }
+    }
+
+    pub fn series_name(&self) -> &'static str {
+        match self.series_type {
+            SeriesType::Primes => "prime",
+            SeriesType::Fibonacci => "fibonacci",
         }
     }
 
@@ -70,7 +116,7 @@ impl PrimeVisualizerApp {
     }
 
     fn get_hovered(
-        app: &PrimeVisualizerApp,
+        app: &NumberVisualizerApp,
         mouse_pos: egui::Pos2,
         rect: egui::Rect,
     ) -> Option<usize> {
@@ -91,12 +137,27 @@ impl PrimeVisualizerApp {
     }
 }
 
-impl eframe::App for PrimeVisualizerApp {
+impl eframe::App for NumberVisualizerApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::SidePanel::left("controls")
             .min_width(250.0)
             .show(ctx, |ui| {
-                ui.heading("Prime Visualizer");
+                ui.heading("Number Visualizer");
+
+                ui.separator();
+
+                ui.label("Series:");
+                egui::ComboBox::from_id_salt("series_type")
+                    .selected_text(format!("{}", self.series_type))
+                    .show_ui(ui, |ui| {
+                        for series in [SeriesType::Primes, SeriesType::Fibonacci] {
+                            ui.selectable_value(
+                                &mut self.series_type,
+                                series,
+                                format!("{}", series),
+                            );
+                        }
+                    });
 
                 ui.separator();
 
@@ -104,24 +165,10 @@ impl eframe::App for PrimeVisualizerApp {
                 egui::ComboBox::from_id_salt("viz_type")
                     .selected_text(format!("{}", self.config.visualization))
                     .show_ui(ui, |ui| {
-                        for viz_type in [
-                            VisualizationType::UlamSpiral,
-                            VisualizationType::SacksSpiral,
-                            VisualizationType::Grid,
-                            VisualizationType::Row,
-                            VisualizationType::PrimeWheel,
-                            VisualizationType::PrimeDensity,
-                            VisualizationType::RiemannZeta,
-                            VisualizationType::HexagonalLattice,
-                            VisualizationType::TriangularLattice,
-                            VisualizationType::FermatsSpiral,
-                            VisualizationType::SacksMobiusSpiral,
-                            VisualizationType::UlamMobiusSpiral,
-                            VisualizationType::PrimeDensityGradient,
-                        ] {
+                        for viz_type in VisualizationType::available_for(self.series_type) {
                             ui.selectable_value(
                                 &mut self.config.visualization,
-                                viz_type,
+                                *viz_type,
                                 format!("{}", viz_type),
                             );
                         }
@@ -141,41 +188,46 @@ impl eframe::App for PrimeVisualizerApp {
                 ui.label("Display");
 
                 if self.config.visualization.uses_point_rendering() {
-                    ui.label("Prime size:");
-                    ui.add(egui::Slider::new(&mut self.config.prime_size, 1..=20));
+                    ui.label("Highlight size:");
+                    ui.add(egui::Slider::new(&mut self.config.highlight_size, 1..=20));
 
-                    ui.label("Non-prime size:");
-                    ui.add(egui::Slider::new(&mut self.config.non_prime_size, 0..=10));
+                    ui.label("Non-highlight size:");
+                    ui.add(egui::Slider::new(
+                        &mut self.config.non_highlight_size,
+                        0..=10,
+                    ));
 
                     ui.checkbox(&mut self.config.show_numbers, "Show numbers");
 
-                    ui.separator();
-                    ui.label("Prime Pairs");
+                    if self.series_type == SeriesType::Primes {
+                        ui.separator();
+                        ui.label("Prime Pairs");
 
-                    ui.checkbox(&mut self.config.show_twin_primes, "Twin primes");
-                    if self.config.show_twin_primes {
-                        ui.color_edit_button_srgba(&mut self.config.twin_color);
-                    }
+                        ui.checkbox(&mut self.config.show_twin_primes, "Twin primes");
+                        if self.config.show_twin_primes {
+                            ui.color_edit_button_srgba(&mut self.config.twin_color);
+                        }
 
-                    ui.checkbox(&mut self.config.show_cousin_primes, "Cousin primes");
-                    if self.config.show_cousin_primes {
-                        ui.color_edit_button_srgba(&mut self.config.cousin_color);
-                    }
+                        ui.checkbox(&mut self.config.show_cousin_primes, "Cousin primes");
+                        if self.config.show_cousin_primes {
+                            ui.color_edit_button_srgba(&mut self.config.cousin_color);
+                        }
 
-                    ui.checkbox(&mut self.config.show_sexy_primes, "Sexy primes");
-                    if self.config.show_sexy_primes {
-                        ui.color_edit_button_srgba(&mut self.config.sexy_color);
+                        ui.checkbox(&mut self.config.show_sexy_primes, "Sexy primes");
+                        if self.config.show_sexy_primes {
+                            ui.color_edit_button_srgba(&mut self.config.sexy_color);
+                        }
                     }
                 }
 
                 ui.separator();
                 ui.label("Colors");
 
-                ui.label("Prime:");
-                ui.color_edit_button_srgba(&mut self.config.prime_color);
+                ui.label("Highlight:");
+                ui.color_edit_button_srgba(&mut self.config.highlight_color);
 
-                ui.label("Non-prime:");
-                ui.color_edit_button_srgba(&mut self.config.non_prime_color);
+                ui.label("Non-highlight:");
+                ui.color_edit_button_srgba(&mut self.config.non_highlight_color);
 
                 ui.label("Background:");
                 ui.color_edit_button_srgba(&mut self.config.background_color);
@@ -205,19 +257,20 @@ impl eframe::App for PrimeVisualizerApp {
                 ui.separator();
                 if ui.button("Reset to Defaults").clicked() {
                     self.config = VisualizerConfig::default();
+                    self.series_type = SeriesType::default();
                 }
             });
 
-        self.regenerate_primes();
+        self.regenerate_series();
 
         egui::CentralPanel::default().show(ctx, |ui| {
             let rect = ui.available_rect_before_wrap();
             self.draw_visualization(ui, rect);
 
             if let Some(hovered) = self.hovered_number {
-                let is_prime = self.primes.contains(&hovered);
-                let text = if is_prime {
-                    format!("{} (prime)", hovered)
+                let is_highlighted = self.contains(hovered);
+                let text = if is_highlighted {
+                    format!("{} ({})", hovered, self.series_name())
                 } else {
                     format!("{}", hovered)
                 };
@@ -226,10 +279,10 @@ impl eframe::App for PrimeVisualizerApp {
                     egui::Align2::LEFT_BOTTOM,
                     text,
                     egui::FontId::proportional(14.0),
-                    if is_prime {
-                        self.config.prime_color
+                    if is_highlighted {
+                        self.config.highlight_color
                     } else {
-                        self.config.non_prime_color
+                        self.config.non_highlight_color
                     },
                 );
             }
