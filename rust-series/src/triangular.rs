@@ -38,7 +38,7 @@ pub fn is_triangular(n: usize) -> bool {
     }
 
     let root = (eight_n_plus_1 as f64).sqrt() as usize;
-    (root - 1) % 2 == 0
+    (root - 1).is_multiple_of(2)
 }
 
 fn is_perfect_square(n: usize) -> bool {

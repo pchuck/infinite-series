@@ -19,7 +19,7 @@ pub fn collatz_stopping_time(n: usize) -> usize {
     let mut steps = 0;
 
     while current != 1 {
-        if current % 2 == 0 {
+        if current.is_multiple_of(2) {
             current /= 2;
         } else {
             current = 3 * current + 1;
