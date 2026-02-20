@@ -3,7 +3,8 @@
 use eframe::egui;
 use primes::generate_primes;
 use series::{
-    generate_collatz_times_up_to, generate_fibonacci_up_to, generate_lucas_up_to,
+    generate_catalan_up_to, generate_collatz_times_up_to, generate_fibonacci_up_to,
+    generate_happy_up_to, generate_hexagonal_up_to, generate_lucas_up_to,
     generate_powers_of_2_up_to, generate_triangular_up_to,
 };
 use std::collections::HashSet;
@@ -27,6 +28,12 @@ pub struct NumberVisualizerApp {
     pub collatz_vec: Vec<usize>,
     pub powers: HashSet<usize>,
     pub powers_vec: Vec<usize>,
+    pub catalan: HashSet<usize>,
+    pub catalan_vec: Vec<usize>,
+    pub hexagonal: HashSet<usize>,
+    pub hexagonal_vec: Vec<usize>,
+    pub happy: HashSet<usize>,
+    pub happy_vec: Vec<usize>,
     cached_max_number: usize,
     cached_series_type: SeriesType,
     pub hovered_number: Option<usize>,
@@ -47,6 +54,12 @@ impl NumberVisualizerApp {
         let collatz_set: HashSet<usize> = collatz_vec.iter().copied().collect();
         let powers_vec = generate_powers_of_2_up_to(max_number);
         let powers_set: HashSet<usize> = powers_vec.iter().copied().collect();
+        let catalan_vec = generate_catalan_up_to(max_number);
+        let catalan_set: HashSet<usize> = catalan_vec.iter().copied().collect();
+        let hexagonal_vec = generate_hexagonal_up_to(max_number);
+        let hexagonal_set: HashSet<usize> = hexagonal_vec.iter().copied().collect();
+        let happy_vec = generate_happy_up_to(max_number);
+        let happy_set: HashSet<usize> = happy_vec.iter().copied().collect();
 
         Self {
             config,
@@ -63,6 +76,12 @@ impl NumberVisualizerApp {
             collatz_vec,
             powers: powers_set,
             powers_vec,
+            catalan: catalan_set,
+            catalan_vec,
+            hexagonal: hexagonal_set,
+            hexagonal_vec,
+            happy: happy_set,
+            happy_vec,
             cached_max_number: max_number,
             cached_series_type: SeriesType::default(),
             hovered_number: None,
@@ -89,6 +108,12 @@ impl NumberVisualizerApp {
             self.collatz = self.collatz_vec.iter().copied().collect();
             self.powers_vec = generate_powers_of_2_up_to(self.config.max_number);
             self.powers = self.powers_vec.iter().copied().collect();
+            self.catalan_vec = generate_catalan_up_to(self.config.max_number);
+            self.catalan = self.catalan_vec.iter().copied().collect();
+            self.hexagonal_vec = generate_hexagonal_up_to(self.config.max_number);
+            self.hexagonal = self.hexagonal_vec.iter().copied().collect();
+            self.happy_vec = generate_happy_up_to(self.config.max_number);
+            self.happy = self.happy_vec.iter().copied().collect();
             self.cached_max_number = self.config.max_number;
         }
 
@@ -107,6 +132,9 @@ impl NumberVisualizerApp {
             SeriesType::Triangular => self.triangular.contains(&n),
             SeriesType::Collatz => self.collatz.contains(&n),
             SeriesType::PowersOf2 => self.powers.contains(&n),
+            SeriesType::Catalan => self.catalan.contains(&n),
+            SeriesType::Hexagonal => self.hexagonal.contains(&n),
+            SeriesType::Happy => self.happy.contains(&n),
         }
     }
 
@@ -118,6 +146,9 @@ impl NumberVisualizerApp {
             SeriesType::Triangular => &self.triangular,
             SeriesType::Collatz => &self.collatz,
             SeriesType::PowersOf2 => &self.powers,
+            SeriesType::Catalan => &self.catalan,
+            SeriesType::Hexagonal => &self.hexagonal,
+            SeriesType::Happy => &self.happy,
         }
     }
 
@@ -129,6 +160,9 @@ impl NumberVisualizerApp {
             SeriesType::Triangular => "triangular",
             SeriesType::Collatz => "collatz",
             SeriesType::PowersOf2 => "power of 2",
+            SeriesType::Catalan => "catalan",
+            SeriesType::Hexagonal => "hexagonal",
+            SeriesType::Happy => "happy",
         }
     }
 

@@ -22,6 +22,9 @@ This project contains infinite series generators and visualizations, including:
 | **Triangular** | Tₙ = n(n+1)/2 | 0, 1, 3, 6, 10, 15, 21, 28, 36, 45, ... |
 | **Collatz** | Steps to reach 1 via 3n+1 | 0, 0, 1, 7, 2, 5, 8, 16, 3, 19, ... |
 | **Powers of 2** | 2ⁿ | 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, ... |
+| **Catalan** | Cₙ = (2n)!/(n!(n+1)!) | 1, 1, 2, 5, 14, 42, 132, 429, 1430, 4862, ... |
+| **Hexagonal** | Hₙ = n(2n-1) | 1, 6, 15, 28, 45, 66, 91, 120, 153, 190, ... |
+| **Happy** | Digit-square sum reaches 1 | 1, 7, 10, 13, 19, 23, 28, 31, 32, 44, ... |
 
 
 ## Implementations
@@ -51,6 +54,9 @@ cargo run -- -c 100 -s lucas     # Lucas numbers
 cargo run -- -c 100 -s tri       # Triangular numbers
 cargo run -- -c 100 -s collatz   # Collatz stopping times
 cargo run -- -c 100 -s pow2      # Powers of 2
+cargo run -- -c 100 -s catalan   # Catalan numbers
+cargo run -- -c 100 -s hex       # Hexagonal numbers
+cargo run -- -c 100 -s happy     # Happy numbers
 ```
 
 ### Prime Generators (CLI and Libraries)
@@ -101,6 +107,9 @@ cd rust-series; cargo run -- -c 100 -s lucas        # Lucas numbers
 cd rust-series; cargo run -- -c 100 -s tri          # Triangular numbers
 cd rust-series; cargo run -- -c 100 -s collatz      # Collatz stopping times
 cd rust-series; cargo run -- -c 100 -s pow2         # Powers of 2
+cd rust-series; cargo run -- -c 100 -s catalan      # Catalan numbers
+cd rust-series; cargo run -- -c 100 -s hex          # Hexagonal numbers
+cd rust-series; cargo run -- -c 100 -s happy        # Happy numbers
 cd rust-series; cargo run -- -c 100 -s fib --quiet  # Count only
 cd rust-series; cargo run -- -c 1000 --progress     # With progress bar
 ```

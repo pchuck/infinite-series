@@ -3,8 +3,8 @@ use std::io::{self, BufWriter, Write};
 
 mod progress;
 use series::{
-    collatz_stopping_time, generate_collatz_times, generate_fibonacci, generate_lucas,
-    generate_powers_of_2, generate_triangular,
+    collatz_stopping_time, generate_catalan, generate_collatz_times, generate_fibonacci,
+    generate_happy, generate_hexagonal, generate_lucas, generate_powers_of_2, generate_triangular,
 };
 
 #[derive(Clone, Copy, PartialEq, Eq, ValueEnum)]
@@ -14,6 +14,9 @@ enum Series {
     Tri,
     Collatz,
     Pow2,
+    Catalan,
+    Hex,
+    Happy,
 }
 
 impl std::fmt::Display for Series {
@@ -24,6 +27,9 @@ impl std::fmt::Display for Series {
             Series::Tri => write!(f, "triangular"),
             Series::Collatz => write!(f, "collatz"),
             Series::Pow2 => write!(f, "powers-of-2"),
+            Series::Catalan => write!(f, "catalan"),
+            Series::Hex => write!(f, "hexagonal"),
+            Series::Happy => write!(f, "happy"),
         }
     }
 }
@@ -32,19 +38,15 @@ impl std::fmt::Display for Series {
 #[command(name = "series_cli")]
 #[command(about = "Infinite series generators", long_about = None)]
 struct Args {
-    /// Number of values to generate
     #[arg(short, long, default_value = "10")]
     count: usize,
 
-    /// Series type to generate
     #[arg(short = 's', long, value_enum, default_value = "fib")]
     series: Series,
 
-    /// Quiet mode - only print count
     #[arg(short, long)]
     quiet: bool,
 
-    /// Show progress bar
     #[arg(short = 'P', long)]
     progress: bool,
 }
@@ -150,6 +152,59 @@ fn main() {
                 result
             } else {
                 generate_powers_of_2(args.count)
+            }
+        }
+        Series::Catalan => {
+            if args.progress {
+                let mut result = Vec::with_capacity(args.count);
+                let mut c = 1usize;
+
+                let mut bar = progress::ProgressBar::new(args.count);
+                for i in 0..args.count {
+                    result.push(c);
+                    if i > 0 {
+                        c = c.saturating_mul(2 * (2 * i - 1)) / (i + 1);
+                    }
+                    bar.inc(1);
+                }
+                bar.finish();
+                result
+            } else {
+                generate_catalan(args.count)
+            }
+        }
+        Series::Hex => {
+            if args.progress {
+                let mut bar = progress::ProgressBar::new(args.count);
+                let result: Vec<usize> = (1..=args.count)
+                    .map(|n| {
+                        bar.inc(1);
+                        n * (2 * n - 1)
+                    })
+                    .collect();
+                bar.finish();
+                result
+            } else {
+                generate_hexagonal(args.count)
+            }
+        }
+        Series::Happy => {
+            if args.progress {
+                let mut result = Vec::with_capacity(args.count);
+                let mut n = 1;
+
+                let mut bar = progress::ProgressBar::new(args.count);
+                while result.len() < args.count {
+                    if series::is_happy(n) {
+                        result.push(n);
+                        bar.inc(1);
+                    }
+                    n += 1;
+                }
+                bar.finish();
+                result
+            } else {
+                generate_happy(args.count)
             }
         }
     };

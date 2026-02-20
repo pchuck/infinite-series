@@ -9,6 +9,9 @@ pub enum SeriesType {
     Triangular,
     Collatz,
     PowersOf2,
+    Catalan,
+    Hexagonal,
+    Happy,
 }
 
 impl SeriesType {
@@ -19,6 +22,9 @@ impl SeriesType {
         SeriesType::Triangular,
         SeriesType::Collatz,
         SeriesType::PowersOf2,
+        SeriesType::Catalan,
+        SeriesType::Hexagonal,
+        SeriesType::Happy,
     ];
 }
 
@@ -31,6 +37,9 @@ impl std::fmt::Display for SeriesType {
             SeriesType::Triangular => write!(f, "Triangular"),
             SeriesType::Collatz => write!(f, "Collatz"),
             SeriesType::PowersOf2 => write!(f, "Powers of 2"),
+            SeriesType::Catalan => write!(f, "Catalan"),
+            SeriesType::Hexagonal => write!(f, "Hexagonal"),
+            SeriesType::Happy => write!(f, "Happy"),
         }
     }
 }
@@ -83,11 +92,14 @@ impl VisualizationType {
     pub fn available_for(series: SeriesType) -> &'static [VisualizationType] {
         match series {
             SeriesType::Primes => Self::ALL,
-            SeriesType::Fibonacci => Self::GENERAL,
-            SeriesType::Lucas => Self::GENERAL,
-            SeriesType::Triangular => Self::GENERAL,
-            SeriesType::Collatz => Self::GENERAL,
-            SeriesType::PowersOf2 => Self::GENERAL,
+            SeriesType::Fibonacci
+            | SeriesType::Lucas
+            | SeriesType::Triangular
+            | SeriesType::Collatz
+            | SeriesType::PowersOf2
+            | SeriesType::Catalan
+            | SeriesType::Hexagonal
+            | SeriesType::Happy => Self::GENERAL,
         }
     }
 

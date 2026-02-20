@@ -28,6 +28,9 @@ cargo run
 | **Triangular** | Triangular numbers (0, 1, 3, 6, 10, 15, 21, ...) |
 | **Collatz** | Stopping times (0, 0, 1, 7, 2, 5, 8, 16, ...) |
 | **Powers of 2** | Powers of 2 (1, 2, 4, 8, 16, 32, 64, ...) |
+| **Catalan** | Catalan numbers (1, 1, 2, 5, 14, 42, 132, ...) |
+| **Hexagonal** | Hexagonal numbers (1, 6, 15, 28, 45, 66, 91, ...) |
+| **Happy** | Happy numbers (1, 7, 10, 13, 19, 23, 28, ...) |
 
 ## Visualizations
 
