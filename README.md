@@ -4,9 +4,9 @@
 
 This project contains infinite series generators and visualizations, including:
 
-* An interactive visualizer for number sequences in Rust [rust-gui](./rust-gui/README.md) - supports primes, fibonacci, lucas, triangular, collatz, and powers of 2
-* A high-performance parallel prime generator in Rust [rust-primes](./rust-primes/README.md), with reference implementations in Python [python-primes](./python-primes) and Go [golang-primes](./golang-primes/README.md)
-* An infinite series generator in Rust [rust-series](./rust-series/README.md) - fibonacci, lucas, triangular, collatz stopping times, and powers of 2
+* An interactive visualizer for number sequences in Rust [rust-gui](./rust-gui/README.md)
+* A high-performance parallel prime generator in Rust [rust-primes](./rust-primes/README.md),<br>with reference implementations in Python [python-primes](./python-primes) and Go [golang-primes](./golang-primes/README.md)
+* An infinite series generator in Rust [rust-series](./rust-series/README.md)<br> supporting fibonacci, lucas, triangular, collatz stopping times, and powers
 * A fast parallelized Miller-Rabin primality tester in Rust [rust-miller-rabin](./rust-miller-rabin/README.md)
 
 ![Rust Number Sequence Visualizer Screenshot](rust-gui/resources/rust_prime_visualizer_sacks_spiral_screenshot.png)
