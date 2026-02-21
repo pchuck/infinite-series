@@ -198,6 +198,14 @@ impl NumberVisualizerApp {
             VisualizationType::UlamMobiusSpiral => viz::draw_ulam_mobius(self, ui, rect),
             VisualizationType::PrimeDensityGradient => viz::draw_density_gradient(self, ui, rect),
             VisualizationType::Helix3D => viz::draw_helix_3d(self, ui, rect),
+            VisualizationType::Sphere3D => viz::draw_sphere_3d(self, ui, rect),
+            VisualizationType::Torus3D => viz::draw_torus_3d(self, ui, rect),
+            VisualizationType::Cone3D => viz::draw_cone_3d(self, ui, rect),
+            VisualizationType::Cylinder3D => viz::draw_cylinder_3d(self, ui, rect),
+            VisualizationType::Cube3D => viz::draw_cube_3d(self, ui, rect),
+            VisualizationType::Mobius3D => viz::draw_mobius_3d(self, ui, rect),
+            VisualizationType::Klein3D => viz::draw_klein_3d(self, ui, rect),
+            VisualizationType::Pyramid3D => viz::draw_pyramid_3d(self, ui, rect),
         }
     }
 

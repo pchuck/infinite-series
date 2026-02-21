@@ -61,6 +61,14 @@ pub enum VisualizationType {
     UlamMobiusSpiral,
     PrimeDensityGradient,
     Helix3D,
+    Sphere3D,
+    Torus3D,
+    Cone3D,
+    Cylinder3D,
+    Cube3D,
+    Mobius3D,
+    Klein3D,
+    Pyramid3D,
 }
 
 impl VisualizationType {
@@ -79,6 +87,14 @@ impl VisualizationType {
         VisualizationType::UlamMobiusSpiral,
         VisualizationType::PrimeDensityGradient,
         VisualizationType::Helix3D,
+        VisualizationType::Sphere3D,
+        VisualizationType::Torus3D,
+        VisualizationType::Cone3D,
+        VisualizationType::Cylinder3D,
+        VisualizationType::Cube3D,
+        VisualizationType::Mobius3D,
+        VisualizationType::Klein3D,
+        VisualizationType::Pyramid3D,
     ];
 
     pub const GENERAL: &'static [VisualizationType] = &[
@@ -90,6 +106,14 @@ impl VisualizationType {
         VisualizationType::TriangularLattice,
         VisualizationType::FermatsSpiral,
         VisualizationType::Helix3D,
+        VisualizationType::Sphere3D,
+        VisualizationType::Torus3D,
+        VisualizationType::Cone3D,
+        VisualizationType::Cylinder3D,
+        VisualizationType::Cube3D,
+        VisualizationType::Mobius3D,
+        VisualizationType::Klein3D,
+        VisualizationType::Pyramid3D,
     ];
 
     pub fn available_for(series: SeriesType) -> &'static [VisualizationType] {
@@ -132,6 +156,14 @@ impl VisualizationType {
                 | Self::SacksMobiusSpiral
                 | Self::UlamMobiusSpiral
                 | Self::Helix3D
+                | Self::Sphere3D
+                | Self::Torus3D
+                | Self::Cone3D
+                | Self::Cylinder3D
+                | Self::Cube3D
+                | Self::Mobius3D
+                | Self::Klein3D
+                | Self::Pyramid3D
         )
     }
 
@@ -167,6 +199,14 @@ impl VisualizationType {
             }
             Self::PrimeDensityGradient => "Heatmap grid showing local prime density",
             Self::Helix3D => "3D spiral helix with highlighted numbers spiking outward",
+            Self::Sphere3D => "3D sphere with numbers distributed on surface, highlights bulge",
+            Self::Torus3D => "3D torus (donut) with numbers wrapped around, highlights bulge",
+            Self::Cone3D => "3D cone with numbers spiraling up, highlights spike outward",
+            Self::Cylinder3D => "3D cylinder with numbers spiraling around, highlights spike",
+            Self::Cube3D => "3D cube with numbers on faces, highlights bulge outward",
+            Self::Mobius3D => "3D Mobius strip with numbers on twisted surface",
+            Self::Klein3D => "3D Klein bottle (non-orientable surface), highlights bulge",
+            Self::Pyramid3D => "3D pyramid with numbers on faces, highlights spike outward",
         }
     }
 
@@ -201,6 +241,14 @@ impl std::fmt::Display for VisualizationType {
             VisualizationType::UlamMobiusSpiral => write!(f, "Ulam Mobius Spiral"),
             VisualizationType::PrimeDensityGradient => write!(f, "Prime Density Gradient"),
             VisualizationType::Helix3D => write!(f, "3D Helix"),
+            VisualizationType::Sphere3D => write!(f, "3D Sphere"),
+            VisualizationType::Torus3D => write!(f, "3D Torus"),
+            VisualizationType::Cone3D => write!(f, "3D Cone"),
+            VisualizationType::Cylinder3D => write!(f, "3D Cylinder"),
+            VisualizationType::Cube3D => write!(f, "3D Cube"),
+            VisualizationType::Mobius3D => write!(f, "3D Mobius Strip"),
+            VisualizationType::Klein3D => write!(f, "3D Klein Bottle"),
+            VisualizationType::Pyramid3D => write!(f, "3D Pyramid"),
         }
     }
 }

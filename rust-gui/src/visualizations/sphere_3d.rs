@@ -1,12 +1,10 @@
-//! 3D Spiral Helix visualization - numbers spiral upward like DNA
-//! Highlighted numbers (primes, Fibonacci, etc.) spike outward from the helix
+//! 3D Sphere visualization - numbers distributed on sphere surface
+//! Highlighted numbers bulge outward from the surface
 
 use crate::helpers::MARGIN_SMALL;
 use eframe::egui;
 
-const HELIX_RADIUS: f32 = 100.0;
-const HELIX_HEIGHT_FACTOR: f32 = 3.0;
-const TURNS: f32 = 8.0;
+const SPHERE_RADIUS: f32 = 100.0;
 const DRAG_SENSITIVITY: f32 = 0.01;
 
 struct Point3D {
@@ -33,8 +31,20 @@ fn project_3d_to_2d(point: &Point3D, rotation_y: f32, rotation_x: f32) -> (f32, 
     (x1 * scale, y2 * scale, z2)
 }
 
+fn fibonacci_sphere_point(n: usize, total: usize) -> (f32, f32, f32) {
+    let golden_ratio = (1.0 + 5.0f32.sqrt()) / 2.0;
+    let theta = 2.0 * std::f32::consts::PI * n as f32 / golden_ratio;
+    let phi = (1.0 - 2.0 * n as f32 / total as f32).acos();
+
+    let x = phi.sin() * theta.cos();
+    let y = phi.cos();
+    let z = phi.sin() * theta.sin();
+
+    (x, y, z)
+}
+
 pub fn draw(app: &mut crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: egui::Rect) {
-    let response = ui.interact(rect, egui::Id::new("helix_3d"), egui::Sense::drag());
+    let response = ui.interact(rect, egui::Id::new("sphere_3d"), egui::Sense::drag());
 
     if response.dragged() {
         let delta = response.drag_delta();
@@ -52,29 +62,23 @@ pub fn draw(app: &mut crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: 
     }
 
     let highlights = app.highlights();
-    let angle_step = TURNS * std::f32::consts::TAU / max_n as f32;
-    let height_step = HELIX_HEIGHT_FACTOR * HELIX_RADIUS / max_n as f32;
 
     let mut projected: Vec<(f32, f32, f32, bool)> = Vec::with_capacity(max_n);
 
     for n in 1..=max_n {
-        let t = (n - 1) as f32;
-        let angle = t * angle_step;
-        let height = t * height_step - HELIX_HEIGHT_FACTOR * HELIX_RADIUS / 2.0;
-
-        let x = HELIX_RADIUS * angle.cos();
-        let z = HELIX_RADIUS * angle.sin();
+        let (nx, ny, nz) = fibonacci_sphere_point(n - 1, max_n);
 
         let is_highlighted = highlights.contains(&n);
-        let spike = if is_highlighted { 25.0 } else { 0.0 };
-
-        let spike_x = x + spike * angle.cos();
-        let spike_z = z + spike * angle.sin();
+        let radius = if is_highlighted {
+            SPHERE_RADIUS + 15.0
+        } else {
+            SPHERE_RADIUS
+        };
 
         let point = Point3D {
-            x: spike_x,
-            y: height,
-            z: spike_z,
+            x: nx * radius,
+            y: ny * radius,
+            z: nz * radius,
         };
         let (px, py, pz) = project_3d_to_2d(&point, rotation_y, rotation_x);
 

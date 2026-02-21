@@ -44,6 +44,15 @@ cargo run
 | **Hexagonal Lattice** | 6-direction symmetric spiral on hexagonal grid |
 | **Triangular Lattice** | 3-direction symmetric spiral on triangular grid |
 | **Fermat's Spiral** | Phyllotaxis spiral with golden angle (sunflower pattern) |
+| **3D Helix** | Numbers spiral upward like DNA, highlights spike outward |
+| **3D Sphere** | Fibonacci sphere distribution, highlights bulge outward |
+| **3D Torus** | Numbers wrapped around donut shape, highlights bulge |
+| **3D Cone** | Spiral ascending a cone, highlights spike outward |
+| **3D Cylinder** | Spiral around cylinder, highlights spike outward |
+| **3D Cube** | Numbers on cube faces, highlights bulge outward |
+| **3D Mobius Strip** | Numbers on a twisted one-sided surface |
+| **3D Klein Bottle** | Numbers on non-orientable surface (immersed form) |
+| **3D Pyramid** | Numbers on pyramid faces, highlights spike outward |
 
 ### Primes-Only Visualizations
 | Visualization | Description |
@@ -57,10 +66,11 @@ cargo run
 
 ## Controls
 
-- **Series Type**: Switch between Primes, Fibonacci, Lucas, Triangular, Collatz, and Powers of 2
+- **Series Type**: Switch between Primes, Fibonacci, Lucas, Triangular, Collatz, Powers of 2, Catalan, Hexagonal, and Happy numbers
 - **Visualization**: Select the visualization type
 - **Max Number**: Set the upper bound for the sequence
 - **Display**: Adjust point sizes, colors, and visibility options
+- **3D Rotation**: Drag left/right to rotate, drag up/down to tilt (3D visualizations only)
 
 ## Building
 
@@ -100,7 +110,16 @@ rust-gui/
         ├── riemann.rs
         ├── sacks_mobius.rs
         ├── ulam_mobius.rs
-        └── density_gradient.rs
+        ├── density_gradient.rs
+        ├── helix_3d.rs
+        ├── sphere_3d.rs
+        ├── torus_3d.rs
+        ├── cone_3d.rs
+        ├── cylinder_3d.rs
+        ├── cube_3d.rs
+        ├── mobius_3d.rs
+        ├── klein_3d.rs
+        └── pyramid_3d.rs
 ```
 
 ## Dependencies
@@ -121,4 +140,13 @@ rust-gui/
 * **Fermat's Spiral** - Phyllotaxis spiral - golden angle placement (r = sqrt(n), theta = n * 137.5°), same pattern as sunflower seed arrangements 
 * **Sacks Mobius Spiral** - Archimedean spiral using prime index with gap-colored lines (white=close, gray=far) 
 * **Ulam Mobius Spiral** - Square-grid spiral using prime index with gap-colored lines (white=close, gray=far) 
-* **Prime Density Gradient** - Heatmap grid showing local prime density across the number space 
+* **Prime Density Gradient** - Heatmap grid showing local prime density across the number space
+* **3D Helix** - Numbers spiral upward like DNA, highlighted numbers spike outward from the helix surface
+* **3D Sphere** - Fibonacci sphere point distribution for even coverage, highlighted numbers bulge outward
+* **3D Torus** - Numbers wrapped around a torus (donut) using golden ratio for even distribution, highlights bulge
+* **3D Cone** - Numbers spiral up a cone from base to tip, highlights spike outward from the surface
+* **3D Cylinder** - Numbers spiral around a cylinder, highlights spike outward from the surface
+* **3D Cube** - Numbers distributed on cube faces using golden ratio, highlights bulge outward
+* **3D Mobius Strip** - Numbers on twisted one-sided surface (half-twist band), highlights bulge
+* **3D Klein Bottle** - Numbers on immersed Klein bottle (non-orientable surface with self-intersection), highlights bulge
+* **3D Pyramid** - Numbers on 4 triangular faces and base, highlights spike outward from surfaces 

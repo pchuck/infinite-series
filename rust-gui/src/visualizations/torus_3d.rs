@@ -1,12 +1,11 @@
-//! 3D Spiral Helix visualization - numbers spiral upward like DNA
-//! Highlighted numbers (primes, Fibonacci, etc.) spike outward from the helix
+//! 3D Torus visualization - numbers wrapped around a donut shape
+//! Highlighted numbers bulge outward from the torus surface
 
 use crate::helpers::MARGIN_SMALL;
 use eframe::egui;
 
-const HELIX_RADIUS: f32 = 100.0;
-const HELIX_HEIGHT_FACTOR: f32 = 3.0;
-const TURNS: f32 = 8.0;
+const TORUS_MAJOR_RADIUS: f32 = 80.0;
+const TORUS_MINOR_RADIUS: f32 = 30.0;
 const DRAG_SENSITIVITY: f32 = 0.01;
 
 struct Point3D {
@@ -34,7 +33,7 @@ fn project_3d_to_2d(point: &Point3D, rotation_y: f32, rotation_x: f32) -> (f32, 
 }
 
 pub fn draw(app: &mut crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: egui::Rect) {
-    let response = ui.interact(rect, egui::Id::new("helix_3d"), egui::Sense::drag());
+    let response = ui.interact(rect, egui::Id::new("torus_3d"), egui::Sense::drag());
 
     if response.dragged() {
         let delta = response.drag_delta();
@@ -52,30 +51,27 @@ pub fn draw(app: &mut crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: 
     }
 
     let highlights = app.highlights();
-    let angle_step = TURNS * std::f32::consts::TAU / max_n as f32;
-    let height_step = HELIX_HEIGHT_FACTOR * HELIX_RADIUS / max_n as f32;
+    let golden_ratio = (1.0 + 5.0f32.sqrt()) / 2.0;
 
     let mut projected: Vec<(f32, f32, f32, bool)> = Vec::with_capacity(max_n);
 
     for n in 1..=max_n {
         let t = (n - 1) as f32;
-        let angle = t * angle_step;
-        let height = t * height_step - HELIX_HEIGHT_FACTOR * HELIX_RADIUS / 2.0;
-
-        let x = HELIX_RADIUS * angle.cos();
-        let z = HELIX_RADIUS * angle.sin();
+        let u = t / max_n as f32 * std::f32::consts::TAU * golden_ratio;
+        let v = t * golden_ratio / max_n as f32 * std::f32::consts::TAU;
 
         let is_highlighted = highlights.contains(&n);
-        let spike = if is_highlighted { 25.0 } else { 0.0 };
-
-        let spike_x = x + spike * angle.cos();
-        let spike_z = z + spike * angle.sin();
-
-        let point = Point3D {
-            x: spike_x,
-            y: height,
-            z: spike_z,
+        let minor_r = if is_highlighted {
+            TORUS_MINOR_RADIUS + 10.0
+        } else {
+            TORUS_MINOR_RADIUS
         };
+
+        let x = (TORUS_MAJOR_RADIUS + minor_r * v.cos()) * u.cos();
+        let y = minor_r * v.sin();
+        let z = (TORUS_MAJOR_RADIUS + minor_r * v.cos()) * u.sin();
+
+        let point = Point3D { x, y, z };
         let (px, py, pz) = project_3d_to_2d(&point, rotation_y, rotation_x);
 
         projected.push((px, py, pz, is_highlighted));
