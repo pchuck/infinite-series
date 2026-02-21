@@ -1,4 +1,4 @@
-//! 3D Pyramid visualization - numbers distributed on pyramid surface
+//! 3D Pyramid visualization - evenly distributed point cloud on all faces
 //! Highlighted numbers spike outward from the pyramid faces
 
 use crate::helpers::MARGIN_SMALL;
@@ -32,12 +32,11 @@ fn project_3d_to_2d(point: &Point3D, rotation_y: f32, rotation_x: f32) -> (f32, 
     (x1 * scale, y2 * scale, z2)
 }
 
-fn pyramid_face_point(face: usize, r: f32, theta: f32, spike: f32) -> Point3D {
+fn point_on_pyramid_surface(seed: f32, u: f32, v: f32, spike: f32) -> Point3D {
     let half = PYRAMID_BASE / 2.0;
     let h = PYRAMID_HEIGHT / 2.0;
 
     let apex = [0.0f32, h, 0.0f32];
-
     let base_corners: [[f32; 3]; 4] = [
         [half, -h, -half],
         [half, -h, half],
@@ -45,25 +44,33 @@ fn pyramid_face_point(face: usize, r: f32, theta: f32, spike: f32) -> Point3D {
         [-half, -h, -half],
     ];
 
+    let slant = (half * half + PYRAMID_HEIGHT * PYRAMID_HEIGHT).sqrt();
+    let tri_area = 0.5 * PYRAMID_BASE * slant / 2.0f32.sqrt() * 2.0;
+    let base_area = PYRAMID_BASE * PYRAMID_BASE;
+    let _total_area = 4.0 * tri_area + base_area;
+    let face = (seed * 5.0) as usize;
+    let face_seed = (seed * 5.0).fract();
+
     if face < 4 {
         let c1 = base_corners[face];
         let c2 = base_corners[(face + 1) % 4];
 
-        let sqrt_r = r.sqrt();
-        let u = sqrt_r * (1.0 - theta);
-        let v = sqrt_r * theta;
-        let w = 1.0 - sqrt_r;
+        let r = face_seed.sqrt();
+        let s = v;
+        let t = 1.0 - r;
+        let w = r * (1.0 - s);
+        let u_tri = r * s;
 
-        let x = w * apex[0] + u * c1[0] + v * c2[0];
-        let y = w * apex[1] + u * c1[1] + v * c2[1];
-        let z = w * apex[2] + u * c1[2] + v * c2[2];
+        let x = t * apex[0] + w * c1[0] + u_tri * c2[0];
+        let y = t * apex[1] + w * c1[1] + u_tri * c2[1];
+        let z = t * apex[2] + w * c1[2] + u_tri * c2[2];
 
         let edge1 = [c1[0] - apex[0], c1[1] - apex[1], c1[2] - apex[2]];
         let edge2 = [c2[0] - apex[0], c2[1] - apex[1], c2[2] - apex[2]];
 
-        let nx = edge1[1] * edge2[2] - edge1[2] * edge2[1];
-        let ny = edge1[2] * edge2[0] - edge1[0] * edge2[2];
-        let nz = edge1[0] * edge2[1] - edge1[1] * edge2[0];
+        let nx = -(edge1[1] * edge2[2] - edge1[2] * edge2[1]);
+        let ny = -(edge1[2] * edge2[0] - edge1[0] * edge2[2]);
+        let nz = -(edge1[0] * edge2[1] - edge1[1] * edge2[0]);
         let len = (nx * nx + ny * ny + nz * nz).sqrt();
 
         Point3D {
@@ -77,10 +84,14 @@ fn pyramid_face_point(face: usize, r: f32, theta: f32, spike: f32) -> Point3D {
         let c3 = base_corners[2];
         let c4 = base_corners[3];
 
-        let x = (1.0 - theta) * ((1.0 - r) * c1[0] + r * c4[0])
-            + theta * ((1.0 - r) * c2[0] + r * c3[0]);
-        let z = (1.0 - theta) * ((1.0 - r) * c1[2] + r * c4[2])
-            + theta * ((1.0 - r) * c2[2] + r * c3[2]);
+        let x = (1.0 - u) * (1.0 - v) * c1[0]
+            + u * (1.0 - v) * c2[0]
+            + u * v * c3[0]
+            + (1.0 - u) * v * c4[0];
+        let z = (1.0 - u) * (1.0 - v) * c1[2]
+            + u * (1.0 - v) * c2[2]
+            + u * v * c3[2]
+            + (1.0 - u) * v * c4[2];
 
         Point3D {
             x,
@@ -115,15 +126,15 @@ pub fn draw(app: &mut crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: 
 
     for n in 1..=max_n {
         let t = (n - 1) as f32;
-        let face = ((n - 1) * 5 / max_n) % 5;
 
-        let r = (t * golden_ratio).fract();
-        let theta = (t * golden_ratio * golden_ratio).fract();
+        let seed = t / max_n as f32;
+        let u = (t * golden_ratio).fract();
+        let v = (t * golden_ratio * golden_ratio).fract();
 
         let is_highlighted = highlights.contains(&n);
         let spike = if is_highlighted { 12.0 } else { 0.0 };
 
-        let point = pyramid_face_point(face, r, theta, spike);
+        let point = point_on_pyramid_surface(seed, u, v, spike);
         let (px, py, pz) = project_3d_to_2d(&point, rotation_y, rotation_x);
 
         projected.push((px, py, pz, is_highlighted));
