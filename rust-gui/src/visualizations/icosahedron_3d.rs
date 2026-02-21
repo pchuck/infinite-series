@@ -1,11 +1,10 @@
-//! 3D Pyramid visualization - numbers distributed on pyramid surface
-//! Highlighted numbers spike outward from the pyramid faces
+//! 3D Icosahedron visualization - numbers distributed on 20 triangular faces
+//! Highlighted numbers bulge outward from the surface
 
 use crate::helpers::MARGIN_SMALL;
 use eframe::egui;
 
-const PYRAMID_HEIGHT: f32 = 150.0;
-const PYRAMID_BASE: f32 = 120.0;
+const SCALE: f32 = 80.0;
 const DRAG_SENSITIVITY: f32 = 0.01;
 
 struct Point3D {
@@ -32,66 +31,79 @@ fn project_3d_to_2d(point: &Point3D, rotation_y: f32, rotation_x: f32) -> (f32, 
     (x1 * scale, y2 * scale, z2)
 }
 
-fn pyramid_face_point(face: usize, r: f32, theta: f32, spike: f32) -> Point3D {
-    let half = PYRAMID_BASE / 2.0;
-    let h = PYRAMID_HEIGHT / 2.0;
+fn icosahedron_vertices() -> Vec<[f32; 3]> {
+    let phi = (1.0 + 5.0f32.sqrt()) / 2.0;
 
-    let apex = [0.0f32, h, 0.0f32];
+    vec![
+        [0.0, 1.0, phi],
+        [0.0, 1.0, -phi],
+        [0.0, -1.0, phi],
+        [0.0, -1.0, -phi],
+        [1.0, phi, 0.0],
+        [1.0, -phi, 0.0],
+        [-1.0, phi, 0.0],
+        [-1.0, -phi, 0.0],
+        [phi, 0.0, 1.0],
+        [phi, 0.0, -1.0],
+        [-phi, 0.0, 1.0],
+        [-phi, 0.0, -1.0],
+    ]
+}
 
-    let base_corners: [[f32; 3]; 4] = [
-        [half, -h, -half],
-        [half, -h, half],
-        [-half, -h, half],
-        [-half, -h, -half],
-    ];
+fn icosahedron_faces() -> Vec<[usize; 3]> {
+    vec![
+        [0, 2, 8],
+        [0, 8, 4],
+        [0, 4, 6],
+        [0, 6, 10],
+        [0, 10, 2],
+        [1, 9, 3],
+        [1, 4, 9],
+        [1, 6, 4],
+        [1, 11, 6],
+        [1, 3, 11],
+        [2, 5, 8],
+        [2, 7, 5],
+        [2, 10, 7],
+        [3, 5, 7],
+        [3, 7, 11],
+        [4, 8, 9],
+        [5, 9, 8],
+        [6, 11, 10],
+        [7, 10, 11],
+        [9, 5, 3],
+    ]
+}
 
-    if face < 4 {
-        let c1 = base_corners[face];
-        let c2 = base_corners[(face + 1) % 4];
+fn point_on_triangle(
+    vertices: &[[f32; 3]],
+    face: &[usize; 3],
+    u: f32,
+    v: f32,
+    spike: f32,
+) -> Point3D {
+    let a = vertices[face[0]];
+    let b = vertices[face[1]];
+    let c = vertices[face[2]];
 
-        let sqrt_r = r.sqrt();
-        let u = sqrt_r * (1.0 - theta);
-        let v = sqrt_r * theta;
-        let w = 1.0 - sqrt_r;
+    let w = 1.0 - u - v;
 
-        let x = w * apex[0] + u * c1[0] + v * c2[0];
-        let y = w * apex[1] + u * c1[1] + v * c2[1];
-        let z = w * apex[2] + u * c1[2] + v * c2[2];
+    let x = w * a[0] + u * b[0] + v * c[0];
+    let y = w * a[1] + u * b[1] + v * c[1];
+    let z = w * a[2] + u * b[2] + v * c[2];
 
-        let edge1 = [c1[0] - apex[0], c1[1] - apex[1], c1[2] - apex[2]];
-        let edge2 = [c2[0] - apex[0], c2[1] - apex[1], c2[2] - apex[2]];
+    let len = (x * x + y * y + z * z).sqrt();
+    let normal = [x / len, y / len, z / len];
 
-        let nx = edge1[1] * edge2[2] - edge1[2] * edge2[1];
-        let ny = edge1[2] * edge2[0] - edge1[0] * edge2[2];
-        let nz = edge1[0] * edge2[1] - edge1[1] * edge2[0];
-        let len = (nx * nx + ny * ny + nz * nz).sqrt();
-
-        Point3D {
-            x: x + (nx / len) * spike,
-            y: y + (ny / len) * spike,
-            z: z + (nz / len) * spike,
-        }
-    } else {
-        let c1 = base_corners[0];
-        let c2 = base_corners[1];
-        let c3 = base_corners[2];
-        let c4 = base_corners[3];
-
-        let x = (1.0 - theta) * ((1.0 - r) * c1[0] + r * c4[0])
-            + theta * ((1.0 - r) * c2[0] + r * c3[0]);
-        let z = (1.0 - theta) * ((1.0 - r) * c1[2] + r * c4[2])
-            + theta * ((1.0 - r) * c2[2] + r * c3[2]);
-
-        Point3D {
-            x,
-            y: -h - spike,
-            z,
-        }
+    Point3D {
+        x: (x + normal[0] * spike) * SCALE,
+        y: (y + normal[1] * spike) * SCALE,
+        z: (z + normal[2] * spike) * SCALE,
     }
 }
 
 pub fn draw(app: &mut crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: egui::Rect) {
-    let response = ui.interact(rect, egui::Id::new("pyramid_3d"), egui::Sense::drag());
+    let response = ui.interact(rect, egui::Id::new("icosahedron_3d"), egui::Sense::drag());
 
     if response.dragged() {
         let delta = response.drag_delta();
@@ -109,21 +121,30 @@ pub fn draw(app: &mut crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: 
     }
 
     let highlights = app.highlights();
+    let vertices = icosahedron_vertices();
+    let faces = icosahedron_faces();
     let golden_ratio = (1.0 + 5.0f32.sqrt()) / 2.0;
 
     let mut projected: Vec<(f32, f32, f32, bool)> = Vec::with_capacity(max_n);
 
     for n in 1..=max_n {
         let t = (n - 1) as f32;
-        let face = ((n - 1) * 5 / max_n) % 5;
+        let face_idx = ((n - 1) * 20 / max_n) % 20;
+        let local = (t * golden_ratio).fract();
 
-        let r = (t * golden_ratio).fract();
-        let theta = (t * golden_ratio * golden_ratio).fract();
+        let u = local * 0.9 + 0.05;
+        let v = (local * golden_ratio).fract() * 0.9 + 0.05;
+
+        let (u, v) = if u + v > 0.95 {
+            (0.95 - u, 0.95 - v)
+        } else {
+            (u, v)
+        };
 
         let is_highlighted = highlights.contains(&n);
-        let spike = if is_highlighted { 12.0 } else { 0.0 };
+        let spike = if is_highlighted { 0.2 } else { 0.0 };
 
-        let point = pyramid_face_point(face, r, theta, spike);
+        let point = point_on_triangle(&vertices, &faces[face_idx], u, v, spike);
         let (px, py, pz) = project_3d_to_2d(&point, rotation_y, rotation_x);
 
         projected.push((px, py, pz, is_highlighted));

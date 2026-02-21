@@ -53,6 +53,9 @@ cargo run
 | **3D Mobius Strip** | Numbers on a twisted one-sided surface |
 | **3D Klein Bottle** | Numbers on non-orientable surface (immersed form) |
 | **3D Pyramid** | Numbers on pyramid faces, highlights spike outward |
+| **3D Dodecahedron** | Numbers on 12 pentagonal faces, highlights bulge |
+| **3D Icosahedron** | Numbers on 20 triangular faces, highlights bulge |
+| **3D Trefoil Knot** | Numbers along a mathematical knot curve |
 
 ### Primes-Only Visualizations
 | Visualization | Description |
@@ -119,7 +122,11 @@ rust-gui/
         ├── cube_3d.rs
         ├── mobius_3d.rs
         ├── klein_3d.rs
-        └── pyramid_3d.rs
+        ├── mobius_3d.rs
+        ├── pyramid_3d.rs
+        ├── dodecahedron_3d.rs
+        ├── icosahedron_3d.rs
+        └── trefoil_3d.rs
 ```
 
 ## Dependencies
@@ -149,4 +156,7 @@ rust-gui/
 * **3D Cube** - Numbers distributed on cube faces using golden ratio, highlights bulge outward
 * **3D Mobius Strip** - Numbers on twisted one-sided surface (half-twist band), highlights bulge
 * **3D Klein Bottle** - Numbers on immersed Klein bottle (non-orientable surface with self-intersection), highlights bulge
-* **3D Pyramid** - Numbers on 4 triangular faces and base, highlights spike outward from surfaces 
+* **3D Pyramid** - Numbers on 4 triangular faces and base, highlights spike outward from surfaces
+* **3D Dodecahedron** - Numbers on 12 pentagonal faces (Platonic solid), highlights bulge outward
+* **3D Icosahedron** - Numbers on 20 triangular faces (Platonic solid), highlights bulge outward
+* **3D Trefoil Knot** - Numbers along trefoil knot tube (simplest non-trivial mathematical knot), highlights bulge 

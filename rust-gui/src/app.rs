@@ -206,6 +206,9 @@ impl NumberVisualizerApp {
             VisualizationType::Mobius3D => viz::draw_mobius_3d(self, ui, rect),
             VisualizationType::Klein3D => viz::draw_klein_3d(self, ui, rect),
             VisualizationType::Pyramid3D => viz::draw_pyramid_3d(self, ui, rect),
+            VisualizationType::Dodecahedron3D => viz::draw_dodecahedron_3d(self, ui, rect),
+            VisualizationType::Icosahedron3D => viz::draw_icosahedron_3d(self, ui, rect),
+            VisualizationType::Trefoil3D => viz::draw_trefoil_3d(self, ui, rect),
         }
     }
 

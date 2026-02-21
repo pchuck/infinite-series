@@ -1,11 +1,10 @@
-//! 3D Pyramid visualization - numbers distributed on pyramid surface
-//! Highlighted numbers spike outward from the pyramid faces
+//! 3D Dodecahedron visualization - numbers distributed on 12 pentagonal faces
+//! Highlighted numbers bulge outward from the surface
 
 use crate::helpers::MARGIN_SMALL;
 use eframe::egui;
 
-const PYRAMID_HEIGHT: f32 = 150.0;
-const PYRAMID_BASE: f32 = 120.0;
+const SCALE: f32 = 70.0;
 const DRAG_SENSITIVITY: f32 = 0.01;
 
 struct Point3D {
@@ -32,66 +31,99 @@ fn project_3d_to_2d(point: &Point3D, rotation_y: f32, rotation_x: f32) -> (f32, 
     (x1 * scale, y2 * scale, z2)
 }
 
-fn pyramid_face_point(face: usize, r: f32, theta: f32, spike: f32) -> Point3D {
-    let half = PYRAMID_BASE / 2.0;
-    let h = PYRAMID_HEIGHT / 2.0;
+fn dodecahedron_vertices() -> Vec<[f32; 3]> {
+    let phi = (1.0 + 5.0f32.sqrt()) / 2.0;
+    let inv_phi = 1.0 / phi;
 
-    let apex = [0.0f32, h, 0.0f32];
+    vec![
+        [1.0, 1.0, 1.0],
+        [1.0, 1.0, -1.0],
+        [1.0, -1.0, 1.0],
+        [1.0, -1.0, -1.0],
+        [-1.0, 1.0, 1.0],
+        [-1.0, 1.0, -1.0],
+        [-1.0, -1.0, 1.0],
+        [-1.0, -1.0, -1.0],
+        [0.0, inv_phi, phi],
+        [0.0, inv_phi, -phi],
+        [0.0, -inv_phi, phi],
+        [0.0, -inv_phi, -phi],
+        [inv_phi, phi, 0.0],
+        [inv_phi, -phi, 0.0],
+        [-inv_phi, phi, 0.0],
+        [-inv_phi, -phi, 0.0],
+        [phi, 0.0, inv_phi],
+        [phi, 0.0, -inv_phi],
+        [-phi, 0.0, inv_phi],
+        [-phi, 0.0, -inv_phi],
+    ]
+}
 
-    let base_corners: [[f32; 3]; 4] = [
-        [half, -h, -half],
-        [half, -h, half],
-        [-half, -h, half],
-        [-half, -h, -half],
+fn dodecahedron_faces() -> Vec<[usize; 5]> {
+    vec![
+        [0, 8, 10, 2, 16],
+        [0, 16, 17, 1, 12],
+        [0, 12, 14, 4, 8],
+        [1, 17, 3, 11, 9],
+        [1, 9, 5, 14, 12],
+        [2, 10, 6, 15, 13],
+        [2, 13, 3, 17, 16],
+        [3, 13, 15, 7, 11],
+        [4, 14, 5, 19, 18],
+        [4, 18, 6, 10, 8],
+        [5, 9, 11, 7, 19],
+        [6, 18, 19, 7, 15],
+    ]
+}
+
+fn point_on_pentagon(
+    vertices: &[[f32; 3]],
+    face: &[usize; 5],
+    r: f32,
+    theta: f32,
+    spike: f32,
+) -> Point3D {
+    let v0 = vertices[face[0]];
+    let v1 = vertices[face[1]];
+    let v2 = vertices[face[2]];
+    let v3 = vertices[face[3]];
+    let v4 = vertices[face[4]];
+
+    let center = [
+        (v0[0] + v1[0] + v2[0] + v3[0] + v4[0]) / 5.0,
+        (v0[1] + v1[1] + v2[1] + v3[1] + v4[1]) / 5.0,
+        (v0[2] + v1[2] + v2[2] + v3[2] + v4[2]) / 5.0,
     ];
 
-    if face < 4 {
-        let c1 = base_corners[face];
-        let c2 = base_corners[(face + 1) % 4];
+    let mut corners = [[0.0f32; 3]; 5];
+    for i in 0..5 {
+        let vi = vertices[face[i]];
+        corners[i] = [vi[0] - center[0], vi[1] - center[1], vi[2] - center[2]];
+    }
 
-        let sqrt_r = r.sqrt();
-        let u = sqrt_r * (1.0 - theta);
-        let v = sqrt_r * theta;
-        let w = 1.0 - sqrt_r;
+    let sector = ((theta / (2.0 * std::f32::consts::PI)) * 5.0).floor() as usize % 5;
+    let sector_theta = theta - sector as f32 * 2.0 * std::f32::consts::PI / 5.0;
+    let angle_norm = sector_theta / (2.0 * std::f32::consts::PI / 5.0);
 
-        let x = w * apex[0] + u * c1[0] + v * c2[0];
-        let y = w * apex[1] + u * c1[1] + v * c2[1];
-        let z = w * apex[2] + u * c1[2] + v * c2[2];
+    let c1 = corners[sector];
+    let c2 = corners[(sector + 1) % 5];
 
-        let edge1 = [c1[0] - apex[0], c1[1] - apex[1], c1[2] - apex[2]];
-        let edge2 = [c2[0] - apex[0], c2[1] - apex[1], c2[2] - apex[2]];
+    let x = center[0] + r * (c1[0] * (1.0 - angle_norm) + c2[0] * angle_norm);
+    let y = center[1] + r * (c1[1] * (1.0 - angle_norm) + c2[1] * angle_norm);
+    let z = center[2] + r * (c1[2] * (1.0 - angle_norm) + c2[2] * angle_norm);
 
-        let nx = edge1[1] * edge2[2] - edge1[2] * edge2[1];
-        let ny = edge1[2] * edge2[0] - edge1[0] * edge2[2];
-        let nz = edge1[0] * edge2[1] - edge1[1] * edge2[0];
-        let len = (nx * nx + ny * ny + nz * nz).sqrt();
+    let len = (x * x + y * y + z * z).sqrt();
+    let normal = [x / len, y / len, z / len];
 
-        Point3D {
-            x: x + (nx / len) * spike,
-            y: y + (ny / len) * spike,
-            z: z + (nz / len) * spike,
-        }
-    } else {
-        let c1 = base_corners[0];
-        let c2 = base_corners[1];
-        let c3 = base_corners[2];
-        let c4 = base_corners[3];
-
-        let x = (1.0 - theta) * ((1.0 - r) * c1[0] + r * c4[0])
-            + theta * ((1.0 - r) * c2[0] + r * c3[0]);
-        let z = (1.0 - theta) * ((1.0 - r) * c1[2] + r * c4[2])
-            + theta * ((1.0 - r) * c2[2] + r * c3[2]);
-
-        Point3D {
-            x,
-            y: -h - spike,
-            z,
-        }
+    Point3D {
+        x: (x + normal[0] * spike) * SCALE,
+        y: (y + normal[1] * spike) * SCALE,
+        z: (z + normal[2] * spike) * SCALE,
     }
 }
 
 pub fn draw(app: &mut crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: egui::Rect) {
-    let response = ui.interact(rect, egui::Id::new("pyramid_3d"), egui::Sense::drag());
+    let response = ui.interact(rect, egui::Id::new("dodecahedron_3d"), egui::Sense::drag());
 
     if response.dragged() {
         let delta = response.drag_delta();
@@ -109,21 +141,24 @@ pub fn draw(app: &mut crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: 
     }
 
     let highlights = app.highlights();
+    let vertices = dodecahedron_vertices();
+    let faces = dodecahedron_faces();
     let golden_ratio = (1.0 + 5.0f32.sqrt()) / 2.0;
 
     let mut projected: Vec<(f32, f32, f32, bool)> = Vec::with_capacity(max_n);
 
     for n in 1..=max_n {
         let t = (n - 1) as f32;
-        let face = ((n - 1) * 5 / max_n) % 5;
+        let face_idx = ((n - 1) * 12 / max_n) % 12;
 
-        let r = (t * golden_ratio).fract();
-        let theta = (t * golden_ratio * golden_ratio).fract();
+        let local = (t * golden_ratio).fract();
+        let r = local.sqrt() * 0.9;
+        let theta = (local * golden_ratio * 5.0).fract() * std::f32::consts::TAU;
 
         let is_highlighted = highlights.contains(&n);
-        let spike = if is_highlighted { 12.0 } else { 0.0 };
+        let spike = if is_highlighted { 0.15 } else { 0.0 };
 
-        let point = pyramid_face_point(face, r, theta, spike);
+        let point = point_on_pentagon(&vertices, &faces[face_idx], r, theta, spike);
         let (px, py, pz) = project_3d_to_2d(&point, rotation_y, rotation_x);
 
         projected.push((px, py, pz, is_highlighted));

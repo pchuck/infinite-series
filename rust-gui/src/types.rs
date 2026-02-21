@@ -69,6 +69,9 @@ pub enum VisualizationType {
     Mobius3D,
     Klein3D,
     Pyramid3D,
+    Dodecahedron3D,
+    Icosahedron3D,
+    Trefoil3D,
 }
 
 impl VisualizationType {
@@ -95,6 +98,9 @@ impl VisualizationType {
         VisualizationType::Mobius3D,
         VisualizationType::Klein3D,
         VisualizationType::Pyramid3D,
+        VisualizationType::Dodecahedron3D,
+        VisualizationType::Icosahedron3D,
+        VisualizationType::Trefoil3D,
     ];
 
     pub const GENERAL: &'static [VisualizationType] = &[
@@ -114,6 +120,9 @@ impl VisualizationType {
         VisualizationType::Mobius3D,
         VisualizationType::Klein3D,
         VisualizationType::Pyramid3D,
+        VisualizationType::Dodecahedron3D,
+        VisualizationType::Icosahedron3D,
+        VisualizationType::Trefoil3D,
     ];
 
     pub fn available_for(series: SeriesType) -> &'static [VisualizationType] {
@@ -164,6 +173,9 @@ impl VisualizationType {
                 | Self::Mobius3D
                 | Self::Klein3D
                 | Self::Pyramid3D
+                | Self::Dodecahedron3D
+                | Self::Icosahedron3D
+                | Self::Trefoil3D
         )
     }
 
@@ -207,6 +219,9 @@ impl VisualizationType {
             Self::Mobius3D => "3D Mobius strip with numbers on twisted surface",
             Self::Klein3D => "3D Klein bottle (non-orientable surface), highlights bulge",
             Self::Pyramid3D => "3D pyramid with numbers on faces, highlights spike outward",
+            Self::Dodecahedron3D => "3D dodecahedron (12 pentagonal faces), highlights bulge",
+            Self::Icosahedron3D => "3D icosahedron (20 triangular faces), highlights bulge",
+            Self::Trefoil3D => "3D trefoil knot (mathematical knot), highlights bulge",
         }
     }
 
@@ -249,6 +264,9 @@ impl std::fmt::Display for VisualizationType {
             VisualizationType::Mobius3D => write!(f, "3D Mobius Strip"),
             VisualizationType::Klein3D => write!(f, "3D Klein Bottle"),
             VisualizationType::Pyramid3D => write!(f, "3D Pyramid"),
+            VisualizationType::Dodecahedron3D => write!(f, "3D Dodecahedron"),
+            VisualizationType::Icosahedron3D => write!(f, "3D Icosahedron"),
+            VisualizationType::Trefoil3D => write!(f, "3D Trefoil Knot"),
         }
     }
 }
