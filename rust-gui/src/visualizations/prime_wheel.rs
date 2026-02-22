@@ -58,7 +58,7 @@ pub fn draw(app: &crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: egui
             screen_x,
             screen_y,
             painter,
-            &app.primes,
+            app.primes_set(),
             &app.config,
             SeriesType::Primes,
         );

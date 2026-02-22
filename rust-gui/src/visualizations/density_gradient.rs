@@ -4,7 +4,7 @@ use crate::helpers::MARGIN_SMALL;
 use eframe::egui;
 
 pub fn draw(app: &crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: egui::Rect) {
-    if app.primes_vec.is_empty() {
+    if app.primes_vec().is_empty() {
         return;
     }
 
@@ -32,7 +32,7 @@ pub fn draw(app: &crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: egui
 
     let mut density_grid = vec![0.0_f32; grid_size * grid_size];
 
-    for &p in &app.primes_vec {
+    for &p in app.primes_vec() {
         let x_frac = p as f32 / app.config.max_number as f32;
         let y_frac = (p * p % app.config.max_number) as f32 / app.config.max_number as f32;
 

@@ -8,34 +8,36 @@ use series::{
     generate_powers_of_2_up_to, generate_triangular_up_to,
 };
 use std::collections::HashSet;
+use std::sync::OnceLock;
 
 use crate::config::VisualizerConfig;
 use crate::types::{SeriesType, VisualizationType};
 use crate::visualizations as viz;
 
+static EMPTY_SET: OnceLock<HashSet<usize>> = OnceLock::new();
+static EMPTY_VEC: OnceLock<Vec<usize>> = OnceLock::new();
+
+fn empty_set() -> &'static HashSet<usize> {
+    EMPTY_SET.get_or_init(HashSet::new)
+}
+
+fn empty_vec() -> &'static Vec<usize> {
+    EMPTY_VEC.get_or_init(Vec::new)
+}
+
 pub struct NumberVisualizerApp {
     pub config: VisualizerConfig,
     pub series_type: SeriesType,
-    pub primes: HashSet<usize>,
-    pub primes_vec: Vec<usize>,
-    pub fibs: HashSet<usize>,
-    pub fibs_vec: Vec<usize>,
-    pub lucas: HashSet<usize>,
-    pub lucas_vec: Vec<usize>,
-    pub triangular: HashSet<usize>,
-    pub triangular_vec: Vec<usize>,
-    pub collatz: HashSet<usize>,
-    pub collatz_vec: Vec<usize>,
-    pub powers: HashSet<usize>,
-    pub powers_vec: Vec<usize>,
-    pub catalan: HashSet<usize>,
-    pub catalan_vec: Vec<usize>,
-    pub hexagonal: HashSet<usize>,
-    pub hexagonal_vec: Vec<usize>,
-    pub happy: HashSet<usize>,
-    pub happy_vec: Vec<usize>,
+    primes: Option<(Vec<usize>, HashSet<usize>)>,
+    fibs: Option<(Vec<usize>, HashSet<usize>)>,
+    lucas: Option<(Vec<usize>, HashSet<usize>)>,
+    triangular: Option<(Vec<usize>, HashSet<usize>)>,
+    collatz: Option<(Vec<usize>, HashSet<usize>)>,
+    powers: Option<(Vec<usize>, HashSet<usize>)>,
+    catalan: Option<(Vec<usize>, HashSet<usize>)>,
+    hexagonal: Option<(Vec<usize>, HashSet<usize>)>,
+    happy: Option<(Vec<usize>, HashSet<usize>)>,
     cached_max_number: usize,
-    cached_series_type: SeriesType,
     pub hovered_number: Option<usize>,
     pub helix_rotation_x: f32,
     pub helix_rotation_y: f32,
@@ -43,117 +45,141 @@ pub struct NumberVisualizerApp {
 
 impl NumberVisualizerApp {
     pub fn new(config: VisualizerConfig, _ctx: &egui::Context) -> Self {
-        let max_number = config.max_number;
-        let primes_vec = generate_primes(max_number, false, None, None, None);
-        let primes_set: HashSet<usize> = primes_vec.iter().copied().collect();
-        let fibs_vec = generate_fibonacci_up_to(max_number);
-        let fibs_set: HashSet<usize> = fibs_vec.iter().copied().collect();
-        let lucas_vec = generate_lucas_up_to(max_number);
-        let lucas_set: HashSet<usize> = lucas_vec.iter().copied().collect();
-        let triangular_vec = generate_triangular_up_to(max_number);
-        let triangular_set: HashSet<usize> = triangular_vec.iter().copied().collect();
-        let collatz_vec = generate_collatz_times_up_to(max_number);
-        let collatz_set: HashSet<usize> = collatz_vec.iter().copied().collect();
-        let powers_vec = generate_powers_of_2_up_to(max_number);
-        let powers_set: HashSet<usize> = powers_vec.iter().copied().collect();
-        let catalan_vec = generate_catalan_up_to(max_number);
-        let catalan_set: HashSet<usize> = catalan_vec.iter().copied().collect();
-        let hexagonal_vec = generate_hexagonal_up_to(max_number);
-        let hexagonal_set: HashSet<usize> = hexagonal_vec.iter().copied().collect();
-        let happy_vec = generate_happy_up_to(max_number);
-        let happy_set: HashSet<usize> = happy_vec.iter().copied().collect();
-
         Self {
             config,
             series_type: SeriesType::default(),
-            primes: primes_set,
-            primes_vec,
-            fibs: fibs_set,
-            fibs_vec,
-            lucas: lucas_set,
-            lucas_vec,
-            triangular: triangular_set,
-            triangular_vec,
-            collatz: collatz_set,
-            collatz_vec,
-            powers: powers_set,
-            powers_vec,
-            catalan: catalan_set,
-            catalan_vec,
-            hexagonal: hexagonal_set,
-            hexagonal_vec,
-            happy: happy_set,
-            happy_vec,
-            cached_max_number: max_number,
-            cached_series_type: SeriesType::default(),
+            primes: None,
+            fibs: None,
+            lucas: None,
+            triangular: None,
+            collatz: None,
+            powers: None,
+            catalan: None,
+            hexagonal: None,
+            happy: None,
+            cached_max_number: 0,
             hovered_number: None,
             helix_rotation_x: 0.4,
             helix_rotation_y: 0.0,
         }
     }
 
-    pub fn regenerate_series(&mut self) {
-        if self.config.max_number == self.cached_max_number
-            && self.series_type == self.cached_series_type
-        {
-            return;
+    fn get_or_compute_series<F>(
+        cache: &mut Option<(Vec<usize>, HashSet<usize>)>,
+        max_number: usize,
+        generator: F,
+    ) -> &(Vec<usize>, HashSet<usize>)
+    where
+        F: FnOnce(usize) -> Vec<usize>,
+    {
+        if cache.is_none() {
+            let vec = generator(max_number);
+            let set: HashSet<usize> = vec.iter().copied().collect();
+            *cache = Some((vec, set));
+        }
+        cache.as_ref().unwrap()
+    }
+
+    pub fn ensure_series_loaded(&mut self) {
+        if self.config.max_number != self.cached_max_number {
+            self.primes = None;
+            self.fibs = None;
+            self.lucas = None;
+            self.triangular = None;
+            self.collatz = None;
+            self.powers = None;
+            self.catalan = None;
+            self.hexagonal = None;
+            self.happy = None;
+            self.cached_max_number = self.config.max_number;
         }
 
-        if self.config.max_number != self.cached_max_number {
-            self.primes_vec = generate_primes(self.config.max_number, false, None, None, None);
-            self.primes = self.primes_vec.iter().copied().collect();
-            self.fibs_vec = generate_fibonacci_up_to(self.config.max_number);
-            self.fibs = self.fibs_vec.iter().copied().collect();
-            self.lucas_vec = generate_lucas_up_to(self.config.max_number);
-            self.lucas = self.lucas_vec.iter().copied().collect();
-            self.triangular_vec = generate_triangular_up_to(self.config.max_number);
-            self.triangular = self.triangular_vec.iter().copied().collect();
-            self.collatz_vec = generate_collatz_times_up_to(self.config.max_number);
-            self.collatz = self.collatz_vec.iter().copied().collect();
-            self.powers_vec = generate_powers_of_2_up_to(self.config.max_number);
-            self.powers = self.powers_vec.iter().copied().collect();
-            self.catalan_vec = generate_catalan_up_to(self.config.max_number);
-            self.catalan = self.catalan_vec.iter().copied().collect();
-            self.hexagonal_vec = generate_hexagonal_up_to(self.config.max_number);
-            self.hexagonal = self.hexagonal_vec.iter().copied().collect();
-            self.happy_vec = generate_happy_up_to(self.config.max_number);
-            self.happy = self.happy_vec.iter().copied().collect();
-            self.cached_max_number = self.config.max_number;
+        let max_number = self.config.max_number;
+        match self.series_type {
+            SeriesType::Primes => {
+                Self::get_or_compute_series(&mut self.primes, max_number, |n| {
+                    generate_primes(n, false, None, None, None)
+                });
+            }
+            SeriesType::Fibonacci => {
+                Self::get_or_compute_series(&mut self.fibs, max_number, generate_fibonacci_up_to);
+            }
+            SeriesType::Lucas => {
+                Self::get_or_compute_series(&mut self.lucas, max_number, generate_lucas_up_to);
+            }
+            SeriesType::Triangular => {
+                Self::get_or_compute_series(
+                    &mut self.triangular,
+                    max_number,
+                    generate_triangular_up_to,
+                );
+            }
+            SeriesType::Collatz => {
+                Self::get_or_compute_series(
+                    &mut self.collatz,
+                    max_number,
+                    generate_collatz_times_up_to,
+                );
+            }
+            SeriesType::PowersOf2 => {
+                Self::get_or_compute_series(
+                    &mut self.powers,
+                    max_number,
+                    generate_powers_of_2_up_to,
+                );
+            }
+            SeriesType::Catalan => {
+                Self::get_or_compute_series(&mut self.catalan, max_number, generate_catalan_up_to);
+            }
+            SeriesType::Hexagonal => {
+                Self::get_or_compute_series(
+                    &mut self.hexagonal,
+                    max_number,
+                    generate_hexagonal_up_to,
+                );
+            }
+            SeriesType::Happy => {
+                Self::get_or_compute_series(&mut self.happy, max_number, generate_happy_up_to);
+            }
         }
 
         if self.config.visualization.is_primes_only() && self.series_type != SeriesType::Primes {
             self.config.visualization = VisualizationType::UlamSpiral;
         }
-
-        self.cached_series_type = self.series_type;
     }
 
     pub fn contains(&self, n: usize) -> bool {
-        match self.series_type {
-            SeriesType::Primes => self.primes.contains(&n),
-            SeriesType::Fibonacci => self.fibs.contains(&n),
-            SeriesType::Lucas => self.lucas.contains(&n),
-            SeriesType::Triangular => self.triangular.contains(&n),
-            SeriesType::Collatz => self.collatz.contains(&n),
-            SeriesType::PowersOf2 => self.powers.contains(&n),
-            SeriesType::Catalan => self.catalan.contains(&n),
-            SeriesType::Hexagonal => self.hexagonal.contains(&n),
-            SeriesType::Happy => self.happy.contains(&n),
-        }
+        self.highlights().contains(&n)
     }
 
     pub fn highlights(&self) -> &HashSet<usize> {
         match self.series_type {
-            SeriesType::Primes => &self.primes,
-            SeriesType::Fibonacci => &self.fibs,
-            SeriesType::Lucas => &self.lucas,
-            SeriesType::Triangular => &self.triangular,
-            SeriesType::Collatz => &self.collatz,
-            SeriesType::PowersOf2 => &self.powers,
-            SeriesType::Catalan => &self.catalan,
-            SeriesType::Hexagonal => &self.hexagonal,
-            SeriesType::Happy => &self.happy,
+            SeriesType::Primes => self.primes.as_ref().map(|(_, s)| s).unwrap_or(empty_set()),
+            SeriesType::Fibonacci => self.fibs.as_ref().map(|(_, s)| s).unwrap_or(empty_set()),
+            SeriesType::Lucas => self.lucas.as_ref().map(|(_, s)| s).unwrap_or(empty_set()),
+            SeriesType::Triangular => self
+                .triangular
+                .as_ref()
+                .map(|(_, s)| s)
+                .unwrap_or(empty_set()),
+            SeriesType::Collatz => self.collatz.as_ref().map(|(_, s)| s).unwrap_or(empty_set()),
+            SeriesType::PowersOf2 => self.powers.as_ref().map(|(_, s)| s).unwrap_or(empty_set()),
+            SeriesType::Catalan => self.catalan.as_ref().map(|(_, s)| s).unwrap_or(empty_set()),
+            SeriesType::Hexagonal => self
+                .hexagonal
+                .as_ref()
+                .map(|(_, s)| s)
+                .unwrap_or(empty_set()),
+            SeriesType::Happy => self.happy.as_ref().map(|(_, s)| s).unwrap_or(empty_set()),
         }
+    }
+
+    pub fn primes_set(&self) -> &HashSet<usize> {
+        self.primes.as_ref().map(|(_, s)| s).unwrap_or(empty_set())
+    }
+
+    pub fn primes_vec(&self) -> &Vec<usize> {
+        self.primes.as_ref().map(|(v, _)| v).unwrap_or(empty_vec())
     }
 
     pub fn series_name(&self) -> &'static str {
@@ -358,7 +384,7 @@ impl eframe::App for NumberVisualizerApp {
                 }
             });
 
-        self.regenerate_series();
+        self.ensure_series_loaded();
 
         egui::CentralPanel::default().show(ctx, |ui| {
             let rect = ui.available_rect_before_wrap();

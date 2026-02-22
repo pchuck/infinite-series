@@ -9,12 +9,12 @@ use crate::types::SeriesType;
 use eframe::egui;
 
 pub fn draw(app: &crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: egui::Rect) {
-    if app.primes_vec.len() < 2 {
+    if app.primes_vec().len() < 2 {
         return;
     }
 
     let positions: Vec<(usize, f32, f32)> = app
-        .primes_vec
+        .primes_vec()
         .iter()
         .enumerate()
         .map(|(idx, &n)| {
@@ -27,7 +27,7 @@ pub fn draw(app: &crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: egui
         })
         .collect();
 
-    let mut max_coord = 0.0f32;
+    let mut max_coord = 0.0_f32;
     for (_, x, y) in &positions {
         max_coord = max_coord.max(x.abs()).max(y.abs());
     }
@@ -73,7 +73,7 @@ pub fn draw(app: &crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: egui
             screen_x,
             screen_y,
             painter,
-            &app.primes,
+            app.primes_set(),
             &app.config,
             SeriesType::Primes,
         );

@@ -9,13 +9,13 @@ use crate::visualizations::ulam::generate_positions as generate_ulam_positions;
 use eframe::egui;
 
 pub fn draw(app: &crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: egui::Rect) {
-    if app.primes_vec.len() < 2 {
+    if app.primes_vec().len() < 2 {
         return;
     }
 
-    let spiral_positions = generate_ulam_positions(app.primes_vec.len());
+    let spiral_positions = generate_ulam_positions(app.primes_vec().len());
     let positions: Vec<(usize, f32, f32)> = app
-        .primes_vec
+        .primes_vec()
         .iter()
         .enumerate()
         .map(|(idx, &n)| {
@@ -64,7 +64,7 @@ pub fn draw(app: &crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: egui
             screen_x,
             screen_y,
             painter,
-            &app.primes,
+            app.primes_set(),
             &app.config,
             SeriesType::Primes,
         );
