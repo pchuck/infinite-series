@@ -2,35 +2,13 @@
 //! Highlighted numbers spike outward from the pyramid faces
 
 use crate::helpers::MARGIN_SMALL;
+use crate::visualizations::shared_3d::{
+    adjust_brightness, depth_factor, project_3d_to_2d, Point3D, DRAG_SENSITIVITY,
+};
 use eframe::egui;
 
 const PYRAMID_HEIGHT: f32 = 150.0;
 const PYRAMID_BASE: f32 = 120.0;
-const DRAG_SENSITIVITY: f32 = 0.01;
-
-struct Point3D {
-    x: f32,
-    y: f32,
-    z: f32,
-}
-
-fn project_3d_to_2d(point: &Point3D, rotation_y: f32, rotation_x: f32) -> (f32, f32, f32) {
-    let cos_y = rotation_y.cos();
-    let sin_y = rotation_y.sin();
-    let x1 = point.x * cos_y - point.z * sin_y;
-    let z1 = point.x * sin_y + point.z * cos_y;
-    let y1 = point.y;
-
-    let cos_x = rotation_x.cos();
-    let sin_x = rotation_x.sin();
-    let y2 = y1 * cos_x - z1 * sin_x;
-    let z2 = y1 * sin_x + z1 * cos_x;
-
-    let perspective = 500.0;
-    let scale = perspective / (perspective + z2 + 300.0);
-
-    (x1 * scale, y2 * scale, z2)
-}
 
 fn point_on_pyramid_surface(seed: f32, u: f32, v: f32, spike: f32) -> Point3D {
     let half = PYRAMID_BASE / 2.0;
@@ -44,10 +22,6 @@ fn point_on_pyramid_surface(seed: f32, u: f32, v: f32, spike: f32) -> Point3D {
         [-half, -h, -half],
     ];
 
-    let slant = (half * half + PYRAMID_HEIGHT * PYRAMID_HEIGHT).sqrt();
-    let tri_area = 0.5 * PYRAMID_BASE * slant / 2.0f32.sqrt() * 2.0;
-    let base_area = PYRAMID_BASE * PYRAMID_BASE;
-    let _total_area = 4.0 * tri_area + base_area;
     let face = (seed * 5.0) as usize;
     let face_seed = (seed * 5.0).fract();
 
@@ -73,11 +47,11 @@ fn point_on_pyramid_surface(seed: f32, u: f32, v: f32, spike: f32) -> Point3D {
         let nz = -(edge1[0] * edge2[1] - edge1[1] * edge2[0]);
         let len = (nx * nx + ny * ny + nz * nz).sqrt();
 
-        Point3D {
-            x: x + (nx / len) * spike,
-            y: y + (ny / len) * spike,
-            z: z + (nz / len) * spike,
-        }
+        Point3D::new(
+            x + (nx / len) * spike,
+            y + (ny / len) * spike,
+            z + (nz / len) * spike,
+        )
     } else {
         let c1 = base_corners[0];
         let c2 = base_corners[1];
@@ -93,11 +67,7 @@ fn point_on_pyramid_surface(seed: f32, u: f32, v: f32, spike: f32) -> Point3D {
             + u * v * c3[2]
             + (1.0 - u) * v * c4[2];
 
-        Point3D {
-            x,
-            y: -h - spike,
-            z,
-        }
+        Point3D::new(x, -h - spike, z)
     }
 }
 
@@ -161,25 +131,16 @@ pub fn draw(app: &mut crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: 
     for (x, y, depth, is_highlighted) in &projected {
         let screen_x = center_x + *x * scale;
         let screen_y = center_y + *y * scale;
-
-        let depth_factor = (*depth + 300.0) / 600.0;
-        let depth_factor = depth_factor.clamp(0.3, 1.0);
+        let df = depth_factor(*depth);
 
         if *is_highlighted {
-            let size = (app.config.highlight_size as f32 * depth_factor) / 2.0;
-            let color = adjust_brightness(app.config.highlight_color, depth_factor);
+            let size = (app.config.highlight_size as f32 * df) / 2.0;
+            let color = adjust_brightness(app.config.highlight_color, df);
             painter.circle_filled(egui::Pos2::new(screen_x, screen_y), size.max(0.5), color);
         } else if app.config.non_highlight_size > 0 {
-            let size = (app.config.non_highlight_size as f32 * depth_factor) / 2.0;
-            let color = adjust_brightness(app.config.non_highlight_color, depth_factor);
+            let size = (app.config.non_highlight_size as f32 * df) / 2.0;
+            let color = adjust_brightness(app.config.non_highlight_color, df);
             painter.circle_filled(egui::Pos2::new(screen_x, screen_y), size.max(0.5), color);
         }
     }
-}
-
-fn adjust_brightness(color: egui::Color32, factor: f32) -> egui::Color32 {
-    let r = (color.r() as f32 * factor).min(255.0) as u8;
-    let g = (color.g() as f32 * factor).min(255.0) as u8;
-    let b = (color.b() as f32 * factor).min(255.0) as u8;
-    egui::Color32::from_rgb(r, g, b)
 }

@@ -19,6 +19,7 @@ pub mod riemann;
 pub mod row;
 pub mod sacks;
 pub mod sacks_mobius;
+pub mod shared_3d;
 pub mod sphere_3d;
 pub mod torus_3d;
 pub mod trefoil_3d;

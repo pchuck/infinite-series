@@ -2,36 +2,14 @@
 //! Highlighted numbers spike outward from the cylinder surface
 
 use crate::helpers::MARGIN_SMALL;
+use crate::visualizations::shared_3d::{
+    adjust_brightness, depth_factor, project_3d_to_2d, Point3D, DRAG_SENSITIVITY,
+};
 use eframe::egui;
 
 const CYLINDER_HEIGHT: f32 = 200.0;
 const CYLINDER_RADIUS: f32 = 80.0;
 const CYLINDER_TURNS: f32 = 8.0;
-const DRAG_SENSITIVITY: f32 = 0.01;
-
-struct Point3D {
-    x: f32,
-    y: f32,
-    z: f32,
-}
-
-fn project_3d_to_2d(point: &Point3D, rotation_y: f32, rotation_x: f32) -> (f32, f32, f32) {
-    let cos_y = rotation_y.cos();
-    let sin_y = rotation_y.sin();
-    let x1 = point.x * cos_y - point.z * sin_y;
-    let z1 = point.x * sin_y + point.z * cos_y;
-    let y1 = point.y;
-
-    let cos_x = rotation_x.cos();
-    let sin_x = rotation_x.sin();
-    let y2 = y1 * cos_x - z1 * sin_x;
-    let z2 = y1 * sin_x + z1 * cos_x;
-
-    let perspective = 500.0;
-    let scale = perspective / (perspective + z2 + 300.0);
-
-    (x1 * scale, y2 * scale, z2)
-}
 
 pub fn draw(app: &mut crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: egui::Rect) {
     let response = ui.interact(rect, egui::Id::new("cylinder_3d"), egui::Sense::drag());
@@ -67,7 +45,7 @@ pub fn draw(app: &mut crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: 
         let x = r * angle.cos();
         let z = r * angle.sin();
 
-        let point = Point3D { x, y: height, z };
+        let point = Point3D::new(x, height, z);
         let (px, py, pz) = project_3d_to_2d(&point, rotation_y, rotation_x);
 
         projected.push((px, py, pz, is_highlighted));
@@ -94,25 +72,16 @@ pub fn draw(app: &mut crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: 
     for (x, y, depth, is_highlighted) in &projected {
         let screen_x = center_x + *x * scale;
         let screen_y = center_y + *y * scale;
-
-        let depth_factor = (*depth + 300.0) / 600.0;
-        let depth_factor = depth_factor.clamp(0.3, 1.0);
+        let df = depth_factor(*depth);
 
         if *is_highlighted {
-            let size = (app.config.highlight_size as f32 * depth_factor) / 2.0;
-            let color = adjust_brightness(app.config.highlight_color, depth_factor);
+            let size = (app.config.highlight_size as f32 * df) / 2.0;
+            let color = adjust_brightness(app.config.highlight_color, df);
             painter.circle_filled(egui::Pos2::new(screen_x, screen_y), size.max(0.5), color);
         } else if app.config.non_highlight_size > 0 {
-            let size = (app.config.non_highlight_size as f32 * depth_factor) / 2.0;
-            let color = adjust_brightness(app.config.non_highlight_color, depth_factor);
+            let size = (app.config.non_highlight_size as f32 * df) / 2.0;
+            let color = adjust_brightness(app.config.non_highlight_color, df);
             painter.circle_filled(egui::Pos2::new(screen_x, screen_y), size.max(0.5), color);
         }
     }
-}
-
-fn adjust_brightness(color: egui::Color32, factor: f32) -> egui::Color32 {
-    let r = (color.r() as f32 * factor).min(255.0) as u8;
-    let g = (color.g() as f32 * factor).min(255.0) as u8;
-    let b = (color.b() as f32 * factor).min(255.0) as u8;
-    egui::Color32::from_rgb(r, g, b)
 }
