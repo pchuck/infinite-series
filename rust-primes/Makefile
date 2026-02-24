@@ -11,27 +11,17 @@ build:
 release:
 	cargo build --release
 
-run_cli_direct: 
+run_direct: 
 	cargo run --bin primes_cli
 
-run_gui_direct: 
-	cargo run --bin primes_gui
-
-run_cli: build
+run: build
 	./target/debug/primes_cli
 
-run_gui: build
-	./target/debug/primes_gui -n 1000
-
-
-run-release_cli: release
+run-release: release
 	./target/release/primes_cli -n 1000000 --quiet
 
-run-release-parallel_cli: release
+run-release-parallel: release
 	@./target/release/primes_cli -n $(N) -p -P > /dev/null
-
-run-release_gui: release
-	./target/release/primes_gui
 
 test:
 	cargo test
