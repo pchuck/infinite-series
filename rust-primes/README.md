@@ -8,13 +8,25 @@ A high-performance prime number generator with CLI.
 
 ### CLI
 
-High performance prime generation using a parallel segmented sieve and highly optimized code. Output approaching 200M primes/s (on an AMD 7950x and Apple M3 Ultra).
+High performance prime generation using a parallel segmented sieve and highly optimized code.
 
-| Input | Time | Rate |
-|-------|------|------|
-| 1M | ~5ms | ~200M/s |
-| 10M | ~52ms | ~192M/s |
-| 100M | ~700ms | ~143M/s |
+Performance varies by hardware:
+- Apple M3 Ultra: ~346M primes/s (parallel, 100M)
+- AMD Ryzen 9 7950X: ~67M primes/s (parallel, 100M)  
+- AMD Ryzen 9 7900X: ~55M primes/s (parallel, 100M), ~29M/s (sequential)
+
+Note: CLI performance includes I/O overhead. Micro-benchmarks (using Criterion) show higher throughput:
+- Classic sieve: 333 Melem/s - 1.34 Gelem/s
+- Segmented sieve: 333 Melem/s - 613 Melem/s
+
+| Input | Hardware | Parallel | Time | Rate |
+|-------|----------|----------|------|------|
+| 1M | AMD 7900X | ✗ | ~5ms | ~16M/s |
+| 10M | AMD 7900X | ✗ | ~24ms | ~27M/s |
+| 100M | AMD 7900X | ✗ | ~199ms | ~29M/s |
+| 100M | AMD 7900X | ✓ (24t) | ~106ms | ~55M/s |
+| 100M | AMD 7950X | ✓ (24t) | ~86ms | ~67M/s |
+| 100M | Apple M3 Ultra | ✓ (24t) | ~17ms | ~346M/s |
 
 
 ## Quick Start
@@ -27,6 +39,8 @@ make run-release        # Run (n=1000)
 make run-release-quiet  # Count primes < 1M
 make test               # Test
 ```
+
+Note: Timing claims above reflect measured performance on specific hardware. Actual times vary by CPU architecture.
 
 ### Cargo
 
@@ -104,6 +118,16 @@ cargo build
 cargo build --release
 ```
 
+## Performance Benchmarks
+
+For detailed performance benchmarks, run:
+
+```bash
+cargo bench
+```
+
+See `benches/prime_benchmarks.rs` for benchmark definitions.
+
 ## Testing
 
 ```bash
@@ -122,3 +146,10 @@ cargo clippy
 # Format code
 cargo fmt
 ```
+
+## Contributing
+
+Performance contributions are welcome! When submitting benchmarks:
+- Include hardware specifications
+- Report both sequential and parallel results
+- Note whether I/O is included in timing
