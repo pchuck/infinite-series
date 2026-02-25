@@ -2,12 +2,12 @@
 //!
 //! Run with: cargo test --test cli_integration
 
-use assert_cmd::Command;
+use assert_cmd::cargo_bin_cmd;
 use predicates::prelude::*;
 
 #[test]
 fn test_basic_prime_generation() {
-    let mut cmd = Command::cargo_bin("primes_cli").unwrap();
+    let mut cmd = cargo_bin_cmd!("primes_cli");
     cmd.args(["-n", "10", "--quiet"])
         .assert()
         .success()
@@ -16,7 +16,7 @@ fn test_basic_prime_generation() {
 
 #[test]
 fn test_quiet_mode_outputs_only_count() {
-    let mut cmd = Command::cargo_bin("primes_cli").unwrap();
+    let mut cmd = cargo_bin_cmd!("primes_cli");
     cmd.args(["-n", "100", "--quiet"])
         .assert()
         .success()
@@ -25,7 +25,7 @@ fn test_quiet_mode_outputs_only_count() {
 
 #[test]
 fn test_verbose_mode_outputs_primes() {
-    let mut cmd = Command::cargo_bin("primes_cli").unwrap();
+    let mut cmd = cargo_bin_cmd!("primes_cli");
     cmd.args(["-n", "10"])
         .assert()
         .success()
@@ -37,7 +37,7 @@ fn test_verbose_mode_outputs_primes() {
 
 #[test]
 fn test_help_flag() {
-    let mut cmd = Command::cargo_bin("primes_cli").unwrap();
+    let mut cmd = cargo_bin_cmd!("primes_cli");
     cmd.arg("--help")
         .assert()
         .success()
@@ -51,7 +51,7 @@ fn test_help_flag() {
 
 #[test]
 fn test_version_flag() {
-    let mut cmd = Command::cargo_bin("primes_cli").unwrap();
+    let mut cmd = cargo_bin_cmd!("primes_cli");
     cmd.arg("--version")
         .assert()
         .success()
@@ -60,7 +60,7 @@ fn test_version_flag() {
 
 #[test]
 fn test_segment_size_validation() {
-    let mut cmd = Command::cargo_bin("primes_cli").unwrap();
+    let mut cmd = cargo_bin_cmd!("primes_cli");
     cmd.args(["-n", "100", "--segment", "0"])
         .assert()
         .failure()
@@ -69,7 +69,7 @@ fn test_segment_size_validation() {
 
 #[test]
 fn test_parallel_flag_below_threshold() {
-    let mut cmd = Command::cargo_bin("primes_cli").unwrap();
+    let mut cmd = cargo_bin_cmd!("primes_cli");
     cmd.args(["-n", "1000", "-p", "--quiet"])
         .assert()
         .success()
@@ -78,7 +78,7 @@ fn test_parallel_flag_below_threshold() {
 
 #[test]
 fn test_custom_segment_size() {
-    let mut cmd = Command::cargo_bin("primes_cli").unwrap();
+    let mut cmd = cargo_bin_cmd!("primes_cli");
     cmd.args(["-n", "1000", "--segment", "100", "--quiet"])
         .assert()
         .success()
@@ -87,7 +87,7 @@ fn test_custom_segment_size() {
 
 #[test]
 fn test_no_primes_below_2() {
-    let mut cmd = Command::cargo_bin("primes_cli").unwrap();
+    let mut cmd = cargo_bin_cmd!("primes_cli");
     cmd.args(["-n", "2", "--quiet"])
         .assert()
         .success()
@@ -96,8 +96,7 @@ fn test_no_primes_below_2() {
 
 #[test]
 fn test_large_input() {
-    // Test with 1 million - should complete in reasonable time
-    let mut cmd = Command::cargo_bin("primes_cli").unwrap();
+    let mut cmd = cargo_bin_cmd!("primes_cli");
     cmd.args(["-n", "1000000", "--quiet"])
         .assert()
         .success()
@@ -106,7 +105,7 @@ fn test_large_input() {
 
 #[test]
 fn test_workers_flag() {
-    let mut cmd = Command::cargo_bin("primes_cli").unwrap();
+    let mut cmd = cargo_bin_cmd!("primes_cli");
     cmd.args(["-n", "10000", "-w", "2", "--quiet"])
         .assert()
         .success()
@@ -115,7 +114,7 @@ fn test_workers_flag() {
 
 #[test]
 fn test_combined_flags() {
-    let mut cmd = Command::cargo_bin("primes_cli").unwrap();
+    let mut cmd = cargo_bin_cmd!("primes_cli");
     cmd.args(["-n", "100000", "--segment", "10000", "-w", "4", "--quiet"])
         .assert()
         .success()
