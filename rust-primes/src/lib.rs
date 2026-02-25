@@ -13,6 +13,11 @@ use std::sync::Arc;
 pub const DEFAULT_SEGMENT_SIZE: usize = 1_000_000;
 pub const PARALLEL_THRESHOLD: usize = 100_000_000;
 
+#[derive(Debug)]
+pub enum PrimeGenError {
+    WorkerThreadPanic(String),
+}
+
 /// Estimate the number of primes up to n using the Prime Number Theorem.
 /// Returns a safe capacity for Vec::with_capacity (at least 1).
 #[must_use]
@@ -196,15 +201,14 @@ pub fn segmented_sieve(
 /// Parallel Segmented Sieve (odd-only)
 /// Best for n >= 100,000,000
 /// Uses multiple threads for concurrent segment processing
-#[must_use]
 pub fn parallel_segmented_sieve(
     n: usize,
     workers: usize,
     segment_size: usize,
     progress: Option<Arc<dyn Fn(usize) + Send + Sync>>,
-) -> Vec<usize> {
+) -> Result<Vec<usize>, PrimeGenError> {
     if n <= 2 {
-        return Vec::new();
+        return Ok(Vec::new());
     }
 
     let base_limit = (n as f64).sqrt() as usize;
@@ -269,13 +273,17 @@ pub fn parallel_segmented_sieve(
         for handle in handles {
             match handle.join() {
                 Ok(worker_primes) => all_primes.extend(worker_primes),
-                Err(_) => {
-                    panic!("Worker thread panicked during prime generation");
+                Err(e) => {
+                    return Err(PrimeGenError::WorkerThreadPanic(
+                        e.downcast::<String>()
+                            .map(|s| s.as_str().to_string())
+                            .unwrap_or_else(|_| "Unknown panic".to_string()),
+                    ));
                 }
             }
         }
 
-        all_primes
+        Ok(all_primes)
     })
 }
 
@@ -300,7 +308,13 @@ pub fn generate_primes(
     let segment_size = segment_size.unwrap_or(DEFAULT_SEGMENT_SIZE);
 
     if parallel && n >= PARALLEL_THRESHOLD {
-        parallel_segmented_sieve(n, workers, segment_size, progress)
+        match parallel_segmented_sieve(n, workers, segment_size, progress) {
+            Ok(primes) => primes,
+            Err(e) => {
+                eprintln!("Error: Prime generation failed: {:?}", e);
+                std::process::exit(1);
+            }
+        }
     } else if n >= DEFAULT_SEGMENT_SIZE {
         segmented_sieve(n, segment_size, progress)
     } else {
@@ -349,7 +363,7 @@ mod tests {
     fn test_parallel_matches_segmented() {
         for &n in &[100, 500, 1000, 5000] {
             let segmented = segmented_sieve(n, 100, None);
-            let parallel = parallel_segmented_sieve(n, 2, 100, None);
+            let parallel = parallel_segmented_sieve(n, 2, 100, None).unwrap();
             assert_eq!(segmented, parallel, "Failed for n={}", n);
         }
     }
@@ -391,7 +405,7 @@ mod tests {
     fn test_parallel_various_workers() {
         let expected = segmented_sieve(10000, 100, None);
         for workers in 1..=4 {
-            let result = parallel_segmented_sieve(10000, workers, 100, None);
+            let result = parallel_segmented_sieve(10000, workers, 100, None).unwrap();
             assert_eq!(result, expected, "Failed for workers={}", workers);
         }
     }

@@ -115,7 +115,6 @@ fn main() {
                     Some(workers),
                     Some(segment_size_for_progress),
                     Some(Arc::new(move |delta: usize| {
-                        // Progress callback now receives a delta (1 per segment)
                         progress_callback.update(delta);
                     })),
                 );
@@ -125,7 +124,9 @@ fn main() {
             })
         };
 
-        handle.join().unwrap()
+        handle
+            .join()
+            .expect("Worker thread panicked during prime generation")
     } else {
         generate_primes(
             n,
