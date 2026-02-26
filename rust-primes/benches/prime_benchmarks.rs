@@ -70,11 +70,39 @@ fn bench_segment_sizes(c: &mut Criterion) {
     group.finish();
 }
 
+fn bench_parallel_large(c: &mut Criterion) {
+    let mut group = c.benchmark_group("parallel_large");
+
+    for &n in &[100_000_000, 200_000_000] {
+        group.throughput(Throughput::Elements(n as u64));
+        group.bench_function(format!("n_{}_parallel", n), |b| {
+            b.iter(|| generate_primes(black_box(n), true, None, None, None).unwrap())
+        });
+    }
+
+    group.finish();
+}
+
+fn bench_segmented_large(c: &mut Criterion) {
+    let mut group = c.benchmark_group("segmented_large");
+
+    for &n in &[10_000_000, 100_000_000, 200_000_000] {
+        group.throughput(Throughput::Elements(n as u64));
+        group.bench_function(format!("n_{}", n), |b| {
+            b.iter(|| segmented_sieve(black_box(n), DEFAULT_SEGMENT_SIZE, None))
+        });
+    }
+
+    group.finish();
+}
+
 criterion_group!(
     benches,
     bench_classic_sieve,
     bench_segmented_sieve,
     bench_auto_selection,
-    bench_segment_sizes
+    bench_segment_sizes,
+    bench_parallel_large,
+    bench_segmented_large
 );
 criterion_main!(benches);
