@@ -46,6 +46,9 @@ pub fn estimate_prime_count(n: usize) -> usize {
 /// `base_primes_odd` are odd primes up to sqrt(n) (excludes 2).
 /// `is_prime` is a reusable buffer (at least (high - low) / 2 elements).
 ///
+/// Memory note: The caller allocates `segment_size` bools, but only ~50% are used
+/// (odd-only indexing). The unused even indices waste memory for simplicity.
+///
 /// Returns primes found in [max(low, 2), high).
 fn sieve_segment_odd_only(
     low: usize,
@@ -158,7 +161,10 @@ pub fn sieve_of_eratosthenes(n: usize) -> Vec<usize> {
 
 /// Segmented Sieve of Eratosthenes (odd-only)
 /// Best for n >= 1,000,000
-/// Uses O(sqrt(n) + segment_size) memory
+///
+/// Memory: O(sqrt(n) + segment_size) with ~50% overhead due to odd-only indexing
+/// (allocates `segment_size` bools but only uses ~`segment_size/2` for odd numbers).
+/// The overhead simplifies the implementation by avoiding dynamic per-segment allocation.
 ///
 /// # Arguments
 /// * `n` - Upper bound (exclusive) for prime generation
@@ -211,6 +217,8 @@ pub fn segmented_sieve(
 /// Parallel Segmented Sieve (odd-only)
 /// Best for n >= 100,000,000
 /// Uses multiple threads for concurrent segment processing
+///
+/// Memory: O(sqrt(n) + segment_size) per worker with ~50% overhead (see segmented_sieve).
 ///
 /// # Arguments
 /// * `n` - Upper bound (exclusive) for prime generation
