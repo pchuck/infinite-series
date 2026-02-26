@@ -120,3 +120,48 @@ fn test_combined_flags() {
         .success()
         .stdout("9592\n");
 }
+
+#[test]
+fn test_parallel_large_input_100m() {
+    let mut cmd = cargo_bin_cmd!("primes_cli");
+    cmd.args(["-n", "100000000", "-p", "--quiet"])
+        .assert()
+        .success()
+        .stdout("5761455\n");
+}
+
+#[test]
+fn test_parallel_large_input_200m() {
+    let mut cmd = cargo_bin_cmd!("primes_cli");
+    cmd.args(["-n", "200000000", "-p", "--quiet"])
+        .assert()
+        .success()
+        .stdout("11078937\n");
+}
+
+#[test]
+fn test_custom_segment_parallel() {
+    let mut cmd = cargo_bin_cmd!("primes_cli");
+    cmd.args(["-n", "150000000", "--segment", "500000", "-p", "--quiet"])
+        .assert()
+        .success()
+        .stdout("8444396\n");
+}
+
+#[test]
+fn test_progress_large_input() {
+    let mut cmd = cargo_bin_cmd!("primes_cli");
+    cmd.args(["-n", "100000000", "-P", "--quiet"])
+        .assert()
+        .success()
+        .stdout("5761455\n");
+}
+
+#[test]
+fn test_progress_with_custom_segment() {
+    let mut cmd = cargo_bin_cmd!("primes_cli");
+    cmd.args(["-n", "100000000", "--segment", "500000", "-P", "--quiet"])
+        .assert()
+        .success()
+        .stdout("5761455\n");
+}
