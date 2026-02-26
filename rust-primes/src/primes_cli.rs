@@ -53,10 +53,7 @@ fn main() {
         Some(v) => v,
         None => {
             eprint!("Enter upper bound (n): ");
-            if let Err(e) = std::io::stderr().flush() {
-                eprintln!("Error: Failed to flush stderr: {}", e);
-                std::process::exit(1);
-            }
+            let _ = std::io::stderr().flush();
             let mut input = String::new();
             if let Err(e) = std::io::stdin().read_line(&mut input) {
                 eprintln!("Error: Failed to read input: {}", e);
