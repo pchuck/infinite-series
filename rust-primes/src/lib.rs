@@ -176,7 +176,7 @@ pub fn segmented_sieve(
     segment_size: usize,
     progress: Option<Arc<dyn Fn(usize) + Send + Sync>>,
 ) -> Vec<usize> {
-    if n <= 2 {
+    if n <= 2 || segment_size == 0 {
         return Vec::new();
     }
 
@@ -231,7 +231,7 @@ pub fn parallel_segmented_sieve(
     segment_size: usize,
     progress: Option<Arc<dyn Fn(usize) + Send + Sync>>,
 ) -> Result<Vec<usize>, PrimeGenError> {
-    if n <= 2 {
+    if n <= 2 || segment_size == 0 {
         return Ok(Vec::new());
     }
 
