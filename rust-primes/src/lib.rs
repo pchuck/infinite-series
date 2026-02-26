@@ -311,16 +311,15 @@ pub fn parallel_segmented_sieve(
 /// * `workers` - Number of threads (default: all available)
 /// * `segment_size` - Segment size in elements (default: DEFAULT_SEGMENT_SIZE)
 /// * `progress` - Optional callback receiving segment count updates
-#[must_use]
 pub fn generate_primes(
     n: usize,
     parallel: bool,
     workers: Option<usize>,
     segment_size: Option<usize>,
     progress: Option<Arc<dyn Fn(usize) + Send + Sync>>,
-) -> Vec<usize> {
+) -> Result<Vec<usize>, PrimeGenError> {
     if n <= 2 {
-        return Vec::new();
+        return Ok(Vec::new());
     }
 
     let workers = workers.unwrap_or_else(|| {
@@ -331,17 +330,11 @@ pub fn generate_primes(
     let segment_size = segment_size.unwrap_or(DEFAULT_SEGMENT_SIZE);
 
     if parallel && n >= PARALLEL_THRESHOLD {
-        match parallel_segmented_sieve(n, workers, segment_size, progress) {
-            Ok(primes) => primes,
-            Err(e) => {
-                eprintln!("Error: Prime generation failed: {:?}", e);
-                std::process::exit(1);
-            }
-        }
+        parallel_segmented_sieve(n, workers, segment_size, progress)
     } else if n >= DEFAULT_SEGMENT_SIZE {
-        segmented_sieve(n, segment_size, progress)
+        Ok(segmented_sieve(n, segment_size, progress))
     } else {
-        sieve_of_eratosthenes(n)
+        Ok(sieve_of_eratosthenes(n))
     }
 }
 

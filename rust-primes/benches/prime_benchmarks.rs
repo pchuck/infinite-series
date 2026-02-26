@@ -41,7 +41,7 @@ fn bench_auto_selection(c: &mut Criterion) {
     for &n in &[100_000, 1_000_000, 10_000_000] {
         group.throughput(Throughput::Elements(n as u64));
         group.bench_function(format!("n_{}_sequential", n), |b| {
-            b.iter(|| generate_primes(black_box(n), false, None, None, None))
+            b.iter(|| generate_primes(black_box(n), false, None, None, None).unwrap())
         });
     }
 
@@ -49,7 +49,7 @@ fn bench_auto_selection(c: &mut Criterion) {
     for &n in &[10_000_000, 50_000_000] {
         group.throughput(Throughput::Elements(n as u64));
         group.bench_function(format!("n_{}_parallel", n), |b| {
-            b.iter(|| generate_primes(black_box(n), true, None, None, None))
+            b.iter(|| generate_primes(black_box(n), true, None, None, None).unwrap())
         });
     }
 

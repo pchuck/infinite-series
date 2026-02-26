@@ -106,7 +106,7 @@ fn main() {
         let handle = {
             let progress_bar = Arc::clone(&progress_bar);
             thread::spawn(move || {
-                let primes = generate_primes(
+                let result = generate_primes(
                     n,
                     args.parallel && n >= PARALLEL_THRESHOLD,
                     Some(workers),
@@ -117,21 +117,35 @@ fn main() {
                 );
 
                 progress_bar.finish();
-                primes
+                result
             })
         };
 
-        handle
-            .join()
-            .expect("Worker thread panicked during prime generation")
+        match handle.join() {
+            Ok(Ok(primes)) => primes,
+            Ok(Err(e)) => {
+                eprintln!("Error: Prime generation failed: {:?}", e);
+                std::process::exit(1);
+            }
+            Err(_) => {
+                eprintln!("Error: Worker thread panicked during prime generation");
+                std::process::exit(1);
+            }
+        }
     } else {
-        generate_primes(
+        match generate_primes(
             n,
             args.parallel && n >= PARALLEL_THRESHOLD,
             Some(workers),
             Some(args.segment),
             None,
-        )
+        ) {
+            Ok(primes) => primes,
+            Err(e) => {
+                eprintln!("Error: Prime generation failed: {:?}", e);
+                std::process::exit(1);
+            }
+        }
     };
 
     let compute_time = compute_start.elapsed();

@@ -98,7 +98,7 @@ impl NumberVisualizerApp {
         match self.series_type {
             SeriesType::Primes => {
                 Self::get_or_compute_series(&mut self.primes, max_number, |n| {
-                    generate_primes(n, false, None, None, None)
+                    generate_primes(n, false, None, None, None).unwrap()
                 });
             }
             SeriesType::Fibonacci => {
