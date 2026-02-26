@@ -3,7 +3,7 @@
 # Default target
 all: build
 
-N ?= 10000000
+N ?= 10000000000 # 10M
 
 build:
 	cargo build
@@ -21,7 +21,7 @@ run-release: release
 	./target/release/primes_cli -n 1000000 --quiet
 
 run-release-parallel: release
-	@./target/release/primes_cli -n $(N) -p -P > /dev/null
+	@./target/release/primes_cli -n $(N) -p -P --quiet
 
 test:
 	cargo test

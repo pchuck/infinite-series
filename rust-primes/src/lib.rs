@@ -292,7 +292,7 @@ pub fn parallel_segmented_sieve(
                 Err(e) => {
                     return Err(PrimeGenError::WorkerThreadPanic(
                         e.downcast::<String>()
-                            .map(|s| s.as_str().to_string())
+                            .map(|s| s.to_string())
                             .unwrap_or_else(|_| "Unknown panic".to_string()),
                     ));
                 }
