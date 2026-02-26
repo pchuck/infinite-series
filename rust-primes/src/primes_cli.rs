@@ -96,6 +96,8 @@ fn main() {
     let compute_start = Instant::now();
 
     let primes: Vec<usize> = if args.progress {
+        // Progress bar will show 100% instantly when classic sieve is used (n < 1M),
+        // since generate_primes doesn't invoke the callback in that code path.
         let progress_bar = Arc::new(ProgressBar::new(
             (n / segment_size_for_progress).max(1),
             "Generating primes",
