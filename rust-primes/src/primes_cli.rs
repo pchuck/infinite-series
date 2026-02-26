@@ -171,13 +171,12 @@ fn main() {
         println!("No primes less than {}", n);
     }
 
-    let total_time = compute_time;
-    let rate = primes.len() as f64 / total_time.as_secs_f64();
+    let rate = primes.len() as f64 / compute_time.as_secs_f64();
 
     if primes.is_empty() {
         eprintln!(
             "Done! Generated 0 primes in {:.3}s (0 primes/s).",
-            total_time.as_secs_f64()
+            compute_time.as_secs_f64()
         );
     } else {
         let last_prime = primes[primes.len() - 1];
@@ -187,7 +186,7 @@ fn main() {
             n,
             last_prime,
             primes.len(),
-            total_time.as_secs_f64(),
+            compute_time.as_secs_f64(),
             rate_str
         );
     }
