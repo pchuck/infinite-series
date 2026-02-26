@@ -10,11 +10,16 @@
 use std::cmp::min;
 use std::sync::Arc;
 
+/// Default segment size for segmented sieve (1M elements)
 pub const DEFAULT_SEGMENT_SIZE: usize = 1_000_000;
+
+/// Minimum input size for parallel processing (100M)
 pub const PARALLEL_THRESHOLD: usize = 100_000_000;
 
+/// Error type for prime generation failures
 #[derive(Debug)]
 pub enum PrimeGenError {
+    /// Worker thread panicked during parallel execution
     WorkerThreadPanic(String),
 }
 
@@ -154,6 +159,11 @@ pub fn sieve_of_eratosthenes(n: usize) -> Vec<usize> {
 /// Segmented Sieve of Eratosthenes (odd-only)
 /// Best for n >= 1,000,000
 /// Uses O(sqrt(n) + segment_size) memory
+///
+/// # Arguments
+/// * `n` - Upper bound (exclusive) for prime generation
+/// * `segment_size` - Size of each segment in elements
+/// * `progress` - Optional callback receiving segment count updates
 #[must_use]
 pub fn segmented_sieve(
     n: usize,
@@ -201,6 +211,12 @@ pub fn segmented_sieve(
 /// Parallel Segmented Sieve (odd-only)
 /// Best for n >= 100,000,000
 /// Uses multiple threads for concurrent segment processing
+///
+/// # Arguments
+/// * `n` - Upper bound (exclusive) for prime generation
+/// * `workers` - Number of worker threads
+/// * `segment_size` - Size of each segment in elements
+/// * `progress` - Optional callback receiving segment count updates
 pub fn parallel_segmented_sieve(
     n: usize,
     workers: usize,
@@ -288,6 +304,13 @@ pub fn parallel_segmented_sieve(
 }
 
 /// Auto-select algorithm based on n
+///
+/// # Arguments
+/// * `n` - Upper bound (exclusive) for prime generation
+/// * `parallel` - Enable parallel processing for large inputs
+/// * `workers` - Number of threads (default: all available)
+/// * `segment_size` - Segment size in elements (default: DEFAULT_SEGMENT_SIZE)
+/// * `progress` - Optional callback receiving segment count updates
 #[must_use]
 pub fn generate_primes(
     n: usize,
