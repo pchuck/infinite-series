@@ -49,6 +49,7 @@ pub struct NumberVisualizerApp {
     pub hovered_number: Option<usize>,
     pub helix_rotation_x: f32,
     pub helix_rotation_y: f32,
+    pub error_message: Option<String>,
 }
 
 impl NumberVisualizerApp {
@@ -69,6 +70,7 @@ impl NumberVisualizerApp {
             hovered_number: None,
             helix_rotation_x: ROTATION_X_DEFAULT,
             helix_rotation_y: 0.0,
+            error_message: None,
         }
     }
 
@@ -89,6 +91,14 @@ impl NumberVisualizerApp {
         cache.as_ref().unwrap()
     }
 
+    fn set_error(&mut self, message: String) {
+        self.error_message = Some(message);
+    }
+
+    fn clear_error(&mut self) {
+        self.error_message = None;
+    }
+
     pub fn ensure_series_loaded(&mut self) {
         if self.config.max_number != self.cached_max_number {
             self.primes = None;
@@ -103,9 +113,15 @@ impl NumberVisualizerApp {
             self.cached_max_number = self.config.max_number;
         }
 
+        self.clear_error();
+
         let max_number = self.config.max_number;
         match self.series_type {
             SeriesType::Primes => {
+                let result = generate_primes(max_number, false, None, None, None);
+                if result.is_err() {
+                    self.set_error("Failed to generate primes".to_string());
+                }
                 Self::get_or_compute_series(&mut self.primes, max_number, |n| {
                     generate_primes(n, false, None, None, None).ok()
                 });
@@ -414,6 +430,26 @@ impl eframe::App for NumberVisualizerApp {
 
         egui::CentralPanel::default().show(ctx, |ui| {
             let rect = ui.available_rect_before_wrap();
+
+            if let Some(ref error) = self.error_message {
+                let error_rect = egui::Rect::from_min_size(
+                    egui::Pos2::new(rect.left() + 5.0, rect.top() + 5.0),
+                    egui::vec2(rect.width() - 10.0, 30.0),
+                );
+                ui.painter().rect_filled(
+                    error_rect,
+                    2.0,
+                    egui::Color32::from_rgba_unmultiplied(80, 20, 20, 200),
+                );
+                ui.painter().text(
+                    error_rect.center(),
+                    egui::Align2::CENTER_CENTER,
+                    error.clone(),
+                    egui::FontId::proportional(14.0),
+                    egui::Color32::from_rgba_unmultiplied(255, 100, 100, 255),
+                );
+            }
+
             self.draw_visualization(ui, rect);
 
             if let Some(hovered) = self.hovered_number {
