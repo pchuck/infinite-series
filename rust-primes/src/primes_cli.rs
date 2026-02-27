@@ -4,7 +4,7 @@ use std::sync::Arc;
 use std::thread;
 use std::time::Instant;
 
-use primes::{generate_primes, DEFAULT_SEGMENT_SIZE, PARALLEL_THRESHOLD};
+use primes::{generate_primes, PARALLEL_THRESHOLD};
 use progress::ProgressBar;
 
 pub const DEFAULT_PROGRESS_SEGMENT_SIZE: usize = 100_000;
@@ -91,21 +91,20 @@ fn main() {
             .unwrap_or(4)
     });
 
-    let segment_size_for_progress = if args.progress && args.segment == Some(DEFAULT_SEGMENT_SIZE) {
-        DEFAULT_PROGRESS_SEGMENT_SIZE
+    let algorithm_segment = args.segment.unwrap_or(DEFAULT_SEGMENT_SIZE_CLI);
+
+    let progress_ticks = if args.progress {
+        n.div_ceil(DEFAULT_PROGRESS_SEGMENT_SIZE)
     } else {
-        args.segment.unwrap_or(DEFAULT_SEGMENT_SIZE)
+        0
     };
 
     let compute_start = Instant::now();
 
     let primes: Vec<usize> = if args.progress {
-        // Progress bar will show 100% instantly when classic sieve is used (n < 1M),
+        // note: progress bar completes immediately when classic sieve is used
         // since generate_primes doesn't invoke the callback in that code path.
-        let progress_bar = Arc::new(ProgressBar::new(
-            (n / segment_size_for_progress).max(1),
-            "Generating primes",
-        ));
+        let progress_bar = Arc::new(ProgressBar::new(progress_ticks.max(1), "Generating primes"));
 
         let progress_callback = Arc::clone(&progress_bar);
 
@@ -115,7 +114,7 @@ fn main() {
                 n,
                 args.parallel && n >= PARALLEL_THRESHOLD,
                 Some(workers),
-                Some(segment_size_for_progress),
+                Some(algorithm_segment),
                 Some(Arc::new(move |delta: usize| {
                     progress_callback.update(delta);
                 })),
