@@ -278,7 +278,14 @@ impl NumberVisualizerApp {
                     .and_then(|mp| viz::find_hovered_triangular(self, mp, rect, &positions));
                 viz::draw_triangular(self, ui, rect, &positions);
             }
-            VisualizationType::PrimeWheel => viz::draw_prime_wheel(self, ui, rect),
+            VisualizationType::PrimeWheel => {
+                let positions =
+                    viz::generate_prime_wheel_positions(self.config.max_number, self.config.modulo);
+                self.hovered_number = mouse_pos
+                    .filter(|_| self.config.visualization.supports_hover())
+                    .and_then(|mp| viz::find_hovered_prime_wheel(self, mp, rect, &positions));
+                viz::draw_prime_wheel(self, ui, rect);
+            }
             VisualizationType::PrimeDensity => viz::draw_prime_density(self, ui, rect),
             VisualizationType::RiemannZeta => viz::draw_riemann(self, ui, rect),
             VisualizationType::SacksMobiusSpiral => viz::draw_sacks_mobius(self, ui, rect),

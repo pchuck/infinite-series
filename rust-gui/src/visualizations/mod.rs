@@ -49,7 +49,10 @@ pub use icosahedron_3d::draw as draw_icosahedron_3d;
 pub use klein_3d::draw as draw_klein_3d;
 pub use mobius_3d::draw as draw_mobius_3d;
 pub use prime_density::draw as draw_prime_density;
-pub use prime_wheel::draw as draw_prime_wheel;
+pub use prime_wheel::{
+    draw as draw_prime_wheel, find_hovered as find_hovered_prime_wheel,
+    generate_positions as generate_prime_wheel_positions,
+};
 pub use pyramid_3d::draw as draw_pyramid_3d;
 pub use riemann::draw as draw_riemann;
 pub use row::{

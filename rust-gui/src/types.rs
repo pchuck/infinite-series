@@ -235,6 +235,7 @@ impl VisualizationType {
                 | Self::FermatsSpiral
                 | Self::HexagonalLattice
                 | Self::TriangularLattice
+                | Self::PrimeWheel
         )
     }
 }
