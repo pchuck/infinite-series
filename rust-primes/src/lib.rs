@@ -142,13 +142,14 @@ pub fn sieve_of_eratosthenes(n: usize) -> Vec<usize> {
 
     // Odd-only sieve: index i represents number 2*i + 3
     let sieve_size = (n - 3).div_ceil(2); // count of odd numbers in [3, n)
+    let sieve_size = sieve_size.max(1);
     let mut sieve = vec![true; sieve_size];
 
     let limit = (n as f64).sqrt() as usize;
     let mut current = 3;
     while current <= limit {
         let idx = (current - 3) / 2;
-        if sieve[idx] {
+        if idx < sieve_size && sieve[idx] {
             // Mark multiples starting at current*current
             let start_idx = (current * current - 3) / 2;
             let step = current;
@@ -166,7 +167,10 @@ pub fn sieve_of_eratosthenes(n: usize) -> Vec<usize> {
     primes.push(2);
     for (i, &is_p) in sieve.iter().enumerate() {
         if is_p {
-            primes.push(2 * i + 3);
+            let prime = 2 * i + 3;
+            if prime < n {
+                primes.push(prime);
+            }
         }
     }
 
