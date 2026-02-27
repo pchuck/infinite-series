@@ -122,7 +122,6 @@ rust-gui/
         ├── cube_3d.rs
         ├── mobius_3d.rs
         ├── klein_3d.rs
-        ├── mobius_3d.rs
         ├── pyramid_3d.rs
         ├── dodecahedron_3d.rs
         ├── icosahedron_3d.rs

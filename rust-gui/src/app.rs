@@ -88,7 +88,9 @@ impl NumberVisualizerApp {
             let set: HashSet<usize> = vec.iter().copied().collect();
             *cache = Some((vec, set));
         }
-        cache.as_ref().unwrap()
+        cache
+            .as_ref()
+            .expect("series cache should always be populated")
     }
 
     fn set_error(&mut self, message: String) {
