@@ -121,8 +121,8 @@ impl NumberVisualizerApp {
         match self.series_type {
             SeriesType::Primes => {
                 let result = generate_primes(max_number, false, None, None, None);
-                if result.is_err() {
-                    self.set_error("Failed to generate primes".to_string());
+                if let Err(ref err) = result {
+                    self.set_error(format!("Failed to generate primes: {}", err));
                 }
                 Self::get_or_compute_series(&mut self.primes, max_number, |n| {
                     generate_primes(n, false, None, None, None).ok()

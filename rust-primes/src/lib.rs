@@ -29,6 +29,17 @@ pub enum PrimeGenError {
     InvalidInput(String),
 }
 
+impl std::fmt::Display for PrimeGenError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            PrimeGenError::WorkerThreadPanic(msg) => {
+                write!(f, "worker thread panicked: {}", msg)
+            }
+            PrimeGenError::InvalidInput(msg) => write!(f, "invalid input: {}", msg),
+        }
+    }
+}
+
 /// Estimate the number of primes up to n using the Prime Number Theorem.
 /// Returns a safe capacity for Vec::with_capacity (at least 1).
 #[must_use]
