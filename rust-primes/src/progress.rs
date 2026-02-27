@@ -5,6 +5,12 @@ use std::io::Write;
 use std::sync::Mutex;
 use std::time::{Duration, Instant};
 
+/// Default progress bar width in characters
+pub const PROGRESS_BAR_WIDTH: usize = 40;
+
+/// Minimum time between progress updates
+pub const PROGRESS_UPDATE_INTERVAL_MS: u64 = 50;
+
 struct ProgressState {
     completed: usize,
     last_update: Instant,
@@ -27,10 +33,10 @@ impl ProgressBar {
                 completed: 0,
                 last_update: Instant::now(),
             }),
-            width: 40,
+            width: PROGRESS_BAR_WIDTH,
             description: description.to_string(),
             start_time: Instant::now(),
-            update_interval: Duration::from_millis(50),
+            update_interval: Duration::from_millis(PROGRESS_UPDATE_INTERVAL_MS),
         }
     }
 
