@@ -11,6 +11,7 @@ use std::collections::HashSet;
 use std::sync::OnceLock;
 
 use crate::config::VisualizerConfig;
+use crate::config::{MAX_NUMBER_MAX, MAX_NUMBER_MIN};
 use crate::types::{SeriesType, VisualizationType};
 use crate::visualizations as viz;
 
@@ -334,7 +335,13 @@ impl eframe::App for NumberVisualizerApp {
 
                 ui.add_enabled_ui(true, |ui| {
                     ui.label("Max Number:");
-                    ui.add(egui::Slider::new(&mut self.config.max_number, 100..=100000).text("n"));
+                    ui.add(
+                        egui::Slider::new(
+                            &mut self.config.max_number,
+                            MAX_NUMBER_MIN..=MAX_NUMBER_MAX,
+                        )
+                        .text("n"),
+                    );
                 });
 
                 ui.separator();

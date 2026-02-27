@@ -3,6 +3,11 @@
 use crate::types::VisualizationType;
 use eframe::egui;
 
+pub const MAX_NUMBER_MIN: usize = 100;
+pub const MAX_NUMBER_MAX: usize = 100000;
+pub const SHOW_NUMBERS_MAX: usize = 10000;
+pub const DENSITY_INTERVALS: usize = 100;
+
 #[derive(Clone)]
 pub struct VisualizerConfig {
     pub max_number: usize,

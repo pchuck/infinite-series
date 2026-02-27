@@ -1,6 +1,7 @@
 //! Number rendering for point-based visualizations
 
 use crate::config::VisualizerConfig;
+use crate::config::SHOW_NUMBERS_MAX;
 use crate::types::SeriesType;
 use eframe::egui;
 use std::collections::HashSet;
@@ -57,7 +58,7 @@ pub fn draw_number(
     let radius = size / 2.0;
     painter.circle_filled(egui::Pos2::new(x, y), radius.max(0.5), color);
 
-    let show_text = config.show_numbers && size >= 6.0 && config.max_number <= 10000;
+    let show_text = config.show_numbers && size >= 6.0 && config.max_number <= SHOW_NUMBERS_MAX;
 
     if show_text {
         let text = format!("{}", n);

@@ -1,5 +1,6 @@
 //! Prime density graph visualization
 
+use crate::config::DENSITY_INTERVALS;
 use crate::helpers::MARGIN_SMALL;
 use eframe::egui;
 
@@ -11,7 +12,7 @@ pub fn draw(app: &crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: egui
 
     let prime_count = app.primes_vec().len();
 
-    let intervals = 100_usize.max(max_n / 100);
+    let intervals = DENSITY_INTERVALS.max(max_n / DENSITY_INTERVALS);
     let interval_size = max_n / intervals;
 
     let mut pi_x: Vec<(f32, f32)> = Vec::with_capacity(intervals + 1);
