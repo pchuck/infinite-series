@@ -18,6 +18,9 @@ run: build
 	./target/debug/primes_cli
 
 run-release: release
+	./target/release/primes_cli -n 10000
+
+run-release-quiet: release
 	./target/release/primes_cli -n 1000000 --quiet
 
 run-release-parallel: release
@@ -74,6 +77,7 @@ help:
 	@echo "  make release                  - Build optimized release"
 	@echo "  make run                      - Run debug (n=1000)"
 	@echo "  make run-release              - Run release, count primes < 1M"
+	@echo "  make run-release-quiet        - Run release, count primes < 1M (alias)"
 	@echo "  make run-release-parallel     - Run parallel + progress(10M)"
 	@echo "  make test                     - Run all tests"
 	@echo "  make test-verbose             - Run tests with output"

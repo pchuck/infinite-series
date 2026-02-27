@@ -35,7 +35,7 @@ Note: CLI performance includes I/O overhead. Micro-benchmarks (using Criterion) 
 ```bash
 make help
 make release            # Build optimized
-make run-release        # Run (n=1M)
+make run-release        # Run (n=10000)
 make test               # Test
 ```
 

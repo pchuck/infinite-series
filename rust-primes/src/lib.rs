@@ -47,7 +47,7 @@ pub fn estimate_prime_count(n: usize) -> usize {
 /// `is_prime` is a reusable buffer (at least (high - low) / 2 elements).
 ///
 /// Memory note: The caller allocates `segment_size` bools, but only ~50% are used
-/// (odd-only indexing). The unused even indices waste memory for simplicity.
+/// (odd-only indexing stores only odd numbers). Even indices are unused for simplicity.
 ///
 /// Returns primes found in [max(low, 2), high).
 fn sieve_segment_odd_only(
@@ -180,9 +180,9 @@ pub fn sieve_of_eratosthenes(n: usize) -> Vec<usize> {
 /// Segmented Sieve of Eratosthenes (odd-only)
 /// Best for n >= 1,000,000
 ///
-/// Memory: O(sqrt(n) + segment_size) with ~50% overhead due to odd-only indexing
-/// (allocates `segment_size` bools but only uses ~`segment_size/2` for odd numbers).
-/// The overhead simplifies the implementation by avoiding dynamic per-segment allocation.
+/// Memory: O(sqrt(n) + segment_size). Uses odd-only indexing to store only odd numbers,
+/// allocating `segment_size` bools but using ~`segment_size/2` for actual data.
+/// This simplifies implementation by avoiding dynamic per-segment allocation.
 ///
 /// # Arguments
 /// * `n` - Upper bound (exclusive) for prime generation
@@ -230,9 +230,6 @@ pub fn segmented_sieve(
         let high = min(low + segment_size, n);
 
         if high <= 2 {
-            if let Some(ref callback) = progress {
-                callback(1);
-            }
             continue;
         }
 
@@ -251,7 +248,7 @@ pub fn segmented_sieve(
 /// Best for n >= 100,000,000
 /// Uses multiple threads for concurrent segment processing
 ///
-/// Memory: O(sqrt(n) + segment_size) per worker with ~50% overhead (see segmented_sieve).
+/// Memory: O(sqrt(n) + segment_size) per worker (see segmented_sieve for details).
 ///
 /// # Arguments
 /// * `n` - Upper bound (exclusive) for prime generation
@@ -307,7 +304,7 @@ pub fn parallel_segmented_sieve(
             }
 
             // Share base_primes by reference instead of cloning --
-            // thread::scope guarantees they outlive the spawned threads
+            // std::thread::scope guarantees they outlive the spawned threads
             let base_primes_ref = &base_primes_odd;
             let progress_ref = &progress;
 
@@ -322,9 +319,6 @@ pub fn parallel_segmented_sieve(
                     let high = min(low + segment_size, n);
 
                     if high <= 2 {
-                        if let Some(ref callback) = progress_ref {
-                            callback(1);
-                        }
                         continue;
                     }
 
