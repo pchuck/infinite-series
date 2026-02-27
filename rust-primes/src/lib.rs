@@ -116,6 +116,20 @@ fn sieve_segment_odd_only(
 
 /// Classic Sieve of Eratosthenes (odd-only)
 /// Best for n < 1,000,000
+///
+/// # Examples
+///
+/// ```
+/// use primes::sieve_of_eratosthenes;
+///
+/// let primes = sieve_of_eratosthenes(10);
+/// assert_eq!(primes, vec![2, 3, 5, 7]);
+///
+/// // Empty results for small inputs
+/// assert_eq!(sieve_of_eratosthenes(0), Vec::<usize>::new());
+/// assert_eq!(sieve_of_eratosthenes(1), Vec::<usize>::new());
+/// assert_eq!(sieve_of_eratosthenes(2), Vec::<usize>::new());
+/// ```
 #[must_use]
 pub fn sieve_of_eratosthenes(n: usize) -> Vec<usize> {
     if n <= 2 {
@@ -170,6 +184,21 @@ pub fn sieve_of_eratosthenes(n: usize) -> Vec<usize> {
 /// * `n` - Upper bound (exclusive) for prime generation
 /// * `segment_size` - Size of each segment in elements
 /// * `progress` - Optional callback receiving segment count updates
+///
+/// # Examples
+///
+/// ```
+/// use primes::segmented_sieve;
+///
+/// let primes = segmented_sieve(100, 10, None);
+/// assert_eq!(primes, vec![2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97]);
+///
+/// // Progress callback example
+/// let progress = Some(std::sync::Arc::new(|delta: usize| {
+///     let _ = delta; // Use the parameter
+/// }) as std::sync::Arc<dyn Fn(usize) + Send + Sync>);
+/// let _ = segmented_sieve(1000, 100, progress);
+/// ```
 #[must_use]
 pub fn segmented_sieve(
     n: usize,
@@ -225,6 +254,23 @@ pub fn segmented_sieve(
 /// * `workers` - Number of worker threads
 /// * `segment_size` - Size of each segment in elements
 /// * `progress` - Optional callback receiving segment count updates
+///
+/// # Examples
+///
+/// ```
+/// use primes::parallel_segmented_sieve;
+///
+/// let primes = parallel_segmented_sieve(1000, 2, 100, None).unwrap();
+/// assert_eq!(primes.len(), 168); // 168 primes below 1000
+///
+/// // Multi-threaded progress tracking
+/// use std::sync::Arc;
+/// let progress = Arc::new(|delta: usize| {
+///     // Thread-safe progress updates
+/// });
+/// let result = parallel_segmented_sieve(1_000_000, 4, 1_000_000, Some(progress));
+/// assert!(result.is_ok());
+/// ```
 pub fn parallel_segmented_sieve(
     n: usize,
     workers: usize,
@@ -319,6 +365,32 @@ pub fn parallel_segmented_sieve(
 /// * `workers` - Number of threads (default: all available)
 /// * `segment_size` - Segment size in elements (default: DEFAULT_SEGMENT_SIZE)
 /// * `progress` - Optional callback receiving segment count updates
+///
+/// # Examples
+///
+/// ```
+/// use primes::{generate_primes, DEFAULT_SEGMENT_SIZE};
+///
+/// // Basic usage - classic sieve for small inputs
+/// let primes = generate_primes(100, false, None, None, None).unwrap();
+/// assert_eq!(primes.len(), 25);
+///
+/// // Segmented sieve for larger inputs
+/// let primes = generate_primes(1_000_000, false, None, None, None).unwrap();
+/// assert_eq!(primes.len(), 78498);
+///
+/// // Parallel processing for very large inputs (n >= 100M)
+/// let result = generate_primes(100_000_000, true, None, None, None);
+/// assert!(result.is_ok());
+///
+/// // Custom segment size and progress tracking
+/// use std::sync::Arc;
+/// let progress = Some(Arc::new(|delta: usize| {
+///     eprintln!("Processed {} segments", delta);
+/// }) as Arc<dyn Fn(usize) + Send + Sync>);
+/// let primes = generate_primes(1_000_000, false, Some(4), Some(100_000), progress);
+/// assert!(primes.is_ok());
+/// ```
 pub fn generate_primes(
     n: usize,
     parallel: bool,
