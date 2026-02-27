@@ -5,6 +5,9 @@ use crate::helpers::MARGIN_SMALL;
 use crate::types::SeriesType;
 use eframe::egui;
 
+pub const MODULO_MIN: usize = 2;
+pub const MODULO_MAX: usize = 60;
+
 pub fn generate_positions(max_n: usize, modulo: usize) -> Vec<(usize, f32, f32)> {
     (1..=max_n)
         .map(|n| {

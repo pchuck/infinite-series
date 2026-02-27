@@ -10,6 +10,7 @@ use eframe::egui;
 const HELIX_RADIUS: f32 = 100.0;
 const HELIX_HEIGHT_FACTOR: f32 = 3.0;
 const TURNS: f32 = 8.0;
+pub const ROTATION_X_DEFAULT: f32 = 0.4;
 
 pub fn draw(app: &mut crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: egui::Rect) {
     let response = ui.interact(rect, egui::Id::new("helix_3d"), egui::Sense::drag());

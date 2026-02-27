@@ -14,6 +14,13 @@ use crate::config::VisualizerConfig;
 use crate::config::{MAX_NUMBER_MAX, MAX_NUMBER_MIN};
 use crate::types::{SeriesType, VisualizationType};
 use crate::visualizations as viz;
+use crate::visualizations::density_gradient::GRID_SIZE_MAX;
+use crate::visualizations::density_gradient::GRID_SIZE_MIN;
+use crate::visualizations::helix_3d::ROTATION_X_DEFAULT;
+use crate::visualizations::prime_wheel::MODULO_MAX;
+use crate::visualizations::prime_wheel::MODULO_MIN;
+use crate::visualizations::riemann::NUM_ZEROS_MAX;
+use crate::visualizations::riemann::NUM_ZEROS_MIN;
 
 static EMPTY_SET: OnceLock<HashSet<usize>> = OnceLock::new();
 static EMPTY_VEC: OnceLock<Vec<usize>> = OnceLock::new();
@@ -60,7 +67,7 @@ impl NumberVisualizerApp {
             happy: None,
             cached_max_number: 0,
             hovered_number: None,
-            helix_rotation_x: 0.4,
+            helix_rotation_x: ROTATION_X_DEFAULT,
             helix_rotation_y: 0.0,
         }
     }
@@ -395,14 +402,21 @@ impl eframe::App for NumberVisualizerApp {
                 if self.config.visualization.uses_modulo() {
                     ui.separator();
                     ui.label("Prime Wheel");
-                    ui.add(egui::Slider::new(&mut self.config.modulo, 2..=60).text("Modulo"));
+                    ui.add(
+                        egui::Slider::new(&mut self.config.modulo, MODULO_MIN..=MODULO_MAX)
+                            .text("Modulo"),
+                    );
                 }
 
                 if self.config.visualization.uses_grid_size() {
                     ui.separator();
                     ui.label("Density Grid");
                     ui.add(
-                        egui::Slider::new(&mut self.config.grid_size, 10..=100).text("Grid size"),
+                        egui::Slider::new(
+                            &mut self.config.grid_size,
+                            GRID_SIZE_MIN..=GRID_SIZE_MAX,
+                        )
+                        .text("Grid size"),
                     );
                 }
 
@@ -410,7 +424,11 @@ impl eframe::App for NumberVisualizerApp {
                     ui.separator();
                     ui.label("Riemann Zeta");
                     ui.add(
-                        egui::Slider::new(&mut self.config.num_zeros, 1..=20).text("Zeros to show"),
+                        egui::Slider::new(
+                            &mut self.config.num_zeros,
+                            NUM_ZEROS_MIN..=NUM_ZEROS_MAX,
+                        )
+                        .text("Zeros to show"),
                     );
                 }
 

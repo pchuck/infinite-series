@@ -3,6 +3,9 @@
 use crate::helpers::MARGIN_SMALL;
 use eframe::egui;
 
+pub const NUM_ZEROS_MIN: usize = 1;
+pub const NUM_ZEROS_MAX: usize = 20;
+
 pub fn draw(app: &crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: egui::Rect) {
     let graph_left = rect.left() + MARGIN_SMALL;
     let graph_right = rect.right() - MARGIN_SMALL;

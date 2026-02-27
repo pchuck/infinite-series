@@ -4,9 +4,11 @@ use crate::config::DENSITY_INTERVALS;
 use crate::helpers::MARGIN_SMALL;
 use eframe::egui;
 
+pub const MIN_MAX_N: usize = 10;
+
 pub fn draw(app: &crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: egui::Rect) {
     let max_n = app.config.max_number;
-    if max_n < 10 {
+    if max_n < MIN_MAX_N {
         return;
     }
 

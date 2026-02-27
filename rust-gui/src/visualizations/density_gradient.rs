@@ -3,6 +3,9 @@
 use crate::helpers::MARGIN_SMALL;
 use eframe::egui;
 
+pub const GRID_SIZE_MIN: usize = 10;
+pub const GRID_SIZE_MAX: usize = 100;
+
 pub fn draw(app: &crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: egui::Rect) {
     if app.primes_vec().is_empty() {
         return;
