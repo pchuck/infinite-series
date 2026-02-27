@@ -32,19 +32,23 @@ struct Args {
     #[arg(short, long)]
     workers: Option<usize>,
 
-    /// Segment size for segmented sieve (must be > 0)
-    #[arg(long, default_value = "1000000")]
-    segment: usize,
+    /// Segment size for segmented sieve (default: 1M)
+    #[arg(long)]
+    segment: Option<usize>,
 
     /// Only print count (no prime list)
     #[arg(long)]
     quiet: bool,
 }
 
+const DEFAULT_SEGMENT_SIZE_CLI: usize = 1_000_000;
+
 fn main() {
     let args = Args::parse();
 
-    if args.segment == 0 {
+    let segment = args.segment.unwrap_or(DEFAULT_SEGMENT_SIZE_CLI);
+
+    if segment == 0 {
         eprintln!("Error: --segment must be greater than 0");
         std::process::exit(1);
     }
@@ -87,10 +91,10 @@ fn main() {
             .unwrap_or(4)
     });
 
-    let segment_size_for_progress = if args.progress && args.segment == DEFAULT_SEGMENT_SIZE {
+    let segment_size_for_progress = if args.progress && args.segment == Some(DEFAULT_SEGMENT_SIZE) {
         DEFAULT_PROGRESS_SEGMENT_SIZE
     } else {
-        args.segment
+        args.segment.unwrap_or(DEFAULT_SEGMENT_SIZE)
     };
 
     let compute_start = Instant::now();
@@ -139,7 +143,7 @@ fn main() {
             n,
             args.parallel && n >= PARALLEL_THRESHOLD,
             Some(workers),
-            Some(args.segment),
+            Some(segment),
             None,
         ) {
             Ok(primes) => primes,
