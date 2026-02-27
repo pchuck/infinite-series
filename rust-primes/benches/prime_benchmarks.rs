@@ -41,7 +41,7 @@ fn bench_auto_selection(c: &mut Criterion) {
     for &n in &[100_000, 1_000_000, 10_000_000] {
         group.throughput(Throughput::Elements(n as u64));
         group.bench_function(format!("n_{}_sequential", n), |b| {
-            b.iter(|| generate_primes(black_box(n), false, None, None, None).unwrap())
+            b.iter(|| generate_primes(black_box(n), false, None, None, None))
         });
     }
 
@@ -49,7 +49,7 @@ fn bench_auto_selection(c: &mut Criterion) {
     for &n in &[10_000_000, 50_000_000] {
         group.throughput(Throughput::Elements(n as u64));
         group.bench_function(format!("n_{}_parallel", n), |b| {
-            b.iter(|| generate_primes(black_box(n), true, None, None, None).unwrap())
+            b.iter(|| generate_primes(black_box(n), true, None, None, None))
         });
     }
 
@@ -64,32 +64,6 @@ fn bench_segment_sizes(c: &mut Criterion) {
         group.throughput(Throughput::Elements(n as u64));
         group.bench_function(format!("seg_{}", seg_size), |b| {
             b.iter(|| segmented_sieve(black_box(n), seg_size, None))
-        });
-    }
-
-    group.finish();
-}
-
-fn bench_parallel_large(c: &mut Criterion) {
-    let mut group = c.benchmark_group("parallel_large");
-
-    for &n in &[100_000_000, 200_000_000] {
-        group.throughput(Throughput::Elements(n as u64));
-        group.bench_function(format!("n_{}_parallel", n), |b| {
-            b.iter(|| generate_primes(black_box(n), true, None, None, None).unwrap())
-        });
-    }
-
-    group.finish();
-}
-
-fn bench_segmented_large(c: &mut Criterion) {
-    let mut group = c.benchmark_group("segmented_large");
-
-    for &n in &[10_000_000, 100_000_000, 200_000_000] {
-        group.throughput(Throughput::Elements(n as u64));
-        group.bench_function(format!("n_{}", n), |b| {
-            b.iter(|| segmented_sieve(black_box(n), DEFAULT_SEGMENT_SIZE, None))
         });
     }
 

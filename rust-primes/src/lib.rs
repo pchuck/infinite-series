@@ -46,8 +46,8 @@ pub fn estimate_prime_count(n: usize) -> usize {
 /// `base_primes_odd` are odd primes up to sqrt(n) (excludes 2).
 /// `is_prime` is a reusable buffer (at least (high - low) / 2 elements).
 ///
-/// Memory note: The caller allocates `segment_size` bools, but only ~50% are used
-/// (odd-only indexing stores only odd numbers). Even indices are unused for simplicity.
+/// Memory note: allocates `segment_size` bools,
+/// Odd-only uses max 50%; memory-inefficient, but simplifies the logic.
 ///
 /// Returns primes found in [max(low, 2), high).
 fn sieve_segment_odd_only(
@@ -122,22 +122,21 @@ fn sieve_segment_odd_only(
 /// ```
 /// use primes::sieve_of_eratosthenes;
 ///
-/// let primes = sieve_of_eratosthenes(10);
+/// let primes = sieve_of_eratosthenes(10).unwrap();
 /// assert_eq!(primes, vec![2, 3, 5, 7]);
 ///
 /// // Empty results for small inputs
-/// assert_eq!(sieve_of_eratosthenes(0), Vec::<usize>::new());
-/// assert_eq!(sieve_of_eratosthenes(1), Vec::<usize>::new());
-/// assert_eq!(sieve_of_eratosthenes(2), Vec::<usize>::new());
+/// assert_eq!(sieve_of_eratosthenes(0).unwrap(), Vec::<usize>::new());
+/// assert_eq!(sieve_of_eratosthenes(1).unwrap(), Vec::<usize>::new());
+/// assert_eq!(sieve_of_eratosthenes(2).unwrap(), Vec::<usize>::new());
 /// ```
-#[must_use]
-pub fn sieve_of_eratosthenes(n: usize) -> Vec<usize> {
+pub fn sieve_of_eratosthenes(n: usize) -> Result<Vec<usize>, PrimeGenError> {
     if n <= 2 {
-        return Vec::new();
+        return Ok(Vec::new());
     }
 
     if n <= 3 {
-        return vec![2];
+        return Ok(vec![2]);
     }
 
     // Odd-only sieve: index i represents number 2*i + 3
@@ -174,7 +173,7 @@ pub fn sieve_of_eratosthenes(n: usize) -> Vec<usize> {
         }
     }
 
-    primes
+    Ok(primes)
 }
 
 /// Segmented Sieve of Eratosthenes (odd-only)
@@ -194,7 +193,7 @@ pub fn sieve_of_eratosthenes(n: usize) -> Vec<usize> {
 /// ```
 /// use primes::segmented_sieve;
 ///
-/// let primes = segmented_sieve(100, 10, None);
+/// let primes = segmented_sieve(100, 10, None).unwrap();
 /// assert_eq!(primes, vec![2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97]);
 ///
 /// // Progress callback example
@@ -203,18 +202,17 @@ pub fn sieve_of_eratosthenes(n: usize) -> Vec<usize> {
 /// }) as std::sync::Arc<dyn Fn(usize) + Send + Sync>);
 /// let _ = segmented_sieve(1000, 100, progress);
 /// ```
-#[must_use]
 pub fn segmented_sieve(
     n: usize,
     segment_size: usize,
     progress: Option<Arc<dyn Fn(usize) + Send + Sync>>,
-) -> Vec<usize> {
+) -> Result<Vec<usize>, PrimeGenError> {
     if n <= 2 || segment_size == 0 {
-        return Vec::new();
+        return Ok(Vec::new());
     }
 
     let base_limit = (n as f64).sqrt() as usize;
-    let all_base_primes = sieve_of_eratosthenes(base_limit + 1);
+    let all_base_primes = sieve_of_eratosthenes(base_limit + 1)?;
     // Odd base primes only (exclude 2) for segment sieving
     let base_primes_odd: Vec<usize> = all_base_primes.into_iter().filter(|&p| p > 2).collect();
 
@@ -241,7 +239,7 @@ pub fn segmented_sieve(
         }
     }
 
-    primes
+    Ok(primes)
 }
 
 /// Parallel Segmented Sieve (odd-only)
@@ -283,7 +281,7 @@ pub fn parallel_segmented_sieve(
     }
 
     let base_limit = (n as f64).sqrt() as usize;
-    let all_base_primes = sieve_of_eratosthenes(base_limit + 1);
+    let all_base_primes = sieve_of_eratosthenes(base_limit + 1)?;
     // Odd base primes only (exclude 2) for segment sieving
     let base_primes_odd: Vec<usize> = all_base_primes.into_iter().filter(|&p| p > 2).collect();
 
@@ -370,11 +368,11 @@ pub fn parallel_segmented_sieve(
 /// use primes::{generate_primes, DEFAULT_SEGMENT_SIZE};
 ///
 /// // Basic usage - classic sieve for small inputs
-/// let primes = generate_primes(100, false, None, None, None).unwrap();
+/// let primes = generate_primes(100, false, None, None, None)?;
 /// assert_eq!(primes.len(), 25);
 ///
 /// // Segmented sieve for larger inputs
-/// let primes = generate_primes(1_000_000, false, None, None, None).unwrap();
+/// let primes = generate_primes(1_000_000, false, None, None, None)?;
 /// assert_eq!(primes.len(), 78498);
 ///
 /// // Parallel processing for very large inputs (n >= 100M)
@@ -388,6 +386,7 @@ pub fn parallel_segmented_sieve(
 /// }) as Arc<dyn Fn(usize) + Send + Sync>);
 /// let primes = generate_primes(1_000_000, false, Some(4), Some(100_000), progress);
 /// assert!(primes.is_ok());
+/// # Ok::<_, primes::PrimeGenError>(())
 /// ```
 pub fn generate_primes(
     n: usize,
@@ -410,9 +409,9 @@ pub fn generate_primes(
     if parallel && n >= PARALLEL_THRESHOLD {
         parallel_segmented_sieve(n, workers, segment_size, progress)
     } else if n >= DEFAULT_SEGMENT_SIZE {
-        Ok(segmented_sieve(n, segment_size, progress))
+        segmented_sieve(n, segment_size, progress)
     } else {
-        Ok(sieve_of_eratosthenes(n))
+        sieve_of_eratosthenes(n)
     }
 }
 
@@ -422,33 +421,33 @@ mod tests {
 
     #[test]
     fn test_sieve_small() {
-        assert_eq!(sieve_of_eratosthenes(10), vec![2, 3, 5, 7]);
+        assert_eq!(sieve_of_eratosthenes(10).unwrap(), vec![2, 3, 5, 7]);
         assert_eq!(
-            sieve_of_eratosthenes(30),
+            sieve_of_eratosthenes(30).unwrap(),
             vec![2, 3, 5, 7, 11, 13, 17, 19, 23, 29]
         );
     }
 
     #[test]
     fn test_sieve_empty() {
-        assert_eq!(sieve_of_eratosthenes(0), Vec::<usize>::new());
-        assert_eq!(sieve_of_eratosthenes(1), Vec::<usize>::new());
-        assert_eq!(sieve_of_eratosthenes(2), Vec::<usize>::new());
+        assert_eq!(sieve_of_eratosthenes(0).unwrap(), Vec::<usize>::new());
+        assert_eq!(sieve_of_eratosthenes(1).unwrap(), Vec::<usize>::new());
+        assert_eq!(sieve_of_eratosthenes(2).unwrap(), Vec::<usize>::new());
     }
 
     #[test]
     fn test_sieve_boundary() {
-        assert_eq!(sieve_of_eratosthenes(3), vec![2]);
-        assert_eq!(sieve_of_eratosthenes(4), vec![2, 3]);
-        assert_eq!(sieve_of_eratosthenes(5), vec![2, 3]);
-        assert_eq!(sieve_of_eratosthenes(6), vec![2, 3, 5]);
+        assert_eq!(sieve_of_eratosthenes(3).unwrap(), vec![2]);
+        assert_eq!(sieve_of_eratosthenes(4).unwrap(), vec![2, 3]);
+        assert_eq!(sieve_of_eratosthenes(5).unwrap(), vec![2, 3]);
+        assert_eq!(sieve_of_eratosthenes(6).unwrap(), vec![2, 3, 5]);
     }
 
     #[test]
     fn test_segmented_matches_classic() {
         for &n in &[100, 500, 1000, 5000] {
-            let classic = sieve_of_eratosthenes(n);
-            let segmented = segmented_sieve(n, 100, None);
+            let classic = sieve_of_eratosthenes(n).unwrap();
+            let segmented = segmented_sieve(n, 100, None).unwrap();
             assert_eq!(classic, segmented, "Failed for n={}", n);
         }
     }
@@ -456,7 +455,7 @@ mod tests {
     #[test]
     fn test_parallel_matches_segmented() {
         for &n in &[100, 500, 1000, 5000] {
-            let segmented = segmented_sieve(n, 100, None);
+            let segmented = segmented_sieve(n, 100, None).unwrap();
             let parallel = parallel_segmented_sieve(n, 2, 100, None).unwrap();
             assert_eq!(segmented, parallel, "Failed for n={}", n);
         }
@@ -464,7 +463,7 @@ mod tests {
 
     #[test]
     fn test_large_input() {
-        let primes = segmented_sieve(1_000_000, DEFAULT_SEGMENT_SIZE, None);
+        let primes = segmented_sieve(1_000_000, DEFAULT_SEGMENT_SIZE, None).unwrap();
         assert_eq!(primes.len(), 78498);
         assert_eq!(primes[0], 2);
         assert_eq!(primes.last().unwrap(), &999983);
@@ -472,7 +471,7 @@ mod tests {
 
     #[test]
     fn test_no_composites() {
-        let primes = sieve_of_eratosthenes(200);
+        let primes = sieve_of_eratosthenes(200).unwrap();
         for &p in &primes {
             assert!(p >= 2, "Found value < 2: {}", p);
             if p > 2 {
@@ -488,19 +487,55 @@ mod tests {
 
     #[test]
     fn test_segmented_various_segment_sizes() {
-        let expected = sieve_of_eratosthenes(1000);
+        let expected = sieve_of_eratosthenes(1000).unwrap();
         for &seg_size in &[1, 7, 10, 50, 100, 999, 1000, 2000] {
-            let result = segmented_sieve(1000, seg_size, None);
+            let result = segmented_sieve(1000, seg_size, None).unwrap();
             assert_eq!(result, expected, "Failed for segment_size={}", seg_size);
         }
     }
 
     #[test]
     fn test_parallel_various_workers() {
-        let expected = segmented_sieve(10000, 100, None);
+        let expected = segmented_sieve(10000, 100, None).unwrap();
         for workers in 1..=4 {
             let result = parallel_segmented_sieve(10000, workers, 100, None).unwrap();
             assert_eq!(result, expected, "Failed for workers={}", workers);
         }
+    }
+
+    #[test]
+    fn test_all_algorithms_exclusive_of_n() {
+        let n = 7;
+        let expected = vec![2, 3, 5];
+
+        let classic = sieve_of_eratosthenes(n).unwrap();
+        let segmented = segmented_sieve(n, 3, None).unwrap();
+        let parallel = parallel_segmented_sieve(n, 2, 3, None).unwrap();
+
+        assert_eq!(classic, expected);
+        assert_eq!(segmented, expected);
+        assert_eq!(parallel, expected);
+
+        let n = 10;
+        let expected = vec![2, 3, 5, 7];
+
+        let classic = sieve_of_eratosthenes(n).unwrap();
+        let segmented = segmented_sieve(n, 5, None).unwrap();
+        let parallel = parallel_segmented_sieve(n, 2, 5, None).unwrap();
+
+        assert_eq!(classic, expected);
+        assert_eq!(segmented, expected);
+        assert_eq!(parallel, expected);
+
+        let n = 30;
+        let expected = vec![2, 3, 5, 7, 11, 13, 17, 19, 23, 29];
+
+        let classic = sieve_of_eratosthenes(n).unwrap();
+        let segmented = segmented_sieve(n, 10, None).unwrap();
+        let parallel = parallel_segmented_sieve(n, 2, 10, None).unwrap();
+
+        assert_eq!(classic, expected);
+        assert_eq!(segmented, expected);
+        assert_eq!(parallel, expected);
     }
 }

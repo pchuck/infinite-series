@@ -1,7 +1,7 @@
 //! Main application and UI
 
 use eframe::egui;
-use primes::generate_primes;
+use primes::{generate_primes, PrimeGenError};
 use series::{
     generate_catalan_up_to, generate_collatz_times_up_to, generate_fibonacci_up_to,
     generate_happy_up_to, generate_hexagonal_up_to, generate_lucas_up_to,
@@ -64,7 +64,29 @@ impl NumberVisualizerApp {
         }
     }
 
-    fn get_or_compute_series<F>(
+    fn get_or_compute_series_result<F>(
+        cache: &mut Option<(Vec<usize>, HashSet<usize>)>,
+        max_number: usize,
+        generator: F,
+    ) -> &(Vec<usize>, HashSet<usize>)
+    where
+        F: FnOnce(usize) -> Result<Vec<usize>, PrimeGenError>,
+    {
+        if cache.is_none() {
+            match generator(max_number) {
+                Ok(vec) => {
+                    let set: HashSet<usize> = vec.iter().copied().collect();
+                    *cache = Some((vec, set));
+                }
+                Err(_) => {
+                    *cache = Some((Vec::new(), HashSet::new()));
+                }
+            }
+        }
+        cache.as_ref().unwrap()
+    }
+
+    fn get_or_compute_series_vec<F>(
         cache: &mut Option<(Vec<usize>, HashSet<usize>)>,
         max_number: usize,
         generator: F,
@@ -97,49 +119,57 @@ impl NumberVisualizerApp {
         let max_number = self.config.max_number;
         match self.series_type {
             SeriesType::Primes => {
-                Self::get_or_compute_series(&mut self.primes, max_number, |n| {
-                    generate_primes(n, false, None, None, None).unwrap()
+                Self::get_or_compute_series_result(&mut self.primes, max_number, |n| {
+                    generate_primes(n, false, None, None, None)
                 });
             }
             SeriesType::Fibonacci => {
-                Self::get_or_compute_series(&mut self.fibs, max_number, generate_fibonacci_up_to);
+                Self::get_or_compute_series_vec(
+                    &mut self.fibs,
+                    max_number,
+                    generate_fibonacci_up_to,
+                );
             }
             SeriesType::Lucas => {
-                Self::get_or_compute_series(&mut self.lucas, max_number, generate_lucas_up_to);
+                Self::get_or_compute_series_vec(&mut self.lucas, max_number, generate_lucas_up_to);
             }
             SeriesType::Triangular => {
-                Self::get_or_compute_series(
+                Self::get_or_compute_series_vec(
                     &mut self.triangular,
                     max_number,
                     generate_triangular_up_to,
                 );
             }
             SeriesType::Collatz => {
-                Self::get_or_compute_series(
+                Self::get_or_compute_series_vec(
                     &mut self.collatz,
                     max_number,
                     generate_collatz_times_up_to,
                 );
             }
             SeriesType::PowersOf2 => {
-                Self::get_or_compute_series(
+                Self::get_or_compute_series_vec(
                     &mut self.powers,
                     max_number,
                     generate_powers_of_2_up_to,
                 );
             }
             SeriesType::Catalan => {
-                Self::get_or_compute_series(&mut self.catalan, max_number, generate_catalan_up_to);
+                Self::get_or_compute_series_vec(
+                    &mut self.catalan,
+                    max_number,
+                    generate_catalan_up_to,
+                );
             }
             SeriesType::Hexagonal => {
-                Self::get_or_compute_series(
+                Self::get_or_compute_series_vec(
                     &mut self.hexagonal,
                     max_number,
                     generate_hexagonal_up_to,
                 );
             }
             SeriesType::Happy => {
-                Self::get_or_compute_series(&mut self.happy, max_number, generate_happy_up_to);
+                Self::get_or_compute_series_vec(&mut self.happy, max_number, generate_happy_up_to);
             }
         }
 

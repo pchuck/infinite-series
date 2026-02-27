@@ -105,30 +105,30 @@ fn main() {
 
         let progress_callback = Arc::clone(&progress_bar);
 
-        let handle = {
+        let handle = thread::spawn(move || {
             let progress_bar = Arc::clone(&progress_bar);
-            thread::spawn(move || {
-                let result = generate_primes(
-                    n,
-                    args.parallel && n >= PARALLEL_THRESHOLD,
-                    Some(workers),
-                    Some(segment_size_for_progress),
-                    Some(Arc::new(move |delta: usize| {
-                        progress_callback.update(delta);
-                    })),
-                );
+            let result = generate_primes(
+                n,
+                args.parallel && n >= PARALLEL_THRESHOLD,
+                Some(workers),
+                Some(segment_size_for_progress),
+                Some(Arc::new(move |delta: usize| {
+                    progress_callback.update(delta);
+                })),
+            );
 
-                progress_bar.finish();
-                result
-            })
-        };
+            progress_bar.finish();
+            result
+        });
 
         match handle.join() {
-            Ok(Ok(primes)) => primes,
-            Ok(Err(e)) => {
-                eprintln!("Error: Prime generation failed: {:?}", e);
-                std::process::exit(1);
-            }
+            Ok(result) => match result {
+                Ok(primes) => primes,
+                Err(e) => {
+                    eprintln!("Error: Prime generation failed: {:?}", e);
+                    std::process::exit(1);
+                }
+            },
             Err(_) => {
                 eprintln!("Error: Worker thread panicked during prime generation");
                 std::process::exit(1);
