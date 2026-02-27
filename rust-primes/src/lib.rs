@@ -16,11 +16,17 @@ pub const DEFAULT_SEGMENT_SIZE: usize = 1_000_000;
 /// Minimum input size for parallel processing (100M)
 pub const PARALLEL_THRESHOLD: usize = 100_000_000;
 
+/// Maximum input size (1 quadrillion)
+/// Beyond this, time required exceeds practical limits
+pub const MAX_N: usize = 1_000_000_000_000_000;
+
 /// Error type for prime generation failures
 #[derive(Debug)]
 pub enum PrimeGenError {
     /// Worker thread panicked during parallel execution
     WorkerThreadPanic(String),
+    /// Invalid input parameter
+    InvalidInput(String),
 }
 
 /// Estimate the number of primes up to n using the Prime Number Theorem.
@@ -399,11 +405,26 @@ pub fn generate_primes(
         return Ok(Vec::new());
     }
 
+    if n > MAX_N {
+        return Err(PrimeGenError::InvalidInput(format!(
+            "n ({}) exceeds maximum supported value {} (1 quadrillion). \
+             Generating primes above this limit would require impractical computation time.",
+            n, MAX_N
+        )));
+    }
+
     let workers = workers.unwrap_or_else(|| {
         std::thread::available_parallelism()
             .map(|p| p.get())
             .unwrap_or(4)
     });
+
+    if workers == 0 {
+        return Err(PrimeGenError::InvalidInput(
+            "workers must be at least 1".to_string(),
+        ));
+    }
+
     let segment_size = segment_size.unwrap_or(DEFAULT_SEGMENT_SIZE);
 
     if parallel && n >= PARALLEL_THRESHOLD {
