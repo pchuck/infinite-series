@@ -7,6 +7,7 @@ pub const MAX_NUMBER_MIN: usize = 100;
 pub const MAX_NUMBER_MAX: usize = 100000;
 pub const SHOW_NUMBERS_MAX: usize = 10000;
 pub const DENSITY_INTERVALS: usize = 100;
+pub const SIDE_PANEL_MIN_WIDTH: f32 = 250.0;
 
 #[derive(Clone)]
 pub struct VisualizerConfig {

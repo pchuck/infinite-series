@@ -20,10 +20,9 @@ fn main() -> eframe::Result<()> {
     eframe::run_native(
         "Number Sequence Visualizer",
         options,
-        Box::new(|cc: &eframe::CreationContext<'_>| {
+        Box::new(|_cc: &eframe::CreationContext<'_>| {
             Ok(Box::new(NumberVisualizerApp::new(
                 VisualizerConfig::default(),
-                &cc.egui_ctx,
             )))
         }),
     )

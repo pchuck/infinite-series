@@ -11,7 +11,7 @@ use std::collections::HashSet;
 use std::sync::OnceLock;
 
 use crate::config::VisualizerConfig;
-use crate::config::{MAX_NUMBER_MAX, MAX_NUMBER_MIN};
+use crate::config::{MAX_NUMBER_MAX, MAX_NUMBER_MIN, SIDE_PANEL_MIN_WIDTH};
 use crate::types::{SeriesType, VisualizationType};
 use crate::visualizations as viz;
 use crate::visualizations::density_gradient::GRID_SIZE_MAX;
@@ -53,7 +53,7 @@ pub struct NumberVisualizerApp {
 }
 
 impl NumberVisualizerApp {
-    pub fn new(config: VisualizerConfig, _ctx: &egui::Context) -> Self {
+    pub fn new(config: VisualizerConfig) -> Self {
         Self {
             config,
             series_type: SeriesType::default(),
@@ -288,7 +288,7 @@ impl NumberVisualizerApp {
 impl eframe::App for NumberVisualizerApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::SidePanel::left("controls")
-            .min_width(250.0)
+            .min_width(SIDE_PANEL_MIN_WIDTH)
             .show(ctx, |ui| {
                 ui.heading("Number Visualizer");
 
