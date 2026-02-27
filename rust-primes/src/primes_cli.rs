@@ -184,7 +184,7 @@ fn main() {
             compute_time.as_secs_f64()
         );
     } else {
-        let last_prime = primes[primes.len() - 1];
+        let last_prime = *primes.last().unwrap();
         let rate_str = format_number(rate as usize);
         eprintln!(
             "Done! Largest prime < {} is {}. Generated {} primes in {:.3}s ({} primes/s).",
