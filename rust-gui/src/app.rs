@@ -8,7 +8,7 @@ use series::{
     generate_powers_of_2_up_to, generate_triangular_up_to,
 };
 use std::collections::HashSet;
-use std::sync::OnceLock;
+use std::sync::LazyLock;
 
 use crate::config::VisualizerConfig;
 use crate::config::{MAX_NUMBER_MAX, MAX_NUMBER_MIN, SIDE_PANEL_MIN_WIDTH};
@@ -22,15 +22,15 @@ use crate::visualizations::prime_wheel::MODULO_MIN;
 use crate::visualizations::riemann::NUM_ZEROS_MAX;
 use crate::visualizations::riemann::NUM_ZEROS_MIN;
 
-static EMPTY_SET: OnceLock<HashSet<usize>> = OnceLock::new();
-static EMPTY_VEC: OnceLock<Vec<usize>> = OnceLock::new();
+static EMPTY_SET: LazyLock<HashSet<usize>> = LazyLock::new(HashSet::new);
+static EMPTY_VEC: LazyLock<Vec<usize>> = LazyLock::new(Vec::new);
 
 fn empty_set() -> &'static HashSet<usize> {
-    EMPTY_SET.get_or_init(HashSet::new)
+    &EMPTY_SET
 }
 
 fn empty_vec() -> &'static Vec<usize> {
-    EMPTY_VEC.get_or_init(Vec::new)
+    &EMPTY_VEC
 }
 
 pub struct NumberVisualizerApp {
