@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [1.0.1] - 2026-02-26
 
 ### Added
 - Prime pair coloring support for 3D visualizations
@@ -28,3 +28,10 @@ All notable changes to this project will be documented in this file.
   - `draw_number.rs`: `MIN_CIRCLE_RADIUS`, `MIN_SIZE_FOR_TEXT`, `TEXT_SIZE_FACTOR`
   - `prime_density.rs`: `MIN_MAX_N`
 - Removed unused `_ctx` parameter from `NumberVisualizerApp::new()`
+
+## [1.0.0] - 2026-02-19
+
+### Summary
+
+- initial release
+
