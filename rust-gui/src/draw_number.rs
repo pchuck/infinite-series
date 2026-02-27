@@ -10,6 +10,41 @@ pub const MIN_CIRCLE_RADIUS: f32 = 0.5;
 pub const MIN_SIZE_FOR_TEXT: f32 = 6.0;
 pub const TEXT_SIZE_FACTOR: f32 = 0.6;
 
+pub fn get_prime_pair_color(
+    n: usize,
+    highlights: &HashSet<usize>,
+    config: &VisualizerConfig,
+    series_type: SeriesType,
+) -> Option<egui::Color32> {
+    if series_type != SeriesType::Primes {
+        return None;
+    }
+
+    if !highlights.contains(&n) {
+        return None;
+    }
+
+    if config.show_twin_primes
+        && (highlights.contains(&(n + 2)) || (n > 2 && highlights.contains(&(n - 2))))
+    {
+        return Some(config.twin_color);
+    }
+
+    if config.show_cousin_primes
+        && (highlights.contains(&(n + 4)) || (n > 4 && highlights.contains(&(n - 4))))
+    {
+        return Some(config.cousin_color);
+    }
+
+    if config.show_sexy_primes
+        && (highlights.contains(&(n + 6)) || (n > 6 && highlights.contains(&(n - 6))))
+    {
+        return Some(config.sexy_color);
+    }
+
+    None
+}
+
 pub fn draw_number(
     n: usize,
     x: f32,

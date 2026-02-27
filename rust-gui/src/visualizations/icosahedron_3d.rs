@@ -1,6 +1,7 @@
 //! 3D Icosahedron visualization - numbers distributed on 20 triangular faces
 //! Highlighted numbers bulge outward from the surface
 
+use crate::draw_number::get_prime_pair_color;
 use crate::helpers::MARGIN_SMALL;
 use crate::visualizations::shared_3d::{
     adjust_brightness, depth_factor, project_3d_to_2d, Point3D, DRAG_SENSITIVITY,
@@ -103,7 +104,7 @@ pub fn draw(app: &mut crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: 
     let faces = icosahedron_faces();
     let golden_ratio = (1.0 + 5.0f32.sqrt()) / 2.0;
 
-    let mut projected: Vec<(f32, f32, f32, bool)> = Vec::with_capacity(max_n);
+    let mut projected: Vec<(f32, f32, f32, usize, bool)> = Vec::with_capacity(max_n);
 
     for n in 1..=max_n {
         let t = (n - 1) as f32;
@@ -125,13 +126,13 @@ pub fn draw(app: &mut crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: 
         let point = point_on_triangle(&vertices, &faces[face_idx], u, v, spike);
         let (px, py, pz) = project_3d_to_2d(&point, rotation_y, rotation_x);
 
-        projected.push((px, py, pz, is_highlighted));
+        projected.push((px, py, pz, n, is_highlighted));
     }
 
     projected.sort_by(|a, b| a.2.partial_cmp(&b.2).unwrap_or(std::cmp::Ordering::Equal));
 
     let mut max_coord = 0.0f32;
-    for (x, y, _, _) in &projected {
+    for (x, y, _, _, _) in &projected {
         max_coord = max_coord.max(x.abs()).max(y.abs());
     }
 
@@ -146,14 +147,16 @@ pub fn draw(app: &mut crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: 
     let center_y = rect.center().y;
     let painter = ui.painter();
 
-    for (x, y, depth, is_highlighted) in &projected {
+    for (x, y, depth, n, is_highlighted) in &projected {
         let screen_x = center_x + *x * scale;
         let screen_y = center_y + *y * scale;
         let df = depth_factor(*depth);
 
         if *is_highlighted {
             let size = (app.config.highlight_size as f32 * df) / 2.0;
-            let color = adjust_brightness(app.config.highlight_color, df);
+            let base_color = get_prime_pair_color(*n, highlights, &app.config, app.series_type)
+                .unwrap_or(app.config.highlight_color);
+            let color = adjust_brightness(base_color, df);
             painter.circle_filled(egui::Pos2::new(screen_x, screen_y), size.max(0.5), color);
         } else if app.config.non_highlight_size > 0 {
             let size = (app.config.non_highlight_size as f32 * df) / 2.0;
