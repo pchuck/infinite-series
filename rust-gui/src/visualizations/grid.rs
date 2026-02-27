@@ -16,20 +16,17 @@ pub fn generate_positions(max_n: usize) -> Vec<(usize, f32, f32)> {
         .collect()
 }
 
-pub fn draw(app: &crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: egui::Rect) {
-    let positions = generate_positions(app.config.max_number);
-
-    if positions.is_empty() {
-        return;
-    }
-
-    let side = (app.config.max_number as f32).sqrt() as usize + 1;
+pub fn compute_layout(
+    _positions: &[(usize, f32, f32)],
+    rect: egui::Rect,
+    max_n: usize,
+) -> (f32, f32, f32) {
+    let side = (max_n as f32).sqrt() as usize + 1;
     let available_width = rect.width() - 2.0 * MARGIN_SMALL;
     let available_height = rect.height() - 2.0 * MARGIN_SMALL;
 
     let scale = available_width.min(available_height) / side as f32;
 
-    // Center the grid
     let grid_width = side as f32 * scale;
     let grid_height = side as f32 * scale;
     let offset_x = (available_width - grid_width) / 2.0;
@@ -37,9 +34,24 @@ pub fn draw(app: &crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: egui
 
     let start_x = rect.left() + MARGIN_SMALL + offset_x + scale / 2.0;
     let start_y = rect.top() + MARGIN_SMALL + offset_y + scale / 2.0;
+
+    (start_x, start_y, scale)
+}
+
+pub fn draw(
+    app: &crate::app::NumberVisualizerApp,
+    ui: &mut egui::Ui,
+    rect: egui::Rect,
+    positions: &[(usize, f32, f32)],
+) {
+    if positions.is_empty() {
+        return;
+    }
+
+    let (start_x, start_y, scale) = compute_layout(positions, rect, app.config.max_number);
     let painter = ui.painter();
 
-    for (n, x, y) in &positions {
+    for (n, x, y) in positions {
         let screen_x = start_x + *x * scale;
         let screen_y = start_y + *y * scale;
         draw_number(
@@ -58,30 +70,18 @@ pub fn find_hovered(
     app: &crate::app::NumberVisualizerApp,
     mouse_pos: egui::Pos2,
     rect: egui::Rect,
+    positions: &[(usize, f32, f32)],
 ) -> Option<usize> {
-    let positions = generate_positions(app.config.max_number);
     if positions.is_empty() {
         return None;
     }
 
-    let side = (app.config.max_number as f32).sqrt() as usize + 1;
-    let available_width = rect.width() - 2.0 * MARGIN_SMALL;
-    let available_height = rect.height() - 2.0 * MARGIN_SMALL;
-    let scale = available_width.min(available_height) / side as f32;
-
-    // Center the grid (same as draw)
-    let grid_width = side as f32 * scale;
-    let grid_height = side as f32 * scale;
-    let offset_x = (available_width - grid_width) / 2.0;
-    let offset_y = (available_height - grid_height) / 2.0;
-
-    let start_x = rect.left() + MARGIN_SMALL + offset_x + scale / 2.0;
-    let start_y = rect.top() + MARGIN_SMALL + offset_y + scale / 2.0;
+    let (start_x, start_y, scale) = compute_layout(positions, rect, app.config.max_number);
 
     let mut closest_n: Option<usize> = None;
     let mut min_distance_sq = f32::INFINITY;
 
-    for (n, x, y) in &positions {
+    for (n, x, y) in positions {
         let screen_x = start_x + *x * scale;
         let screen_y = start_y + *y * scale;
 

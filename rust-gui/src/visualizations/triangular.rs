@@ -45,14 +45,11 @@ pub fn generate_positions(max_n: usize) -> Vec<(usize, f32, f32)> {
     positions
 }
 
-pub fn draw(app: &crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: egui::Rect) {
-    let positions = generate_positions(app.config.max_number);
-
-    if positions.is_empty() {
-        return;
-    }
-
-    let (min_x, max_x, min_y, max_y) = calculate_bounds(&positions);
+pub fn compute_layout(
+    positions: &[(usize, f32, f32)],
+    rect: egui::Rect,
+) -> (f32, f32, f32, f32, f32) {
+    let (min_x, max_x, min_y, max_y) = calculate_bounds(positions);
     let range_x = max_x - min_x;
     let range_y = max_y - min_y;
 
@@ -60,11 +57,28 @@ pub fn draw(app: &crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: egui
 
     let center_x = rect.center().x;
     let center_y = rect.center().y;
+    let mid_x = (min_x + max_x) / 2.0;
+    let mid_y = (min_y + max_y) / 2.0;
+
+    (center_x, center_y, scale, mid_x, mid_y)
+}
+
+pub fn draw(
+    app: &crate::app::NumberVisualizerApp,
+    ui: &mut egui::Ui,
+    rect: egui::Rect,
+    positions: &[(usize, f32, f32)],
+) {
+    if positions.is_empty() {
+        return;
+    }
+
+    let (center_x, center_y, scale, mid_x, mid_y) = compute_layout(positions, rect);
     let painter = ui.painter();
 
-    for (n, x, y) in &positions {
-        let screen_x = center_x + (*x - (min_x + max_x) / 2.0) * scale;
-        let screen_y = center_y - (*y - (min_y + max_y) / 2.0) * scale;
+    for (n, x, y) in positions {
+        let screen_x = center_x + (*x - mid_x) * scale;
+        let screen_y = center_y - (*y - mid_y) * scale;
         draw_number(
             *n,
             screen_x,
@@ -78,30 +92,23 @@ pub fn draw(app: &crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: egui
 }
 
 pub fn find_hovered(
-    app: &crate::app::NumberVisualizerApp,
+    _app: &crate::app::NumberVisualizerApp,
     mouse_pos: egui::Pos2,
     rect: egui::Rect,
+    positions: &[(usize, f32, f32)],
 ) -> Option<usize> {
-    let positions = generate_positions(app.config.max_number);
     if positions.is_empty() {
         return None;
     }
 
-    let (min_x, max_x, min_y, max_y) = calculate_bounds(&positions);
-    let range_x = max_x - min_x;
-    let range_y = max_y - min_y;
-
-    let scale = calculate_scale(rect, range_x, range_y, MARGIN_SMALL);
-
-    let center_x = rect.center().x;
-    let center_y = rect.center().y;
+    let (center_x, center_y, scale, mid_x, mid_y) = compute_layout(positions, rect);
 
     let mut closest_n: Option<usize> = None;
     let mut min_distance_sq = f32::INFINITY;
 
-    for (n, x, y) in &positions {
-        let screen_x = center_x + (*x - (min_x + max_x) / 2.0) * scale;
-        let screen_y = center_y - (*y - (min_y + max_y) / 2.0) * scale;
+    for (n, x, y) in positions {
+        let screen_x = center_x + (*x - mid_x) * scale;
+        let screen_y = center_y - (*y - mid_y) * scale;
 
         let dx = mouse_pos.x - screen_x;
         let dy = mouse_pos.y - screen_y;

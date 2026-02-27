@@ -53,15 +53,9 @@ pub fn generate_positions(max_n: usize) -> Vec<(usize, f32, f32)> {
     positions
 }
 
-pub fn draw(app: &crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: egui::Rect) {
-    let positions = generate_positions(app.config.max_number);
-
-    if positions.is_empty() {
-        return;
-    }
-
+pub fn compute_layout(positions: &[(usize, f32, f32)], rect: egui::Rect) -> (f32, f32, f32, f32) {
     let mut max_coord = 0.0f32;
-    for (_, x, y) in &positions {
+    for (_, x, y) in positions {
         max_coord = max_coord.max(x.abs()).max(y.abs());
     }
 
@@ -74,9 +68,24 @@ pub fn draw(app: &crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: egui
 
     let center_x = rect.center().x;
     let center_y = rect.center().y;
+
+    (center_x, center_y, scale, max_coord)
+}
+
+pub fn draw(
+    app: &crate::app::NumberVisualizerApp,
+    ui: &mut egui::Ui,
+    rect: egui::Rect,
+    positions: &[(usize, f32, f32)],
+) {
+    if positions.is_empty() {
+        return;
+    }
+
+    let (center_x, center_y, scale, _) = compute_layout(positions, rect);
     let painter = ui.painter();
 
-    for (n, x, y) in &positions {
+    for (n, x, y) in positions {
         let screen_x = center_x + *x * scale;
         let screen_y = center_y + *y * scale;
         draw_number(
@@ -92,34 +101,21 @@ pub fn draw(app: &crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: egui
 }
 
 pub fn find_hovered(
-    app: &crate::app::NumberVisualizerApp,
+    _app: &crate::app::NumberVisualizerApp,
     mouse_pos: egui::Pos2,
     rect: egui::Rect,
+    positions: &[(usize, f32, f32)],
 ) -> Option<usize> {
-    let positions = generate_positions(app.config.max_number);
     if positions.is_empty() {
         return None;
     }
 
-    let mut max_coord = 0.0f32;
-    for (_, x, y) in &positions {
-        max_coord = max_coord.max(x.abs()).max(y.abs());
-    }
-
-    let available = rect.width().min(rect.height()) / 2.0 - MARGIN_SMALL;
-    let scale = if max_coord > 0.0 {
-        available / max_coord
-    } else {
-        1.0
-    };
-
-    let center_x = rect.center().x;
-    let center_y = rect.center().y;
+    let (center_x, center_y, scale, _) = compute_layout(positions, rect);
 
     let mut closest_n: Option<usize> = None;
     let mut min_distance_sq = f32::INFINITY;
 
-    for (n, x, y) in &positions {
+    for (n, x, y) in positions {
         let screen_x = center_x + *x * scale;
         let screen_y = center_y + *y * scale;
 
