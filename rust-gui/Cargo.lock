@@ -1996,7 +1996,7 @@ dependencies = [
 
 [[package]]
 name = "number-visualizer"
-version = "1.0.0"
+version = "1.0.1"
 dependencies = [
  "eframe",
  "primes",
@@ -2474,7 +2474,7 @@ dependencies = [
 
 [[package]]
 name = "primes"
-version = "1.0.0"
+version = "1.0.1"
 dependencies = [
  "clap",
 ]
