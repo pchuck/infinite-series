@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.2] - Unreleased
+
+### Added
+- Detailed error messages for prime generation failures (includes specific error reason)
+
+### Changed
+- Improved error handling to display underlying `PrimeGenError` details
+
 ## [1.0.1] - 2026-02-26
 
 ### Added
@@ -19,14 +27,7 @@ All notable changes to this project will be documented in this file.
 - 3D visualizations now correctly respond to prime pair selections
 
 ### Refactored
-- Extracted magic numbers to constants:
-  - `config.rs`: `MAX_NUMBER_MIN`, `MAX_NUMBER_MAX`, `SHOW_NUMBERS_MAX`, `DENSITY_INTERVALS`, `SIDE_PANEL_MIN_WIDTH`
-  - `prime_wheel.rs`: `MODULO_MIN`, `MODULO_MAX`
-  - `density_gradient.rs`: `GRID_SIZE_MIN`, `GRID_SIZE_MAX`
-  - `riemann.rs`: `NUM_ZEROS_MIN`, `NUM_ZEROS_MAX`
-  - `helix_3d.rs`: `ROTATION_X_DEFAULT`
-  - `draw_number.rs`: `MIN_CIRCLE_RADIUS`, `MIN_SIZE_FOR_TEXT`, `TEXT_SIZE_FACTOR`
-  - `prime_density.rs`: `MIN_MAX_N`
+- Extracted magic numbers to constants
 - Removed unused `_ctx` parameter from `NumberVisualizerApp::new()`
 
 ## [1.0.0] - 2026-02-19
