@@ -88,9 +88,7 @@ impl NumberVisualizerApp {
             let set: HashSet<usize> = vec.iter().copied().collect();
             *cache = Some((vec, set));
         }
-        cache
-            .as_ref()
-            .expect("series cache should always be populated")
+        cache.as_ref().expect("BUG: series cache was not populated")
     }
 
     fn set_error(&mut self, message: String) {
@@ -120,13 +118,17 @@ impl NumberVisualizerApp {
         let max_number = self.config.max_number;
         match self.series_type {
             SeriesType::Primes => {
-                let result = generate_primes(max_number, false, None, None, None);
-                if let Err(ref err) = result {
-                    self.set_error(format!("Failed to generate primes: {}", err));
+                let primes = generate_primes(max_number, false, None, None, None);
+                match primes {
+                    Ok(primes_vec) => {
+                        let set: HashSet<usize> = primes_vec.iter().copied().collect();
+                        self.primes = Some((primes_vec, set));
+                    }
+                    Err(err) => {
+                        self.set_error(format!("Failed to generate primes: {}", err));
+                        self.primes = Some((Vec::new(), HashSet::new()));
+                    }
                 }
-                Self::get_or_compute_series(&mut self.primes, max_number, |n| {
-                    generate_primes(n, false, None, None, None).ok()
-                });
             }
             SeriesType::Fibonacci => {
                 Self::get_or_compute_series(&mut self.fibs, max_number, generate_fibonacci_up_to);
