@@ -29,9 +29,9 @@ pub fn generate_positions(max_n: usize) -> Vec<(usize, f32, f32)> {
 pub fn compute_layout(
     _positions: &[(usize, f32, f32)],
     rect: egui::Rect,
-    max_n: usize,
+    max_number: usize,
 ) -> (f32, f32, f32) {
-    let side = (max_n as f32).sqrt() as usize + 1;
+    let side = (max_number as f32).sqrt() as usize + 1;
     let available_width = rect.width() - 2.0 * MARGIN_SMALL;
     let available_height = rect.height() - 2.0 * MARGIN_SMALL;
 
