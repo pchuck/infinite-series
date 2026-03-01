@@ -1,4 +1,4 @@
-.PHONY: all build release run clean help
+.PHONY: all build release run clean help test test-release lint fmt
 
 all: build
 
@@ -13,6 +13,18 @@ run: build
 
 run-release: release
 	./target/release/visualizer
+
+test:
+	cargo test
+
+test-release:
+	cargo test --release
+
+lint:
+	cargo clippy
+
+fmt:
+	cargo fmt
 
 clean:
 	cargo clean
@@ -29,11 +41,15 @@ setup:
 help:
 	@echo "Number Sequence Visualizer - Makefile Targets"
 	@echo ""
-	@echo "  make build        - Build debug version"
-	@echo "  make release      - Build optimized release"
-	@echo "  make run          - Run debug version"
-	@echo "  make run-release  - Run release version"
-	@echo "  make clean        - Clean build artifacts"
-	@echo "  make rebuild      - Clean and rebuild"
-	@echo "  make setup        - Check/install Rust"
-	@echo "  make help         - Show this help"
+	@echo "  make build         - Build debug version"
+	@echo "  make release       - Build optimized release"
+	@echo "  make run           - Run debug version"
+	@echo "  make run-release   - Run release version"
+	@echo "  make test          - Run unit tests"
+	@echo "  make test-release  - Run unit tests (release)"
+	@echo "  make lint          - Run clippy lints"
+	@echo "  make fmt           - Format code"
+	@echo "  make clean         - Clean build artifacts"
+	@echo "  make rebuild       - Clean and rebuild"
+	@echo "  make setup         - Check/install Rust"
+	@echo "  make help          - Show this help"
