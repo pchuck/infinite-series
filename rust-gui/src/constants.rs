@@ -7,10 +7,24 @@ pub mod limits {
     pub const MAX_NUMBER_MIN: usize = 100;
     /// Maximum value for max_number slider
     pub const MAX_NUMBER_MAX: usize = 100000;
+    /// Default value for max_number
+    pub const MAX_NUMBER_DEFAULT: usize = 10000;
     /// Maximum number of values to show text labels for
     pub const SHOW_NUMBERS_MAX: usize = 10000;
     /// Number of intervals for density calculations
     pub const DENSITY_INTERVALS: usize = 100;
+
+    // Display defaults
+    /// Default highlight size
+    pub const HIGHLIGHT_SIZE_DEFAULT: usize = 2;
+    /// Default non-highlight size
+    pub const NON_HIGHLIGHT_SIZE_DEFAULT: usize = 1;
+    /// Default modulo for prime wheel
+    pub const MODULO_DEFAULT: usize = 30;
+    /// Default number of zeros to show in Riemann visualization
+    pub const NUM_ZEROS_DEFAULT: usize = 10;
+    /// Default grid size for density gradient
+    pub const GRID_SIZE_DEFAULT: usize = 40;
 }
 
 pub mod layout {

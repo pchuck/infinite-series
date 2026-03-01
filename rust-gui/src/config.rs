@@ -72,23 +72,23 @@ pub struct VisualizerConfig {
 impl Default for VisualizerConfig {
     fn default() -> Self {
         Self {
-            max_number: 10000,
-            highlight_size: 2,
-            non_highlight_size: 1,
-            modulo: 30,
+            max_number: MAX_NUMBER_DEFAULT,
+            highlight_size: HIGHLIGHT_SIZE_DEFAULT,
+            non_highlight_size: NON_HIGHLIGHT_SIZE_DEFAULT,
+            modulo: MODULO_DEFAULT,
             show_numbers: false,
             highlight_color: egui::Color32::from_rgba_unmultiplied(255, 220, 80, 255),
             non_highlight_color: egui::Color32::from_rgba_unmultiplied(60, 60, 70, 180),
             background_color: egui::Color32::from_rgba_unmultiplied(20, 20, 30, 255),
             visualization: VisualizationType::UlamSpiral,
-            num_zeros: 10,
+            num_zeros: NUM_ZEROS_DEFAULT,
             show_twin_primes: false,
             twin_color: egui::Color32::from_rgba_unmultiplied(255, 50, 50, 255),
             show_cousin_primes: false,
             cousin_color: egui::Color32::from_rgba_unmultiplied(255, 120, 120, 255),
             show_sexy_primes: false,
             sexy_color: egui::Color32::from_rgba_unmultiplied(255, 180, 180, 255),
-            grid_size: 40,
+            grid_size: GRID_SIZE_DEFAULT,
         }
     }
 }
