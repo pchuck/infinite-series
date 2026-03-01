@@ -19,7 +19,11 @@ fn trefoil_point(t: f32) -> (f32, f32, f32) {
     let y = angle.cos() - (2.0 * angle).cos() / 2.0;
     let z = -(3.0 * angle).sin() / 2.0;
 
-    (x * shapes::KNOT_RADIUS, y * shapes::KNOT_RADIUS, z * shapes::KNOT_RADIUS)
+    (
+        x * shapes::KNOT_RADIUS,
+        y * shapes::KNOT_RADIUS,
+        z * shapes::KNOT_RADIUS,
+    )
 }
 
 /// Draw the 3D trefoil knot visualization.

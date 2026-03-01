@@ -8,8 +8,6 @@ use crate::visualizations::shared_3d::{
 };
 use eframe::egui;
 
-
-
 use crate::constants::helix;
 
 /// Draw the 3D helix visualization.
