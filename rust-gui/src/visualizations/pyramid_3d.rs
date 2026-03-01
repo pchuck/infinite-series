@@ -11,6 +11,9 @@ use eframe::egui;
 const PYRAMID_HEIGHT: f32 = 150.0;
 const PYRAMID_BASE: f32 = 120.0;
 
+/// Calculate a point on the pyramid surface.
+///
+/// Distributes points across 4 triangular faces and the square base.
 fn point_on_pyramid_surface(seed: f32, u: f32, v: f32, spike: f32) -> Point3D {
     let half = PYRAMID_BASE / 2.0;
     let h = PYRAMID_HEIGHT / 2.0;
@@ -72,6 +75,11 @@ fn point_on_pyramid_surface(seed: f32, u: f32, v: f32, spike: f32) -> Point3D {
     }
 }
 
+/// Draw the 3D pyramid visualization.
+///
+/// Renders numbers distributed across 4 triangular faces and the base of a pyramid.
+/// Highlighted numbers (primes, Fibonacci, etc.) spike outward from the faces.
+/// Supports mouse drag for rotation.
 pub fn draw(app: &mut crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: egui::Rect) {
     let response = ui.interact(rect, egui::Id::new("pyramid_3d"), egui::Sense::drag());
 

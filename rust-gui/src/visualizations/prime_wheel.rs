@@ -5,9 +5,15 @@ use crate::helpers::{HOVER_THRESHOLD_DEFAULT, MARGIN_SMALL};
 use crate::types::SeriesType;
 use eframe::egui;
 
+/// Minimum modulo value for the prime wheel.
 pub const MODULO_MIN: usize = 2;
+/// Maximum modulo value for the prime wheel.
 pub const MODULO_MAX: usize = 60;
 
+/// Generate positions for the prime wheel visualization.
+///
+/// Numbers are arranged in concentric rings, with each ring representing a quotient
+/// and positions within the ring determined by the remainder modulo the configured value.
 pub fn generate_positions(max_n: usize, modulo: usize) -> Vec<(usize, f32, f32)> {
     (1..=max_n)
         .map(|n| {
@@ -53,6 +59,10 @@ pub fn compute_layout(
     (center_x, center_y, scale, modulo_f)
 }
 
+/// Draw the prime wheel visualization.
+///
+/// Renders numbers in concentric rings colored by their modulo residue.
+/// Prime numbers are shown in highlight color on their respective spokes.
 pub fn draw(app: &crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: egui::Rect) {
     let positions = generate_positions(app.config.max_number, app.config.modulo);
 
@@ -115,6 +125,9 @@ pub fn draw(app: &crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: egui
     }
 }
 
+/// Find the number at the given mouse position.
+///
+/// Returns the closest number within the hover threshold, or None if no number is close enough.
 pub fn find_hovered(
     app: &crate::app::NumberVisualizerApp,
     mouse_pos: egui::Pos2,

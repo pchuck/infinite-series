@@ -12,6 +12,11 @@ const CONE_HEIGHT: f32 = 200.0;
 const CONE_BASE_RADIUS: f32 = 100.0;
 const CONE_TURNS: f32 = 10.0;
 
+/// Draw the 3D cone visualization.
+///
+/// Renders numbers spiraling upward on a cone surface.
+/// Highlighted numbers (primes, Fibonacci, etc.) spike outward from the surface.
+/// Supports mouse drag for rotation.
 pub fn draw(app: &mut crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: egui::Rect) {
     let response = ui.interact(rect, egui::Id::new("cone_3d"), egui::Sense::drag());
 

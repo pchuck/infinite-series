@@ -10,6 +10,11 @@ use eframe::egui;
 
 const BOTTLE_RADIUS: f32 = 60.0;
 
+/// Draw the 3D Klein bottle visualization.
+///
+/// Renders numbers distributed on an immersed Klein bottle surface (a non-orientable surface).
+/// Highlighted numbers (primes, Fibonacci, etc.) bulge outward from the surface.
+/// Supports mouse drag for rotation.
 pub fn draw(app: &mut crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: egui::Rect) {
     let response = ui.interact(rect, egui::Id::new("klein_3d"), egui::Sense::drag());
 

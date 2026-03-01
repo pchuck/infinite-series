@@ -1,5 +1,6 @@
 //! Series and visualization types
 
+/// Represents different number sequences that can be visualized.
 #[derive(Clone, Copy, PartialEq, Eq, Default)]
 pub enum SeriesType {
     #[default]
@@ -44,6 +45,7 @@ impl std::fmt::Display for SeriesType {
     }
 }
 
+/// Represents different visualization layouts for number sequences.
 #[derive(Clone, Copy, PartialEq, Eq, Default, Hash)]
 pub enum VisualizationType {
     #[default]

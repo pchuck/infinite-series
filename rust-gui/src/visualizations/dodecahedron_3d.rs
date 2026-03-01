@@ -10,6 +10,9 @@ use eframe::egui;
 
 const SCALE: f32 = 70.0;
 
+/// Return the 20 vertices of a regular dodecahedron centered at the origin.
+///
+/// Uses the golden ratio phi to construct the vertex coordinates.
 fn dodecahedron_vertices() -> Vec<[f32; 3]> {
     let phi = (1.0 + 5.0f32.sqrt()) / 2.0;
     let inv_phi = 1.0 / phi;
@@ -38,6 +41,9 @@ fn dodecahedron_vertices() -> Vec<[f32; 3]> {
     ]
 }
 
+/// Return the 12 pentagonal faces of a dodecahedron.
+///
+/// Each face is defined by indices into the vertices array.
 fn dodecahedron_faces() -> Vec<[usize; 5]> {
     vec![
         [0, 8, 10, 2, 16],
@@ -55,6 +61,9 @@ fn dodecahedron_faces() -> Vec<[usize; 5]> {
     ]
 }
 
+/// Calculate a point on a pentagonal face.
+///
+/// Distributes points radially within a pentagon defined by 5 vertices.
 fn point_on_pentagon(
     vertices: &[[f32; 3]],
     face: &[usize; 5],
@@ -101,6 +110,11 @@ fn point_on_pentagon(
     )
 }
 
+/// Draw the 3D dodecahedron visualization.
+///
+/// Renders numbers distributed on 12 pentagonal faces of a dodecahedron (Platonic solid).
+/// Highlighted numbers (primes, Fibonacci, etc.) bulge outward from the faces.
+/// Supports mouse drag for rotation.
 pub fn draw(app: &mut crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: egui::Rect) {
     let response = ui.interact(rect, egui::Id::new("dodecahedron_3d"), egui::Sense::drag());
 

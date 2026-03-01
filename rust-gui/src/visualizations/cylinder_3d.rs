@@ -12,6 +12,11 @@ const CYLINDER_HEIGHT: f32 = 200.0;
 const CYLINDER_RADIUS: f32 = 80.0;
 const CYLINDER_TURNS: f32 = 8.0;
 
+/// Draw the 3D cylinder visualization.
+///
+/// Renders numbers spiraling around a cylinder surface.
+/// Highlighted numbers (primes, Fibonacci, etc.) spike outward from the surface.
+/// Supports mouse drag for rotation.
 pub fn draw(app: &mut crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: egui::Rect) {
     let response = ui.interact(rect, egui::Id::new("cylinder_3d"), egui::Sense::drag());
 

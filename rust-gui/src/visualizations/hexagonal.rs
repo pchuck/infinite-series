@@ -7,6 +7,10 @@ use crate::helpers::{
 };
 use eframe::egui;
 
+/// Generate positions for hexagonal lattice.
+///
+/// Numbers spiral outward from the center in a hexagonal pattern (6 directions).
+/// Returns a vector of (number, x, y) tuples where (0,0) is the center.
 pub fn generate_positions(max_n: usize) -> Vec<(usize, f32, f32)> {
     let mut positions = Vec::with_capacity(max_n);
 
@@ -72,6 +76,9 @@ pub fn compute_layout(
     (center_x, center_y, scale, mid_x, mid_y)
 }
 
+/// Draw the hexagonal lattice visualization.
+///
+/// Renders all numbers as circles on a hexagonal spiral, with highlights shown in highlight color.
 pub fn draw(
     app: &crate::app::NumberVisualizerApp,
     ui: &mut egui::Ui,
@@ -100,6 +107,9 @@ pub fn draw(
     }
 }
 
+/// Find the number at the given mouse position.
+///
+/// Returns the closest number within the hover threshold, or None if no number is close enough.
 pub fn find_hovered(
     _app: &crate::app::NumberVisualizerApp,
     mouse_pos: egui::Pos2,

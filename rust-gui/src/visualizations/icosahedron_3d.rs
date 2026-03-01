@@ -10,6 +10,9 @@ use eframe::egui;
 
 const SCALE: f32 = 80.0;
 
+/// Return the 12 vertices of a regular icosahedron centered at the origin.
+///
+/// Uses the golden ratio phi to construct the vertex coordinates.
 fn icosahedron_vertices() -> Vec<[f32; 3]> {
     let phi = (1.0 + 5.0f32.sqrt()) / 2.0;
 
@@ -29,6 +32,9 @@ fn icosahedron_vertices() -> Vec<[f32; 3]> {
     ]
 }
 
+/// Return the 20 triangular faces of an icosahedron.
+///
+/// Each face is defined by indices into the vertices array.
 fn icosahedron_faces() -> Vec<[usize; 3]> {
     vec![
         [0, 2, 8],
@@ -54,6 +60,9 @@ fn icosahedron_faces() -> Vec<[usize; 3]> {
     ]
 }
 
+/// Calculate a point on a triangular face using barycentric coordinates.
+///
+/// Distributes points within a triangle defined by 3 vertices.
 fn point_on_triangle(
     vertices: &[[f32; 3]],
     face: &[usize; 3],
@@ -81,6 +90,11 @@ fn point_on_triangle(
     )
 }
 
+/// Draw the 3D icosahedron visualization.
+///
+/// Renders numbers distributed on 20 triangular faces of an icosahedron (Platonic solid).
+/// Highlighted numbers (primes, Fibonacci, etc.) bulge outward from the faces.
+/// Supports mouse drag for rotation.
 pub fn draw(app: &mut crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: egui::Rect) {
     let response = ui.interact(rect, egui::Id::new("icosahedron_3d"), egui::Sense::drag());
 

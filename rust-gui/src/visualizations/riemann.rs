@@ -3,9 +3,16 @@
 use crate::helpers::MARGIN_SMALL;
 use eframe::egui;
 
+/// Minimum number of zeros to display.
 pub const NUM_ZEROS_MIN: usize = 1;
+/// Maximum number of zeros to display.
 pub const NUM_ZEROS_MAX: usize = 20;
 
+/// Draw the Riemann zeta function visualization.
+///
+/// Displays the critical strip showing non-trivial zeros of the Riemann zeta function
+/// on the critical line σ=0.5. Visualizes the connection between prime distribution
+/// and the Riemann Hypothesis.
 pub fn draw(app: &crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: egui::Rect) {
     let graph_left = rect.left() + MARGIN_SMALL;
     let graph_right = rect.right() - MARGIN_SMALL;

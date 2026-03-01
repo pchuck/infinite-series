@@ -6,6 +6,10 @@ use crate::helpers::{
 };
 use eframe::egui;
 
+/// Generate positions for grid layout.
+///
+/// Numbers are arranged in a square grid from left to right, top to bottom.
+/// Returns a vector of (number, x, y) tuples where x and y are column/row indices.
 pub fn generate_positions(max_n: usize) -> Vec<(usize, f32, f32)> {
     let side = (max_n as f32).sqrt() as usize + 1;
     (1..=max_n)
@@ -44,6 +48,9 @@ pub fn compute_layout(
     (start_x, start_y, scale)
 }
 
+/// Draw the grid visualization.
+///
+/// Renders all numbers as circles in a grid pattern, with highlights shown in highlight color.
 pub fn draw(
     app: &crate::app::NumberVisualizerApp,
     ui: &mut egui::Ui,
@@ -72,6 +79,9 @@ pub fn draw(
     }
 }
 
+/// Find the number at the given mouse position.
+///
+/// Returns the closest number within the hover threshold, or None if no number is close enough.
 pub fn find_hovered(
     app: &crate::app::NumberVisualizerApp,
     mouse_pos: egui::Pos2,

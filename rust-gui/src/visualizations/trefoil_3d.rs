@@ -11,6 +11,9 @@ use eframe::egui;
 const KNOT_RADIUS: f32 = 80.0;
 const TUBE_RADIUS: f32 = 20.0;
 
+/// Calculate a point on the trefoil knot curve.
+///
+/// Uses a parametric equation to trace the trefoil knot path.
 fn trefoil_point(t: f32) -> (f32, f32, f32) {
     let angle = t * std::f32::consts::TAU;
 
@@ -21,6 +24,11 @@ fn trefoil_point(t: f32) -> (f32, f32, f32) {
     (x * KNOT_RADIUS, y * KNOT_RADIUS, z * KNOT_RADIUS)
 }
 
+/// Draw the 3D trefoil knot visualization.
+///
+/// Renders numbers along the path of a trefoil knot (the simplest non-trivial mathematical knot).
+/// Highlighted numbers (primes, Fibonacci, etc.) bulge outward from the knot tube.
+/// Supports mouse drag for rotation.
 pub fn draw(app: &mut crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: egui::Rect) {
     let response = ui.interact(rect, egui::Id::new("trefoil_3d"), egui::Sense::drag());
 

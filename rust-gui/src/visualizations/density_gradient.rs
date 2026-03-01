@@ -3,9 +3,15 @@
 use crate::helpers::MARGIN_SMALL;
 use eframe::egui;
 
+/// Minimum grid size for the density gradient heatmap.
 pub const GRID_SIZE_MIN: usize = 10;
+/// Maximum grid size for the density gradient heatmap.
 pub const GRID_SIZE_MAX: usize = 100;
 
+/// Draw the prime density gradient visualization.
+///
+/// Renders a heatmap showing local prime density across the number space.
+/// Brighter cells indicate areas with higher concentrations of prime numbers.
 pub fn draw(app: &crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: egui::Rect) {
     if app.primes_vec().is_empty() {
         return;

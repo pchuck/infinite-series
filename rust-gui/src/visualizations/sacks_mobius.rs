@@ -8,6 +8,10 @@ use crate::helpers::{
 use crate::types::SeriesType;
 use eframe::egui;
 
+/// Draw the Sacks Mobius spiral visualization.
+///
+/// Renders prime numbers on an Archimedean spiral with lines colored by gap size.
+/// Larger prime gaps produce darker, thinner lines to visualize prime distribution patterns.
 pub fn draw(app: &crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: egui::Rect) {
     if app.primes_vec().len() < 2 {
         return;

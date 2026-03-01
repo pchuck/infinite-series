@@ -11,6 +11,11 @@ use eframe::egui;
 const TORUS_MAJOR_RADIUS: f32 = 80.0;
 const TORUS_MINOR_RADIUS: f32 = 30.0;
 
+/// Draw the 3D torus visualization.
+///
+/// Renders numbers wrapped around a torus (donut) shape.
+/// Highlighted numbers (primes, Fibonacci, etc.) bulge outward from the surface.
+/// Supports mouse drag for rotation.
 pub fn draw(app: &mut crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: egui::Rect) {
     let response = ui.interact(rect, egui::Id::new("torus_3d"), egui::Sense::drag());
 

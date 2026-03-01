@@ -10,6 +10,9 @@ use eframe::egui;
 
 const SPHERE_RADIUS: f32 = 100.0;
 
+/// Calculate a point on a sphere using the Fibonacci sphere algorithm.
+///
+/// Uses the golden ratio to evenly distribute points on a sphere surface.
 fn fibonacci_sphere_point(n: usize, total: usize) -> (f32, f32, f32) {
     let golden_ratio = (1.0 + 5.0f32.sqrt()) / 2.0;
     let theta = 2.0 * std::f32::consts::PI * n as f32 / golden_ratio;
@@ -22,6 +25,11 @@ fn fibonacci_sphere_point(n: usize, total: usize) -> (f32, f32, f32) {
     (x, y, z)
 }
 
+/// Draw the 3D sphere visualization.
+///
+/// Renders numbers distributed evenly on a sphere surface using the Fibonacci sphere algorithm.
+/// Highlighted numbers (primes, Fibonacci, etc.) bulge outward from the surface.
+/// Supports mouse drag for rotation.
 pub fn draw(app: &mut crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: egui::Rect) {
     let response = ui.interact(rect, egui::Id::new("sphere_3d"), egui::Sense::drag());
 

@@ -10,6 +10,10 @@ pub const MIN_CIRCLE_RADIUS: f32 = 0.5;
 pub const MIN_SIZE_FOR_TEXT: f32 = 6.0;
 pub const TEXT_SIZE_FACTOR: f32 = 0.6;
 
+/// Get the color for a prime pair (twin, cousin, or sexy prime).
+///
+/// Returns `None` if the number is not a prime pair or if the series type
+/// is not primes.
 pub fn get_prime_pair_color(
     n: usize,
     highlights: &HashSet<usize>,
@@ -45,6 +49,14 @@ pub fn get_prime_pair_color(
     None
 }
 
+/// Draw a single number with appropriate highlighting.
+///
+/// Draws a circle at the specified position. If the number is in the highlights set,
+/// it will be drawn with the highlight color and size. For prime series, special
+/// colors are applied for twin, cousin, and sexy primes when enabled.
+///
+/// If `show_numbers` is enabled and the circle is large enough, the number text
+/// will be drawn inside the circle.
 pub fn draw_number(
     n: usize,
     x: f32,

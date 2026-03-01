@@ -6,6 +6,10 @@ use crate::helpers::{
 };
 use eframe::egui;
 
+/// Generate positions for Fermat's spiral (phyllotaxis pattern).
+///
+/// Uses the golden angle to distribute numbers in a sunflower-like pattern.
+/// Each number n is placed at polar coordinates (r = sqrt(n), theta = n * golden_angle).
 pub fn generate_positions(max_n: usize) -> Vec<(usize, f32, f32)> {
     (1..=max_n)
         .map(|n| {
@@ -40,6 +44,9 @@ pub fn compute_layout(positions: &[(usize, f32, f32)], rect: egui::Rect) -> (f32
     (center_x, center_y, scale)
 }
 
+/// Draw the Fermat's spiral visualization.
+///
+/// Renders all numbers as circles, with highlights shown in highlight color.
 pub fn draw(
     app: &crate::app::NumberVisualizerApp,
     ui: &mut egui::Ui,
@@ -68,6 +75,9 @@ pub fn draw(
     }
 }
 
+/// Find the number at the given mouse position.
+///
+/// Returns the closest number within the hover threshold, or None if no number is close enough.
 pub fn find_hovered(
     _app: &crate::app::NumberVisualizerApp,
     mouse_pos: egui::Pos2,

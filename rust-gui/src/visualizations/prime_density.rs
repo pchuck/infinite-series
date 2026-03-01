@@ -4,8 +4,13 @@ use crate::config::DENSITY_INTERVALS;
 use crate::helpers::MARGIN_SMALL;
 use eframe::egui;
 
+/// Minimum max_n value for the density graph to be meaningful.
 pub const MIN_MAX_N: usize = 10;
 
+/// Draw the prime density graph visualization.
+///
+/// Shows the prime counting function π(x) compared to x/ln(x) (Prime Number Theorem approximation).
+/// The highlight line shows actual prime count, the non-highlight line shows the approximation.
 pub fn draw(app: &crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: egui::Rect) {
     let max_n = app.config.max_number;
     if max_n < MIN_MAX_N {

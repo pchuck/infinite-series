@@ -5,6 +5,10 @@ use crate::helpers::SACKS_THETA_MULTIPLIER;
 use crate::helpers::{find_hovered_center_based, HOVER_THRESHOLD_DEFAULT, MARGIN_SMALL};
 use eframe::egui;
 
+/// Generate positions for Sacks spiral (Archimedean spiral).
+///
+/// Each number n is placed at polar coordinates (r = sqrt(n), theta = n/2).
+/// This creates a spiral where primes tend to form curved lines.
 pub fn generate_positions(max_n: usize) -> Vec<(usize, f32, f32)> {
     (1..=max_n)
         .map(|n| {
@@ -39,6 +43,9 @@ pub fn compute_layout(positions: &[(usize, f32, f32)], rect: egui::Rect) -> (f32
     (center_x, center_y, scale)
 }
 
+/// Draw the Sacks spiral visualization.
+///
+/// Renders all numbers as circles on an Archimedean spiral, with highlights shown in highlight color.
 pub fn draw(
     app: &crate::app::NumberVisualizerApp,
     ui: &mut egui::Ui,
@@ -67,6 +74,9 @@ pub fn draw(
     }
 }
 
+/// Find the number at the given mouse position.
+///
+/// Returns the closest number within the hover threshold, or None if no number is close enough.
 pub fn find_hovered(
     _app: &crate::app::NumberVisualizerApp,
     mouse_pos: egui::Pos2,

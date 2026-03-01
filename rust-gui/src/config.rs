@@ -16,6 +16,7 @@ pub const ERROR_BOX_HEIGHT: f32 = 30.0;
 pub const HOVER_TEXT_OFFSET_Y: f32 = 20.0;
 pub const FONT_SIZE_DEFAULT: f32 = 14.0;
 
+/// Per-visualization 3D rotation settings.
 #[derive(Clone, Copy, Debug)]
 pub struct VisualizationSettings {
     pub rotation_x: f32,
@@ -31,12 +32,16 @@ impl Default for VisualizationSettings {
     }
 }
 
+/// Stores per-visualization configuration settings.
 #[derive(Clone, Default)]
 pub struct PerVisualizationConfig {
     pub settings: HashMap<VisualizationType, VisualizationSettings>,
 }
 
 impl PerVisualizationConfig {
+    /// Get the settings for a specific visualization type.
+    ///
+    /// Returns default settings if no custom settings have been stored for this type.
     pub fn get(&self, viz_type: VisualizationType) -> VisualizationSettings {
         self.settings
             .get(&viz_type)
@@ -44,11 +49,13 @@ impl PerVisualizationConfig {
             .unwrap_or_else(VisualizationSettings::default)
     }
 
+    /// Store settings for a specific visualization type.
     pub fn set(&mut self, viz_type: VisualizationType, settings: VisualizationSettings) {
         self.settings.insert(viz_type, settings);
     }
 }
 
+/// Main configuration for the number sequence visualizer.
 #[derive(Clone)]
 pub struct VisualizerConfig {
     pub max_number: usize,

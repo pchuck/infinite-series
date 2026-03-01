@@ -10,6 +10,9 @@ use eframe::egui;
 
 const CUBE_SIZE: f32 = 80.0;
 
+/// Calculate a point on a cube face.
+///
+/// Returns a 3D point on one of the 6 cube faces based on face index and UV coordinates.
 fn cube_face_point(face: usize, u: f32, v: f32, spike: f32) -> Point3D {
     let half = CUBE_SIZE / 2.0 + spike;
     match face % 6 {
@@ -22,6 +25,11 @@ fn cube_face_point(face: usize, u: f32, v: f32, spike: f32) -> Point3D {
     }
 }
 
+/// Draw the 3D cube visualization.
+///
+/// Renders numbers distributed on the 6 faces of a cube.
+/// Highlighted numbers (primes, Fibonacci, etc.) bulge outward from the faces.
+/// Supports mouse drag for rotation.
 pub fn draw(app: &mut crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: egui::Rect) {
     let response = ui.interact(rect, egui::Id::new("cube_3d"), egui::Sense::drag());
 

@@ -8,6 +8,10 @@ use crate::types::SeriesType;
 use crate::visualizations::ulam::generate_positions as generate_ulam_positions;
 use eframe::egui;
 
+/// Draw the Ulam Mobius spiral visualization.
+///
+/// Renders prime numbers on a square spiral with lines colored by gap size.
+/// Larger prime gaps produce darker, thinner lines to visualize prime distribution patterns.
 pub fn draw(app: &crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: egui::Rect) {
     if app.primes_vec().len() < 2 {
         return;

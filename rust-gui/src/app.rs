@@ -39,6 +39,7 @@ fn empty_vec() -> &'static Vec<usize> {
     &EMPTY_VEC
 }
 
+/// Main application state for the Number Sequence Visualizer.
 pub struct NumberVisualizerApp {
     pub config: VisualizerConfig,
     pub series_type: SeriesType,
@@ -91,8 +92,10 @@ impl NumberVisualizerApp {
     }
 
     pub fn invalidate_rotation_cache(&mut self) {
-        let settings = self.per_viz_config.get(self.config.visualization);
-        self.per_viz_config.set(self.config.visualization, settings);
+        self.per_viz_config.set(
+            self.config.visualization,
+            crate::config::VisualizationSettings::default(),
+        );
     }
 
     fn get_or_compute_series<F, R>(
