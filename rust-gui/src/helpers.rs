@@ -83,7 +83,9 @@ pub fn find_hovered_center_based(
 
 /// Find the closest number to mouse position using offset-based layout.
 ///
-/// Layout provides: (start_x, start_y, scale)
+/// This is functionally identical to `find_hovered_center_based` - both compute
+/// screen position as `offset + logical_position * scale`. The name reflects
+/// the typical usage pattern (offset from top-left for grid layouts).
 pub fn find_hovered_offset_based(
     mouse_pos: egui::Pos2,
     positions: &[(usize, f32, f32)],
