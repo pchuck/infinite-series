@@ -25,6 +25,12 @@ pub fn generate_positions(max_n: usize, modulo: usize) -> Vec<(usize, f32, f32)>
         .collect()
 }
 
+/// Compute layout for prime wheel visualization.
+///
+/// Returns: (center_x, center_y, scale, modulo)
+/// - center_x, center_y: Center of the wheel
+/// - scale: Pixels per ring
+/// - modulo: Used for spoke calculations (cast to f32)
 pub fn compute_layout(
     _positions: &[(usize, f32, f32)],
     rect: egui::Rect,

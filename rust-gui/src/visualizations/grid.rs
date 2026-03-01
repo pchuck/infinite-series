@@ -16,6 +16,11 @@ pub fn generate_positions(max_n: usize) -> Vec<(usize, f32, f32)> {
         .collect()
 }
 
+/// Compute layout for grid visualization.
+///
+/// Returns: (start_x, start_y, scale)
+/// - start_x, start_y: Top-left corner of the grid
+/// - scale: Pixels per cell
 pub fn compute_layout(
     _positions: &[(usize, f32, f32)],
     rect: egui::Rect,

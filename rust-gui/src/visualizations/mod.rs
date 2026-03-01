@@ -1,4 +1,10 @@
 //! Individual visualization modules
+//!
+//! Layout computation patterns:
+//! - (f32, f32, f32) - center_x, center_y, scale: Simple centering for spirals
+//! - (f32, f32, f32) - start_x, start_y, scale: Grid/linear layouts
+//! - (f32, f32, f32, f32) - center_x, center_y, scale, extra: Polar/spiral with extra param
+//! - (f32, f32, f32, f32, f32) - center_x, center_y, scale, mid_x, mid_y: Bounding box centering
 
 pub mod cone_3d;
 pub mod cube_3d;

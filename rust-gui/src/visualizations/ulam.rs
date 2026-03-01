@@ -53,6 +53,12 @@ pub fn generate_positions(max_n: usize) -> Vec<(usize, f32, f32)> {
     positions
 }
 
+/// Compute layout for Ulam spiral visualization.
+///
+/// Returns: (center_x, center_y, scale, max_coord)
+/// - center_x, center_y: Center of the visualization
+/// - scale: Pixels per unit
+/// - max_coord: Maximum coordinate magnitude for bounds calculation
 pub fn compute_layout(positions: &[(usize, f32, f32)], rect: egui::Rect) -> (f32, f32, f32, f32) {
     let mut max_coord = 0.0f32;
     for (_, x, y) in positions {

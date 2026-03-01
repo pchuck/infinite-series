@@ -19,6 +19,11 @@ pub fn generate_positions(max_n: usize) -> Vec<(usize, f32, f32)> {
         .collect()
 }
 
+/// Compute layout for Sacks spiral visualization.
+///
+/// Returns: (center_x, center_y, scale)
+/// - center_x, center_y: Center of the spiral
+/// - scale: Pixels per unit radius
 pub fn compute_layout(positions: &[(usize, f32, f32)], rect: egui::Rect) -> (f32, f32, f32) {
     let mut max_r = 0.0f32;
     for (_, x, y) in positions {

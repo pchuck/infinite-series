@@ -9,6 +9,12 @@ pub fn generate_positions(max_n: usize) -> Vec<(usize, f32, f32)> {
     (1..=max_n).map(|n| (n, n as f32, 0.0)).collect()
 }
 
+/// Compute layout for row visualization.
+///
+/// Returns: (start_x, center_y, scale)
+/// - start_x: Starting x position of the row
+/// - center_y: Vertical center of the row
+/// - scale: Pixels per unit
 pub fn compute_layout(
     _positions: &[(usize, f32, f32)],
     rect: egui::Rect,

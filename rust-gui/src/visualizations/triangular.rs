@@ -45,6 +45,12 @@ pub fn generate_positions(max_n: usize) -> Vec<(usize, f32, f32)> {
     positions
 }
 
+/// Compute layout for triangular lattice visualization.
+///
+/// Returns: (center_x, center_y, scale, mid_x, mid_y)
+/// - center_x, center_y: Center of the visualization
+/// - scale: Pixels per unit
+/// - mid_x, mid_y: Center of bounding box for content centering
 pub fn compute_layout(
     positions: &[(usize, f32, f32)],
     rect: egui::Rect,
