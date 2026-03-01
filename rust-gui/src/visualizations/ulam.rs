@@ -1,8 +1,7 @@
 //! Ulam spiral visualization
 
 use crate::draw_number::draw_number;
-use crate::helpers::HOVER_THRESHOLD_DEFAULT;
-use crate::helpers::MARGIN_SMALL;
+use crate::helpers::{find_hovered_center_based, HOVER_THRESHOLD_DEFAULT, MARGIN_SMALL};
 use eframe::egui;
 
 pub fn generate_positions(max_n: usize) -> Vec<(usize, f32, f32)> {
@@ -117,24 +116,10 @@ pub fn find_hovered(
     }
 
     let (center_x, center_y, scale, _) = compute_layout(positions, rect);
-
-    let mut closest_n: Option<usize> = None;
-    let mut min_distance_sq = f32::INFINITY;
-
-    for (n, x, y) in positions {
-        let screen_x = center_x + *x * scale;
-        let screen_y = center_y + *y * scale;
-
-        let dx = mouse_pos.x - screen_x;
-        let dy = mouse_pos.y - screen_y;
-        let distance_sq = dx * dx + dy * dy;
-
-        if distance_sq < min_distance_sq && distance_sq < (scale * HOVER_THRESHOLD_DEFAULT).powi(2)
-        {
-            min_distance_sq = distance_sq;
-            closest_n = Some(*n);
-        }
-    }
-
-    closest_n
+    find_hovered_center_based(
+        mouse_pos,
+        positions,
+        (center_x, center_y, scale),
+        HOVER_THRESHOLD_DEFAULT,
+    )
 }

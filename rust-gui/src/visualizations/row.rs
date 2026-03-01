@@ -1,8 +1,7 @@
 //! Row visualization
 
 use crate::draw_number::draw_number;
-use crate::helpers::HOVER_THRESHOLD_DEFAULT;
-use crate::helpers::MARGIN_SMALL;
+use crate::helpers::{find_hovered_row, LayoutData, HOVER_THRESHOLD_DEFAULT, MARGIN_SMALL};
 use eframe::egui;
 
 pub fn generate_positions(max_n: usize) -> Vec<(usize, f32, f32)> {
@@ -67,24 +66,6 @@ pub fn find_hovered(
         return None;
     }
 
-    let (start_x, center_y, scale) = compute_layout(positions, rect, app.config.max_number);
-
-    let mut closest_n: Option<usize> = None;
-    let mut min_distance_sq = f32::INFINITY;
-
-    for (n, x, _) in positions {
-        let screen_x = start_x + *x * scale;
-
-        let dx = mouse_pos.x - screen_x;
-        let dy = mouse_pos.y - center_y;
-        let distance_sq = dx * dx + dy * dy;
-
-        if distance_sq < min_distance_sq && distance_sq < (scale * HOVER_THRESHOLD_DEFAULT).powi(2)
-        {
-            min_distance_sq = distance_sq;
-            closest_n = Some(*n);
-        }
-    }
-
-    closest_n
+    let layout: LayoutData = compute_layout(positions, rect, app.config.max_number);
+    find_hovered_row(mouse_pos, positions, layout, HOVER_THRESHOLD_DEFAULT)
 }

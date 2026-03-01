@@ -1,7 +1,10 @@
 //! Hexagonal lattice visualization
 
 use crate::draw_number::draw_number;
-use crate::helpers::{calculate_bounds, calculate_scale, HOVER_THRESHOLD_LARGE, MARGIN_SMALL};
+use crate::helpers::{
+    calculate_bounds, calculate_scale, find_hovered_centered, LayoutDataCentered,
+    HOVER_THRESHOLD_LARGE, MARGIN_SMALL,
+};
 use eframe::egui;
 
 pub fn generate_positions(max_n: usize) -> Vec<(usize, f32, f32)> {
@@ -107,24 +110,6 @@ pub fn find_hovered(
         return None;
     }
 
-    let (center_x, center_y, scale, mid_x, mid_y) = compute_layout(positions, rect);
-
-    let mut closest_n: Option<usize> = None;
-    let mut min_distance_sq = f32::INFINITY;
-
-    for (n, x, y) in positions {
-        let screen_x = center_x + (*x - mid_x) * scale;
-        let screen_y = center_y - (*y - mid_y) * scale;
-
-        let dx = mouse_pos.x - screen_x;
-        let dy = mouse_pos.y - screen_y;
-        let distance_sq = dx * dx + dy * dy;
-
-        if distance_sq < min_distance_sq && distance_sq < (scale * HOVER_THRESHOLD_LARGE).powi(2) {
-            min_distance_sq = distance_sq;
-            closest_n = Some(*n);
-        }
-    }
-
-    closest_n
+    let layout: LayoutDataCentered = compute_layout(positions, rect);
+    find_hovered_centered(mouse_pos, positions, layout, HOVER_THRESHOLD_LARGE)
 }

@@ -39,6 +39,161 @@ pub const STROKE_WIDTH_LARGE: f32 = 2.0;
 /// Extra large stroke width in pixels
 pub const STROKE_WIDTH_XLARGE: f32 = 2.5;
 
+/// Layout data returned by compute_layout functions: (offset_x, offset_y, scale).
+///
+/// - For center-based: (center_x, center_y, scale)
+/// - For offset-based: (start_x, start_y, scale)
+/// - For row-based: (start_x, center_y, scale)
+pub type LayoutData = (f32, f32, f32);
+
+/// Find the closest number to mouse position using center-based layout.
+///
+/// Layout provides: (center_x, center_y, scale)
+pub fn find_hovered_center_based(
+    mouse_pos: egui::Pos2,
+    positions: &[(usize, f32, f32)],
+    layout: LayoutData,
+    threshold: f32,
+) -> Option<usize> {
+    if positions.is_empty() {
+        return None;
+    }
+
+    let (center_x, center_y, scale) = layout;
+    let threshold_sq = (scale * threshold).powi(2);
+    let mut closest_n: Option<usize> = None;
+    let mut min_distance_sq = f32::INFINITY;
+
+    for (n, x, y) in positions {
+        let screen_x = center_x + *x * scale;
+        let screen_y = center_y + *y * scale;
+
+        let dx = mouse_pos.x - screen_x;
+        let dy = mouse_pos.y - screen_y;
+        let distance_sq = dx * dx + dy * dy;
+
+        if distance_sq < min_distance_sq && distance_sq < threshold_sq {
+            min_distance_sq = distance_sq;
+            closest_n = Some(*n);
+        }
+    }
+
+    closest_n
+}
+
+/// Find the closest number to mouse position using offset-based layout.
+///
+/// Layout provides: (start_x, start_y, scale)
+pub fn find_hovered_offset_based(
+    mouse_pos: egui::Pos2,
+    positions: &[(usize, f32, f32)],
+    layout: LayoutData,
+    threshold: f32,
+) -> Option<usize> {
+    find_hovered_center_based(mouse_pos, positions, layout, threshold)
+}
+
+/// Find the closest number for row visualization (fixed Y coordinate).
+pub fn find_hovered_row(
+    mouse_pos: egui::Pos2,
+    positions: &[(usize, f32, f32)],
+    layout: LayoutData,
+    threshold: f32,
+) -> Option<usize> {
+    if positions.is_empty() {
+        return None;
+    }
+
+    let (start_x, center_y, scale) = layout;
+    let threshold_sq = (scale * threshold).powi(2);
+    let mut closest_n: Option<usize> = None;
+    let mut min_distance_sq = f32::INFINITY;
+
+    for (n, x, _) in positions {
+        let screen_x = start_x + *x * scale;
+        let dx = mouse_pos.x - screen_x;
+        let dy = mouse_pos.y - center_y;
+        let distance_sq = dx * dx + dy * dy;
+
+        if distance_sq < min_distance_sq && distance_sq < threshold_sq {
+            min_distance_sq = distance_sq;
+            closest_n = Some(*n);
+        }
+    }
+
+    closest_n
+}
+
+/// Find the closest number for center-based layout with Y-axis flip (used by Fermats spiral).
+pub fn find_hovered_center_flip_y(
+    mouse_pos: egui::Pos2,
+    positions: &[(usize, f32, f32)],
+    layout: LayoutData,
+    threshold: f32,
+) -> Option<usize> {
+    if positions.is_empty() {
+        return None;
+    }
+
+    let (center_x, center_y, scale) = layout;
+    let threshold_sq = (scale * threshold).powi(2);
+    let mut closest_n: Option<usize> = None;
+    let mut min_distance_sq = f32::INFINITY;
+
+    for (n, x, y) in positions {
+        let screen_x = center_x + *x * scale;
+        let screen_y = center_y - *y * scale;
+
+        let dx = mouse_pos.x - screen_x;
+        let dy = mouse_pos.y - screen_y;
+        let distance_sq = dx * dx + dy * dy;
+
+        if distance_sq < min_distance_sq && distance_sq < threshold_sq {
+            min_distance_sq = distance_sq;
+            closest_n = Some(*n);
+        }
+    }
+
+    closest_n
+}
+
+/// Layout data for visualizations with bounding-box centering (hexagonal, triangular).
+/// (center_x, center_y, scale, mid_x, mid_y)
+pub type LayoutDataCentered = (f32, f32, f32, f32, f32);
+
+/// Find the closest number for centered layout (bounding box based).
+pub fn find_hovered_centered(
+    mouse_pos: egui::Pos2,
+    positions: &[(usize, f32, f32)],
+    layout: LayoutDataCentered,
+    threshold: f32,
+) -> Option<usize> {
+    if positions.is_empty() {
+        return None;
+    }
+
+    let (center_x, center_y, scale, mid_x, mid_y) = layout;
+    let threshold_sq = (scale * threshold).powi(2);
+    let mut closest_n: Option<usize> = None;
+    let mut min_distance_sq = f32::INFINITY;
+
+    for (n, x, y) in positions {
+        let screen_x = center_x + (*x - mid_x) * scale;
+        let screen_y = center_y - (*y - mid_y) * scale;
+
+        let dx = mouse_pos.x - screen_x;
+        let dy = mouse_pos.y - screen_y;
+        let distance_sq = dx * dx + dy * dy;
+
+        if distance_sq < min_distance_sq && distance_sq < threshold_sq {
+            min_distance_sq = distance_sq;
+            closest_n = Some(*n);
+        }
+    }
+
+    closest_n
+}
+
 /// Calculate bounding box from positions.
 ///
 /// Returns: (min_x, max_x, min_y, max_y)
