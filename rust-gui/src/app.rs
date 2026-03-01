@@ -10,8 +10,10 @@ use series::{
 use std::collections::HashSet;
 use std::sync::LazyLock;
 
-use crate::config::{PerVisualizationConfig, VisualizerConfig};
-use crate::config::{MAX_NUMBER_MAX, MAX_NUMBER_MIN, SIDE_PANEL_MIN_WIDTH};
+use crate::config::{
+    PerVisualizationConfig, VisualizerConfig, ERROR_BOX_HEIGHT, FONT_SIZE_DEFAULT,
+    HOVER_TEXT_OFFSET_Y, MAX_NUMBER_MAX, MAX_NUMBER_MIN, SIDE_PANEL_MIN_WIDTH, UI_MARGIN,
+};
 use crate::types::{SeriesType, VisualizationType};
 use crate::visualizations as viz;
 use crate::visualizations::density_gradient::GRID_SIZE_MAX;
@@ -23,6 +25,11 @@ use crate::visualizations::riemann::NUM_ZEROS_MIN;
 
 static EMPTY_SET: LazyLock<HashSet<usize>> = LazyLock::new(HashSet::new);
 static EMPTY_VEC: LazyLock<Vec<usize>> = LazyLock::new(Vec::new);
+
+static ERROR_BG_COLOR: LazyLock<egui::Color32> =
+    LazyLock::new(|| egui::Color32::from_rgba_unmultiplied(80, 20, 20, 200));
+static ERROR_TEXT_COLOR: LazyLock<egui::Color32> =
+    LazyLock::new(|| egui::Color32::from_rgba_unmultiplied(255, 100, 100, 255));
 
 fn empty_set() -> &'static HashSet<usize> {
     &EMPTY_SET
@@ -474,20 +481,16 @@ impl eframe::App for NumberVisualizerApp {
 
             if let Some(ref error) = self.error_message {
                 let error_rect = egui::Rect::from_min_size(
-                    egui::Pos2::new(rect.left() + 5.0, rect.top() + 5.0),
-                    egui::vec2(rect.width() - 10.0, 30.0),
+                    egui::Pos2::new(rect.left() + UI_MARGIN, rect.top() + UI_MARGIN),
+                    egui::vec2(rect.width() - 2.0 * UI_MARGIN, ERROR_BOX_HEIGHT),
                 );
-                ui.painter().rect_filled(
-                    error_rect,
-                    2.0,
-                    egui::Color32::from_rgba_unmultiplied(80, 20, 20, 200),
-                );
+                ui.painter().rect_filled(error_rect, 2.0, *ERROR_BG_COLOR);
                 ui.painter().text(
                     error_rect.center(),
                     egui::Align2::CENTER_CENTER,
                     error.clone(),
-                    egui::FontId::proportional(14.0),
-                    egui::Color32::from_rgba_unmultiplied(255, 100, 100, 255),
+                    egui::FontId::proportional(FONT_SIZE_DEFAULT),
+                    *ERROR_TEXT_COLOR,
                 );
             }
 
@@ -501,10 +504,10 @@ impl eframe::App for NumberVisualizerApp {
                     format!("{}", hovered)
                 };
                 ui.painter().text(
-                    egui::Pos2::new(rect.left() + 5.0, rect.bottom() - 20.0),
+                    egui::Pos2::new(rect.left() + UI_MARGIN, rect.bottom() - HOVER_TEXT_OFFSET_Y),
                     egui::Align2::LEFT_BOTTOM,
                     text,
-                    egui::FontId::proportional(14.0),
+                    egui::FontId::proportional(FONT_SIZE_DEFAULT),
                     if is_highlighted {
                         self.config.highlight_color
                     } else {

@@ -10,6 +10,12 @@ pub const SHOW_NUMBERS_MAX: usize = 10000;
 pub const DENSITY_INTERVALS: usize = 100;
 pub const SIDE_PANEL_MIN_WIDTH: f32 = 250.0;
 
+// UI Layout constants
+pub const UI_MARGIN: f32 = 5.0;
+pub const ERROR_BOX_HEIGHT: f32 = 30.0;
+pub const HOVER_TEXT_OFFSET_Y: f32 = 20.0;
+pub const FONT_SIZE_DEFAULT: f32 = 14.0;
+
 #[derive(Clone, Copy, Debug)]
 pub struct VisualizationSettings {
     pub rotation_x: f32,
@@ -25,17 +31,9 @@ impl Default for VisualizationSettings {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct PerVisualizationConfig {
     pub settings: HashMap<VisualizationType, VisualizationSettings>,
-}
-
-impl Default for PerVisualizationConfig {
-    fn default() -> Self {
-        Self {
-            settings: HashMap::new(),
-        }
-    }
 }
 
 impl PerVisualizationConfig {
