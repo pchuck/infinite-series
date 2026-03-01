@@ -10,13 +10,12 @@ use series::{
 use std::collections::HashSet;
 use std::sync::LazyLock;
 
-use crate::config::VisualizerConfig;
+use crate::config::{PerVisualizationConfig, VisualizerConfig};
 use crate::config::{MAX_NUMBER_MAX, MAX_NUMBER_MIN, SIDE_PANEL_MIN_WIDTH};
 use crate::types::{SeriesType, VisualizationType};
 use crate::visualizations as viz;
 use crate::visualizations::density_gradient::GRID_SIZE_MAX;
 use crate::visualizations::density_gradient::GRID_SIZE_MIN;
-use crate::visualizations::helix_3d::ROTATION_X_DEFAULT;
 use crate::visualizations::prime_wheel::MODULO_MAX;
 use crate::visualizations::prime_wheel::MODULO_MIN;
 use crate::visualizations::riemann::NUM_ZEROS_MAX;
@@ -36,6 +35,7 @@ fn empty_vec() -> &'static Vec<usize> {
 pub struct NumberVisualizerApp {
     pub config: VisualizerConfig,
     pub series_type: SeriesType,
+    per_viz_config: PerVisualizationConfig,
     primes: Option<(Vec<usize>, HashSet<usize>)>,
     fibs: Option<(Vec<usize>, HashSet<usize>)>,
     lucas: Option<(Vec<usize>, HashSet<usize>)>,
@@ -47,8 +47,6 @@ pub struct NumberVisualizerApp {
     happy: Option<(Vec<usize>, HashSet<usize>)>,
     cached_max_number: usize,
     pub hovered_number: Option<usize>,
-    pub helix_rotation_x: f32,
-    pub helix_rotation_y: f32,
     pub error_message: Option<String>,
 }
 
@@ -57,6 +55,7 @@ impl NumberVisualizerApp {
         Self {
             config,
             series_type: SeriesType::default(),
+            per_viz_config: PerVisualizationConfig::default(),
             primes: None,
             fibs: None,
             lucas: None,
@@ -68,10 +67,25 @@ impl NumberVisualizerApp {
             happy: None,
             cached_max_number: 0,
             hovered_number: None,
-            helix_rotation_x: ROTATION_X_DEFAULT,
-            helix_rotation_y: 0.0,
             error_message: None,
         }
+    }
+
+    pub fn get_rotation(&self) -> (f32, f32) {
+        let settings = self.per_viz_config.get(self.config.visualization);
+        (settings.rotation_x, settings.rotation_y)
+    }
+
+    pub fn set_rotation(&mut self, rotation_x: f32, rotation_y: f32) {
+        let mut settings = self.per_viz_config.get(self.config.visualization);
+        settings.rotation_x = rotation_x;
+        settings.rotation_y = rotation_y;
+        self.per_viz_config.set(self.config.visualization, settings);
+    }
+
+    pub fn invalidate_rotation_cache(&mut self) {
+        let settings = self.per_viz_config.get(self.config.visualization);
+        self.per_viz_config.set(self.config.visualization, settings);
     }
 
     fn get_or_compute_series<F, R>(
@@ -111,6 +125,7 @@ impl NumberVisualizerApp {
             self.hexagonal = None;
             self.happy = None;
             self.cached_max_number = self.config.max_number;
+            self.invalidate_rotation_cache();
         }
 
         self.clear_error();

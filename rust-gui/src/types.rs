@@ -44,7 +44,7 @@ impl std::fmt::Display for SeriesType {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Default)]
+#[derive(Clone, Copy, PartialEq, Eq, Default, Hash)]
 pub enum VisualizationType {
     #[default]
     UlamSpiral,

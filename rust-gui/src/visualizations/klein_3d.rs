@@ -15,13 +15,14 @@ pub fn draw(app: &mut crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: 
 
     if response.dragged() {
         let delta = response.drag_delta();
-        app.helix_rotation_y -= delta.x * DRAG_SENSITIVITY;
-        app.helix_rotation_x -= delta.y * DRAG_SENSITIVITY;
-        app.helix_rotation_x = app.helix_rotation_x.clamp(-1.5, 1.5);
+        let (mut rotation_x, mut rotation_y) = app.get_rotation();
+        rotation_y -= delta.x * DRAG_SENSITIVITY;
+        rotation_x -= delta.y * DRAG_SENSITIVITY;
+        rotation_x = rotation_x.clamp(-1.5, 1.5);
+        app.set_rotation(rotation_x, rotation_y);
     }
 
-    let rotation_y = app.helix_rotation_y;
-    let rotation_x = app.helix_rotation_x;
+    let (rotation_x, rotation_y) = app.get_rotation();
 
     let max_n = app.config.max_number;
     if max_n == 0 {

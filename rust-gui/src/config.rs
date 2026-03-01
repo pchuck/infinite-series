@@ -2,12 +2,54 @@
 
 use crate::types::VisualizationType;
 use eframe::egui;
+use std::collections::HashMap;
 
 pub const MAX_NUMBER_MIN: usize = 100;
 pub const MAX_NUMBER_MAX: usize = 100000;
 pub const SHOW_NUMBERS_MAX: usize = 10000;
 pub const DENSITY_INTERVALS: usize = 100;
 pub const SIDE_PANEL_MIN_WIDTH: f32 = 250.0;
+
+#[derive(Clone, Copy, Debug)]
+pub struct VisualizationSettings {
+    pub rotation_x: f32,
+    pub rotation_y: f32,
+}
+
+impl Default for VisualizationSettings {
+    fn default() -> Self {
+        Self {
+            rotation_x: 0.4,
+            rotation_y: 0.0,
+        }
+    }
+}
+
+#[derive(Clone)]
+pub struct PerVisualizationConfig {
+    pub settings: HashMap<VisualizationType, VisualizationSettings>,
+}
+
+impl Default for PerVisualizationConfig {
+    fn default() -> Self {
+        Self {
+            settings: HashMap::new(),
+        }
+    }
+}
+
+impl PerVisualizationConfig {
+    pub fn get(&self, viz_type: VisualizationType) -> VisualizationSettings {
+        self.settings
+            .get(&viz_type)
+            .copied()
+            .unwrap_or_else(VisualizationSettings::default)
+    }
+
+    pub fn set(&mut self, viz_type: VisualizationType, settings: VisualizationSettings) {
+        self.settings.insert(viz_type, settings);
+    }
+}
 
 #[derive(Clone)]
 pub struct VisualizerConfig {
