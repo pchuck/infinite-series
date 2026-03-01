@@ -123,3 +123,33 @@ pub fn find_hovered(
         HOVER_THRESHOLD_DEFAULT,
     )
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_generate_positions_count() {
+        let positions = generate_positions(10);
+        assert_eq!(positions.len(), 10);
+    }
+
+    #[test]
+    fn test_generate_positions_start_at_center() {
+        let positions = generate_positions(1);
+        assert_eq!(positions[0], (1, 0.0, 0.0));
+    }
+
+    #[test]
+    fn test_generate_positions_spiral_outward() {
+        let positions = generate_positions(9);
+        assert_eq!(positions[0], (1, 0.0, 0.0));
+        assert_eq!(positions[8].0, 9);
+    }
+
+    #[test]
+    fn test_empty_positions() {
+        let positions = generate_positions(0);
+        assert!(positions.is_empty());
+    }
+}

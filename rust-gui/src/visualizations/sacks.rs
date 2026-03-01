@@ -80,3 +80,31 @@ pub fn find_hovered(
     let layout = compute_layout(positions, rect);
     find_hovered_center_based(mouse_pos, positions, layout, HOVER_THRESHOLD_DEFAULT)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_generate_positions_count() {
+        let positions = generate_positions(100);
+        assert_eq!(positions.len(), 100);
+    }
+
+    #[test]
+    fn test_generate_positions_monotonic_radius() {
+        let positions = generate_positions(100);
+        let mut prev_r: f32 = 0.0;
+        for (_, x, y) in positions {
+            let r = (x * x + y * y).sqrt();
+            assert!(r >= prev_r - 0.001, "radius should not decrease");
+            prev_r = r;
+        }
+    }
+
+    #[test]
+    fn test_empty_positions() {
+        let positions = generate_positions(0);
+        assert!(positions.is_empty());
+    }
+}

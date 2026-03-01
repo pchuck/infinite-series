@@ -85,3 +85,23 @@ pub fn find_hovered(
     let layout: LayoutData = compute_layout(positions, rect, app.config.max_number);
     find_hovered_offset_based(mouse_pos, positions, layout, HOVER_THRESHOLD_DEFAULT)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_generate_positions_count() {
+        let positions = generate_positions(100);
+        assert_eq!(positions.len(), 100);
+    }
+
+    #[test]
+    fn test_generate_positions_values() {
+        let positions = generate_positions(9);
+        assert_eq!(positions[0], (1, 0.0, 0.0));
+        assert_eq!(positions[1], (2, 1.0, 0.0));
+        assert_eq!(positions[2], (3, 2.0, 0.0));
+        assert_eq!(positions[3], (4, 3.0, 0.0));
+    }
+}

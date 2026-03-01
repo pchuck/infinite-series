@@ -297,3 +297,80 @@ pub fn gap_stroke_width(gap: usize) -> f32 {
         STROKE_WIDTH_TINY
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_calculate_bounds() {
+        let positions = vec![(1, 0.0, 0.0), (2, 10.0, 5.0), (3, -3.0, 8.0)];
+        let (min_x, max_x, min_y, max_y) = calculate_bounds(&positions);
+        assert_eq!(min_x, -3.0);
+        assert_eq!(max_x, 10.0);
+        assert_eq!(min_y, 0.0);
+        assert_eq!(max_y, 8.0);
+    }
+
+    #[test]
+    fn test_calculate_bounds_empty() {
+        let positions: Vec<(usize, f32, f32)> = vec![];
+        let (min_x, max_x, min_y, max_y) = calculate_bounds(&positions);
+        assert_eq!(min_x, f32::MAX);
+        assert_eq!(max_x, f32::MIN);
+        assert_eq!(min_y, f32::MAX);
+        assert_eq!(max_y, f32::MIN);
+    }
+
+    #[test]
+    fn test_calculate_scale() {
+        let rect =
+            egui::Rect::from_min_size(egui::Pos2::new(0.0, 0.0), egui::Vec2::new(100.0, 100.0));
+        let scale = calculate_scale(rect, 10.0, 10.0, 10.0);
+        assert!((scale - 8.0).abs() < 0.001);
+    }
+
+    #[test]
+    fn test_calculate_scale_zero_range() {
+        let rect =
+            egui::Rect::from_min_size(egui::Pos2::new(0.0, 0.0), egui::Vec2::new(100.0, 100.0));
+        let scale = calculate_scale(rect, 0.0, 0.0, 10.0);
+        assert_eq!(scale, 1.0);
+    }
+
+    #[test]
+    fn test_gap_color_twin_prime() {
+        let color = gap_color(2);
+        assert_eq!(color.r(), 255);
+    }
+
+    #[test]
+    fn test_gap_color_small_gaps() {
+        assert_eq!(gap_color(4).r(), 220);
+        assert_eq!(gap_color(6).r(), 180);
+        assert_eq!(gap_color(8).r(), 150);
+        assert_eq!(gap_color(10).r(), 120);
+    }
+
+    #[test]
+    fn test_gap_color_medium_gaps() {
+        assert_eq!(gap_color(18).r(), 60);
+        assert_eq!(gap_color(25).r(), 45);
+        assert_eq!(gap_color(40).r(), 30);
+    }
+
+    #[test]
+    fn test_gap_color_large_gaps() {
+        assert_eq!(gap_color(100).r(), 20);
+    }
+
+    #[test]
+    fn test_gap_stroke_width() {
+        assert_eq!(gap_stroke_width(2), STROKE_WIDTH_XLARGE);
+        assert_eq!(gap_stroke_width(4), STROKE_WIDTH_XLARGE);
+        assert_eq!(gap_stroke_width(6), STROKE_WIDTH_LARGE);
+        assert_eq!(gap_stroke_width(10), STROKE_WIDTH_MEDIUM);
+        assert_eq!(gap_stroke_width(20), STROKE_WIDTH_SMALL);
+        assert_eq!(gap_stroke_width(21), STROKE_WIDTH_TINY);
+    }
+}

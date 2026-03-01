@@ -271,3 +271,59 @@ impl std::fmt::Display for VisualizationType {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_series_type_display() {
+        assert_eq!(format!("{}", SeriesType::Primes), "Primes");
+        assert_eq!(format!("{}", SeriesType::Fibonacci), "Fibonacci");
+        assert_eq!(format!("{}", SeriesType::PowersOf2), "Powers of 2");
+    }
+
+    #[test]
+    fn test_visualization_type_display() {
+        assert_eq!(format!("{}", VisualizationType::UlamSpiral), "Ulam Spiral");
+        assert_eq!(
+            format!("{}", VisualizationType::SacksSpiral),
+            "Sacks Spiral"
+        );
+    }
+
+    #[test]
+    fn test_visualization_is_primes_only() {
+        assert!(VisualizationType::PrimeWheel.is_primes_only());
+        assert!(VisualizationType::PrimeDensity.is_primes_only());
+        assert!(VisualizationType::RiemannZeta.is_primes_only());
+        assert!(!VisualizationType::UlamSpiral.is_primes_only());
+        assert!(!VisualizationType::Grid.is_primes_only());
+    }
+
+    #[test]
+    fn test_visualization_supports_hover() {
+        assert!(VisualizationType::UlamSpiral.supports_hover());
+        assert!(VisualizationType::SacksSpiral.supports_hover());
+        assert!(!VisualizationType::PrimeDensity.supports_hover());
+        assert!(!VisualizationType::RiemannZeta.supports_hover());
+    }
+
+    #[test]
+    fn test_visualization_uses_point_rendering() {
+        assert!(VisualizationType::UlamSpiral.uses_point_rendering());
+        assert!(VisualizationType::PrimeWheel.uses_point_rendering());
+        assert!(!VisualizationType::PrimeDensity.uses_point_rendering());
+    }
+
+    #[test]
+    fn test_visualization_available_for() {
+        let primes_viz = VisualizationType::available_for(SeriesType::Primes);
+        assert!(primes_viz.contains(&VisualizationType::PrimeWheel));
+        assert!(primes_viz.contains(&VisualizationType::RiemannZeta));
+
+        let fib_viz = VisualizationType::available_for(SeriesType::Fibonacci);
+        assert!(!fib_viz.contains(&VisualizationType::PrimeWheel));
+        assert!(!fib_viz.contains(&VisualizationType::RiemannZeta));
+    }
+}
