@@ -2,13 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.0.2] - Unreleased
+## [1.0.2] - 2026-03-01
 
 ### Added
 - Detailed error messages for prime generation failures (includes specific error reason)
+- 26 unit tests covering helpers, position generators, and types
 
 ### Changed
 - Improved error handling to display underlying `PrimeGenError` details
+
+### Refactored
+- Extracted hover detection logic to reusable helpers (`find_hovered_center_based`, `find_hovered_offset_based`, `find_hovered_row`, `find_hovered_center_flip_y`, `find_hovered_centered`)
+- Extracted UI layout constants (`UI_MARGIN`, `ERROR_BOX_HEIGHT`, `HOVER_TEXT_OFFSET_Y`, `FONT_SIZE_DEFAULT`)
+- Added `Default` derive to `PerVisualizationConfig`
+- Clarified `find_hovered_offset_based` documentation
+- Updated Makefile with `test`, `test-release`, `lint`, and `fmt` targets
 
 ## [1.0.1] - 2026-02-26
 

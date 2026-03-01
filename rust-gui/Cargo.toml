@@ -1,6 +1,6 @@
 [package]
 name = "number-visualizer"
-version = "1.0.1"
+version = "1.0.2"
 edition = "2021"
 description = "Interactive visualization of number sequences (primes, fibonacci, lucas, triangular, collatz, powers of 2)"
 
