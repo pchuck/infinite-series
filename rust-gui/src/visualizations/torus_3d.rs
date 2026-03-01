@@ -1,15 +1,13 @@
 //! 3D Torus visualization - numbers wrapped around a donut shape
 //! Highlighted numbers bulge outward from the torus surface
 
+use crate::constants::shapes;
 use crate::draw_number::get_prime_pair_color;
 use crate::helpers::MARGIN_SMALL;
 use crate::visualizations::shared_3d::{
     adjust_brightness, depth_factor, project_3d_to_2d, Point3D, DRAG_SENSITIVITY,
 };
 use eframe::egui;
-
-const TORUS_MAJOR_RADIUS: f32 = 80.0;
-const TORUS_MINOR_RADIUS: f32 = 30.0;
 
 /// Draw the 3D torus visualization.
 ///
@@ -47,14 +45,14 @@ pub fn draw(app: &mut crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: 
 
         let is_highlighted = highlights.contains(&n);
         let minor_r = if is_highlighted {
-            TORUS_MINOR_RADIUS + 10.0
+            shapes::TORUS_MINOR_RADIUS + 10.0
         } else {
-            TORUS_MINOR_RADIUS
+            shapes::TORUS_MINOR_RADIUS
         };
 
-        let x = (TORUS_MAJOR_RADIUS + minor_r * v.cos()) * u.cos();
+        let x = (shapes::TORUS_MAJOR_RADIUS + minor_r * v.cos()) * u.cos();
         let y = minor_r * v.sin();
-        let z = (TORUS_MAJOR_RADIUS + minor_r * v.cos()) * u.sin();
+        let z = (shapes::TORUS_MAJOR_RADIUS + minor_r * v.cos()) * u.sin();
 
         let point = Point3D::new(x, y, z);
         let (px, py, pz) = project_3d_to_2d(&point, rotation_y, rotation_x);

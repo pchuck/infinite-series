@@ -1,15 +1,13 @@
 //! 3D Trefoil Knot visualization - numbers along a mathematical knot
 //! Highlighted numbers bulge outward from the knot tube
 
+use crate::constants::shapes;
 use crate::draw_number::get_prime_pair_color;
 use crate::helpers::MARGIN_SMALL;
 use crate::visualizations::shared_3d::{
     adjust_brightness, depth_factor, project_3d_to_2d, Point3D, DRAG_SENSITIVITY,
 };
 use eframe::egui;
-
-const KNOT_RADIUS: f32 = 80.0;
-const TUBE_RADIUS: f32 = 20.0;
 
 /// Calculate a point on the trefoil knot curve.
 ///
@@ -21,7 +19,7 @@ fn trefoil_point(t: f32) -> (f32, f32, f32) {
     let y = angle.cos() - (2.0 * angle).cos() / 2.0;
     let z = -(3.0 * angle).sin() / 2.0;
 
-    (x * KNOT_RADIUS, y * KNOT_RADIUS, z * KNOT_RADIUS)
+    (x * shapes::KNOT_RADIUS, y * shapes::KNOT_RADIUS, z * shapes::KNOT_RADIUS)
 }
 
 /// Draw the 3D trefoil knot visualization.
@@ -79,9 +77,9 @@ pub fn draw(app: &mut crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: 
         let bz = bz / bx_len;
 
         let tube_r = if highlights.contains(&n) {
-            TUBE_RADIUS + 8.0
+            shapes::KNOT_TUBE_RADIUS + 8.0
         } else {
-            TUBE_RADIUS
+            shapes::KNOT_TUBE_RADIUS
         };
 
         let x = kx + tube_r * (phi.cos() * bx + phi.sin() * tx);

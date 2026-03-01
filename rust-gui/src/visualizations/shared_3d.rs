@@ -1,13 +1,10 @@
 //! Shared utilities for 3D visualizations
 
+use crate::constants::projection;
 use eframe::egui;
 
-pub const PERSPECTIVE: f32 = 500.0;
-pub const PROJECTION_OFFSET: f32 = 300.0;
-pub const DEPTH_RANGE: f32 = 600.0;
-pub const MIN_DEPTH_FACTOR: f32 = 0.3;
-pub const MAX_DEPTH_FACTOR: f32 = 1.0;
-pub const DRAG_SENSITIVITY: f32 = 0.01;
+// Re-export constants for backward compatibility
+pub use crate::constants::projection::*;
 
 pub struct Point3D {
     pub x: f32,
@@ -40,7 +37,7 @@ pub fn project_3d_to_2d(point: &Point3D, rotation_y: f32, rotation_x: f32) -> (f
     let y2 = y1 * cos_x - z1 * sin_x;
     let z2 = y1 * sin_x + z1 * cos_x;
 
-    let scale = PERSPECTIVE / (PERSPECTIVE + z2 + PROJECTION_OFFSET);
+    let scale = projection::PERSPECTIVE / (projection::PERSPECTIVE + z2 + projection::OFFSET);
 
     (x1 * scale, y2 * scale, z2)
 }
@@ -60,5 +57,6 @@ pub fn adjust_brightness(color: egui::Color32, factor: f32) -> egui::Color32 {
 /// Returns a value between MIN_DEPTH_FACTOR and MAX_DEPTH_FACTOR based on the depth.
 /// Used to darken objects that are farther away.
 pub fn depth_factor(depth: f32) -> f32 {
-    ((depth + PROJECTION_OFFSET) / DEPTH_RANGE).clamp(MIN_DEPTH_FACTOR, MAX_DEPTH_FACTOR)
+    ((depth + projection::OFFSET) / projection::DEPTH_RANGE)
+        .clamp(projection::MIN_DEPTH_FACTOR, projection::MAX_DEPTH_FACTOR)
 }

@@ -1,15 +1,13 @@
 //! 3D Möbius Strip visualization - numbers on a twisted band
 //! Highlighted numbers bulge outward from the strip surface
 
+use crate::constants::shapes;
 use crate::draw_number::get_prime_pair_color;
 use crate::helpers::MARGIN_SMALL;
 use crate::visualizations::shared_3d::{
     adjust_brightness, depth_factor, project_3d_to_2d, Point3D, DRAG_SENSITIVITY,
 };
 use eframe::egui;
-
-const STRIP_RADIUS: f32 = 80.0;
-const STRIP_WIDTH: f32 = 30.0;
 
 /// Draw the 3D Möbius strip visualization.
 ///
@@ -43,15 +41,15 @@ pub fn draw(app: &mut crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: 
     for n in 1..=max_n {
         let t = (n - 1) as f32 / max_n as f32;
         let u = t * std::f32::consts::TAU;
-        let v = ((n as f32 * golden_ratio).fract() - 0.5) * STRIP_WIDTH;
+        let v = ((n as f32 * golden_ratio).fract() - 0.5) * shapes::MOBIUS_WIDTH;
 
         let is_highlighted = highlights.contains(&n);
         let spike = if is_highlighted { 10.0 } else { 0.0 };
 
         let half_u = u / 2.0;
-        let x = (STRIP_RADIUS + (v + spike) * half_u.cos()) * u.cos();
+        let x = (shapes::MOBIUS_RADIUS + (v + spike) * half_u.cos()) * u.cos();
         let y = (v + spike) * half_u.sin();
-        let z = (STRIP_RADIUS + (v + spike) * half_u.cos()) * u.sin();
+        let z = (shapes::MOBIUS_RADIUS + (v + spike) * half_u.cos()) * u.sin();
 
         let point = Point3D::new(x, y, z);
         let (px, py, pz) = project_3d_to_2d(&point, rotation_y, rotation_x);

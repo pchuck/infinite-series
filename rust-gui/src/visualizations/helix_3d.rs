@@ -8,9 +8,9 @@ use crate::visualizations::shared_3d::{
 };
 use eframe::egui;
 
-const HELIX_RADIUS: f32 = 100.0;
-const HELIX_HEIGHT_FACTOR: f32 = 3.0;
-const TURNS: f32 = 8.0;
+
+
+use crate::constants::helix;
 
 /// Draw the 3D helix visualization.
 ///
@@ -37,18 +37,18 @@ pub fn draw(app: &mut crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: 
     }
 
     let highlights = app.highlights();
-    let angle_step = TURNS * std::f32::consts::TAU / max_n as f32;
-    let height_step = HELIX_HEIGHT_FACTOR * HELIX_RADIUS / max_n as f32;
+    let angle_step = helix::TURNS * std::f32::consts::TAU / max_n as f32;
+    let height_step = helix::HEIGHT_FACTOR * helix::RADIUS / max_n as f32;
 
     let mut projected: Vec<(f32, f32, f32, usize, bool)> = Vec::with_capacity(max_n);
 
     for n in 1..=max_n {
         let t = (n - 1) as f32;
         let angle = t * angle_step;
-        let height = t * height_step - HELIX_HEIGHT_FACTOR * HELIX_RADIUS / 2.0;
+        let height = t * height_step - helix::HEIGHT_FACTOR * helix::RADIUS / 2.0;
 
-        let x = HELIX_RADIUS * angle.cos();
-        let z = HELIX_RADIUS * angle.sin();
+        let x = helix::RADIUS * angle.cos();
+        let z = helix::RADIUS * angle.sin();
 
         let is_highlighted = highlights.contains(&n);
         let spike = if is_highlighted { 25.0 } else { 0.0 };

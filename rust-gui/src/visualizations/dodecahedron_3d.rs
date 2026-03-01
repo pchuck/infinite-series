@@ -1,14 +1,13 @@
 //! 3D Dodecahedron visualization - numbers distributed on 12 pentagonal faces
 //! Highlighted numbers bulge outward from the surface
 
+use crate::constants::shapes;
 use crate::draw_number::get_prime_pair_color;
 use crate::helpers::MARGIN_SMALL;
 use crate::visualizations::shared_3d::{
     adjust_brightness, depth_factor, project_3d_to_2d, Point3D, DRAG_SENSITIVITY,
 };
 use eframe::egui;
-
-const SCALE: f32 = 70.0;
 
 /// Return the 20 vertices of a regular dodecahedron centered at the origin.
 ///
@@ -104,9 +103,9 @@ fn point_on_pentagon(
     let normal = [x / len, y / len, z / len];
 
     Point3D::new(
-        (x + normal[0] * spike) * SCALE,
-        (y + normal[1] * spike) * SCALE,
-        (z + normal[2] * spike) * SCALE,
+        (x + normal[0] * spike) * shapes::DODECAHEDRON_SCALE,
+        (y + normal[1] * spike) * shapes::DODECAHEDRON_SCALE,
+        (z + normal[2] * spike) * shapes::DODECAHEDRON_SCALE,
     )
 }
 

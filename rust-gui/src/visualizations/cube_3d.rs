@@ -1,6 +1,7 @@
 //! 3D Cube visualization - numbers distributed on cube surface
 //! Highlighted numbers bulge outward from the faces
 
+use crate::constants::shapes;
 use crate::draw_number::get_prime_pair_color;
 use crate::helpers::MARGIN_SMALL;
 use crate::visualizations::shared_3d::{
@@ -8,13 +9,11 @@ use crate::visualizations::shared_3d::{
 };
 use eframe::egui;
 
-const CUBE_SIZE: f32 = 80.0;
-
 /// Calculate a point on a cube face.
 ///
 /// Returns a 3D point on one of the 6 cube faces based on face index and UV coordinates.
 fn cube_face_point(face: usize, u: f32, v: f32, spike: f32) -> Point3D {
-    let half = CUBE_SIZE / 2.0 + spike;
+    let half = shapes::CUBE_SIZE / 2.0 + spike;
     match face % 6 {
         0 => Point3D::new(u * half, half, v * half),
         1 => Point3D::new(u * half, -half, v * half),

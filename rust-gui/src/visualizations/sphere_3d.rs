@@ -1,14 +1,13 @@
 //! 3D Sphere visualization - numbers distributed on sphere surface
 //! Highlighted numbers bulge outward from the surface
 
+use crate::constants::shapes;
 use crate::draw_number::get_prime_pair_color;
 use crate::helpers::MARGIN_SMALL;
 use crate::visualizations::shared_3d::{
     adjust_brightness, depth_factor, project_3d_to_2d, Point3D, DRAG_SENSITIVITY,
 };
 use eframe::egui;
-
-const SPHERE_RADIUS: f32 = 100.0;
 
 /// Calculate a point on a sphere using the Fibonacci sphere algorithm.
 ///
@@ -58,9 +57,9 @@ pub fn draw(app: &mut crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: 
 
         let is_highlighted = highlights.contains(&n);
         let radius = if is_highlighted {
-            SPHERE_RADIUS + 15.0
+            shapes::SPHERE_RADIUS + 15.0
         } else {
-            SPHERE_RADIUS
+            shapes::SPHERE_RADIUS
         };
 
         let point = Point3D::new(nx * radius, ny * radius, nz * radius);

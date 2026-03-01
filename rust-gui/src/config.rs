@@ -4,17 +4,9 @@ use crate::types::VisualizationType;
 use eframe::egui;
 use std::collections::HashMap;
 
-pub const MAX_NUMBER_MIN: usize = 100;
-pub const MAX_NUMBER_MAX: usize = 100000;
-pub const SHOW_NUMBERS_MAX: usize = 10000;
-pub const DENSITY_INTERVALS: usize = 100;
-pub const SIDE_PANEL_MIN_WIDTH: f32 = 250.0;
-
-// UI Layout constants
-pub const UI_MARGIN: f32 = 5.0;
-pub const ERROR_BOX_HEIGHT: f32 = 30.0;
-pub const HOVER_TEXT_OFFSET_Y: f32 = 20.0;
-pub const FONT_SIZE_DEFAULT: f32 = 14.0;
+// Re-export constants for backward compatibility
+pub use crate::constants::layout::*;
+pub use crate::constants::limits::*;
 
 /// Per-visualization 3D rotation settings.
 #[derive(Clone, Copy, Debug)]

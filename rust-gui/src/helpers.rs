@@ -4,40 +4,12 @@
 //! multiple visualization modules for layout calculations, color generation,
 //! and stroke width determination.
 
+use crate::constants::{gap, stroke};
 use eframe::egui;
 
-/// Small margin used for visualizations
-pub const MARGIN_SMALL: f32 = 20.0;
-
-/// Sacks spiral angle multiplier (r = sqrt(n), theta = n * multiplier)
-pub const SACKS_THETA_MULTIPLIER: f32 = 0.5;
-
-/// Sacks Mobius spiral radius multiplier
-pub const SACKS_MOBIUS_RADIUS_MULTIPLIER: f32 = 0.8;
-
-/// Golden angle in radians for Fermat's spiral (phyllotaxis pattern)
-pub const GOLDEN_ANGLE: f32 = 2.39996_f32;
-
-/// Default hover threshold for point-based visualizations
-pub const HOVER_THRESHOLD_DEFAULT: f32 = 0.7;
-
-/// Large hover threshold for sparse visualizations
-pub const HOVER_THRESHOLD_LARGE: f32 = 1.5;
-
-/// Tiny stroke width in pixels
-pub const STROKE_WIDTH_TINY: f32 = 0.5;
-
-/// Small stroke width in pixels
-pub const STROKE_WIDTH_SMALL: f32 = 1.0;
-
-/// Medium stroke width in pixels
-pub const STROKE_WIDTH_MEDIUM: f32 = 1.5;
-
-/// Large stroke width in pixels
-pub const STROKE_WIDTH_LARGE: f32 = 2.0;
-
-/// Extra large stroke width in pixels
-pub const STROKE_WIDTH_XLARGE: f32 = 2.5;
+// Re-export constants for backward compatibility
+pub use crate::constants::spiral::*;
+pub use crate::constants::visualization::*;
 
 /// Layout data returned by compute_layout functions: (offset_x, offset_y, scale).
 ///
@@ -243,33 +215,20 @@ pub fn calculate_scale(rect: egui::Rect, range_x: f32, range_y: f32, margin: f32
 /// - 21-30: 45
 /// - 31-50: 30
 /// - 51+: 20 (darkest)
-pub const GAP_BRIGHTNESS_TWIN: u8 = 255;
-pub const GAP_BRIGHTNESS_4: u8 = 220;
-pub const GAP_BRIGHTNESS_6: u8 = 180;
-pub const GAP_BRIGHTNESS_8: u8 = 150;
-pub const GAP_BRIGHTNESS_10: u8 = 120;
-pub const GAP_BRIGHTNESS_12: u8 = 100;
-pub const GAP_BRIGHTNESS_14: u8 = 85;
-pub const GAP_BRIGHTNESS_16: u8 = 70;
-pub const GAP_BRIGHTNESS_SMALL: u8 = 60;
-pub const GAP_BRIGHTNESS_MEDIUM: u8 = 45;
-pub const GAP_BRIGHTNESS_LARGE: u8 = 30;
-pub const GAP_BRIGHTNESS_XLARGE: u8 = 20;
-
 pub fn gap_color(gap: usize) -> egui::Color32 {
     let brightness = match gap {
-        2 => GAP_BRIGHTNESS_TWIN,
-        4 => GAP_BRIGHTNESS_4,
-        6 => GAP_BRIGHTNESS_6,
-        8 => GAP_BRIGHTNESS_8,
-        10 => GAP_BRIGHTNESS_10,
-        12 => GAP_BRIGHTNESS_12,
-        14 => GAP_BRIGHTNESS_14,
-        16 => GAP_BRIGHTNESS_16,
-        _ if gap <= 20 => GAP_BRIGHTNESS_SMALL,
-        _ if gap <= 30 => GAP_BRIGHTNESS_MEDIUM,
-        _ if gap <= 50 => GAP_BRIGHTNESS_LARGE,
-        _ => GAP_BRIGHTNESS_XLARGE,
+        2 => gap::BRIGHTNESS_TWIN,
+        4 => gap::BRIGHTNESS_4,
+        6 => gap::BRIGHTNESS_6,
+        8 => gap::BRIGHTNESS_8,
+        10 => gap::BRIGHTNESS_10,
+        12 => gap::BRIGHTNESS_12,
+        14 => gap::BRIGHTNESS_14,
+        16 => gap::BRIGHTNESS_16,
+        _ if gap <= 20 => gap::BRIGHTNESS_SMALL,
+        _ if gap <= 30 => gap::BRIGHTNESS_MEDIUM,
+        _ if gap <= 50 => gap::BRIGHTNESS_LARGE,
+        _ => gap::BRIGHTNESS_XLARGE,
     };
     egui::Color32::from_rgba_unmultiplied(brightness, brightness, brightness, 255)
 }
@@ -286,15 +245,15 @@ pub fn gap_color(gap: usize) -> egui::Color32 {
 /// - 21+: 0.5 (tiny)
 pub fn gap_stroke_width(gap: usize) -> f32 {
     if gap <= 4 {
-        STROKE_WIDTH_XLARGE
+        stroke::XLARGE
     } else if gap <= 6 {
-        STROKE_WIDTH_LARGE
+        stroke::LARGE
     } else if gap <= 10 {
-        STROKE_WIDTH_MEDIUM
+        stroke::MEDIUM
     } else if gap <= 20 {
-        STROKE_WIDTH_SMALL
+        stroke::SMALL
     } else {
-        STROKE_WIDTH_TINY
+        stroke::TINY
     }
 }
 
@@ -366,11 +325,12 @@ mod tests {
 
     #[test]
     fn test_gap_stroke_width() {
-        assert_eq!(gap_stroke_width(2), STROKE_WIDTH_XLARGE);
-        assert_eq!(gap_stroke_width(4), STROKE_WIDTH_XLARGE);
-        assert_eq!(gap_stroke_width(6), STROKE_WIDTH_LARGE);
-        assert_eq!(gap_stroke_width(10), STROKE_WIDTH_MEDIUM);
-        assert_eq!(gap_stroke_width(20), STROKE_WIDTH_SMALL);
-        assert_eq!(gap_stroke_width(21), STROKE_WIDTH_TINY);
+        use crate::constants::stroke;
+        assert_eq!(gap_stroke_width(2), stroke::XLARGE);
+        assert_eq!(gap_stroke_width(4), stroke::XLARGE);
+        assert_eq!(gap_stroke_width(6), stroke::LARGE);
+        assert_eq!(gap_stroke_width(10), stroke::MEDIUM);
+        assert_eq!(gap_stroke_width(20), stroke::SMALL);
+        assert_eq!(gap_stroke_width(21), stroke::TINY);
     }
 }

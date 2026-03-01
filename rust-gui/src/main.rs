@@ -1,5 +1,6 @@
 mod app;
 mod config;
+mod constants;
 mod draw_number;
 mod helpers;
 mod types;

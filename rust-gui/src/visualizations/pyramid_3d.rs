@@ -1,6 +1,7 @@
 //! 3D Pyramid visualization - evenly distributed point cloud on all faces
 //! Highlighted numbers spike outward from the pyramid faces
 
+use crate::constants::shapes;
 use crate::draw_number::get_prime_pair_color;
 use crate::helpers::MARGIN_SMALL;
 use crate::visualizations::shared_3d::{
@@ -8,15 +9,12 @@ use crate::visualizations::shared_3d::{
 };
 use eframe::egui;
 
-const PYRAMID_HEIGHT: f32 = 150.0;
-const PYRAMID_BASE: f32 = 120.0;
-
 /// Calculate a point on the pyramid surface.
 ///
 /// Distributes points across 4 triangular faces and the square base.
 fn point_on_pyramid_surface(seed: f32, u: f32, v: f32, spike: f32) -> Point3D {
-    let half = PYRAMID_BASE / 2.0;
-    let h = PYRAMID_HEIGHT / 2.0;
+    let half = shapes::PYRAMID_BASE / 2.0;
+    let h = shapes::PYRAMID_HEIGHT / 2.0;
 
     let apex = [0.0f32, h, 0.0f32];
     let base_corners: [[f32; 3]; 4] = [

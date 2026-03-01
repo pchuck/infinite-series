@@ -1,14 +1,13 @@
 //! 3D Klein Bottle visualization - numbers on an immersed Klein bottle
 //! Highlighted numbers bulge outward from the surface
 
+use crate::constants::shapes;
 use crate::draw_number::get_prime_pair_color;
 use crate::helpers::MARGIN_SMALL;
 use crate::visualizations::shared_3d::{
     adjust_brightness, depth_factor, project_3d_to_2d, Point3D, DRAG_SENSITIVITY,
 };
 use eframe::egui;
-
-const BOTTLE_RADIUS: f32 = 60.0;
 
 /// Draw the 3D Klein bottle visualization.
 ///
@@ -52,9 +51,9 @@ pub fn draw(app: &mut crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: 
         let y = r * v.sin() + spike * v.sin();
         let z = (r * v.cos() + 4.0) * u.sin() + spike * v.cos() * u.sin();
 
-        let x = x * BOTTLE_RADIUS / 4.0;
-        let y = y * BOTTLE_RADIUS / 4.0;
-        let z = z * BOTTLE_RADIUS / 4.0;
+        let x = x * shapes::KLEIN_RADIUS / 4.0;
+        let y = y * shapes::KLEIN_RADIUS / 4.0;
+        let z = z * shapes::KLEIN_RADIUS / 4.0;
 
         let point = Point3D::new(x, y, z);
         let (px, py, pz) = project_3d_to_2d(&point, rotation_y, rotation_x);

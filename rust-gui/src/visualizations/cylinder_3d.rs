@@ -1,16 +1,13 @@
 //! 3D Cylinder visualization - numbers spiral around a cylinder
 //! Highlighted numbers spike outward from the cylinder surface
 
+use crate::constants::shapes;
 use crate::draw_number::get_prime_pair_color;
 use crate::helpers::MARGIN_SMALL;
 use crate::visualizations::shared_3d::{
     adjust_brightness, depth_factor, project_3d_to_2d, Point3D, DRAG_SENSITIVITY,
 };
 use eframe::egui;
-
-const CYLINDER_HEIGHT: f32 = 200.0;
-const CYLINDER_RADIUS: f32 = 80.0;
-const CYLINDER_TURNS: f32 = 8.0;
 
 /// Draw the 3D cylinder visualization.
 ///
@@ -42,12 +39,12 @@ pub fn draw(app: &mut crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: 
 
     for n in 1..=max_n {
         let t = (n - 1) as f32 / max_n as f32;
-        let angle = t * CYLINDER_TURNS * std::f32::consts::TAU;
-        let height = t * CYLINDER_HEIGHT - CYLINDER_HEIGHT / 2.0;
+        let angle = t * shapes::CYLINDER_TURNS * std::f32::consts::TAU;
+        let height = t * shapes::CYLINDER_HEIGHT - shapes::CYLINDER_HEIGHT / 2.0;
 
         let is_highlighted = highlights.contains(&n);
         let spike = if is_highlighted { 15.0 } else { 0.0 };
-        let r = CYLINDER_RADIUS + spike;
+        let r = shapes::CYLINDER_RADIUS + spike;
 
         let x = r * angle.cos();
         let z = r * angle.sin();

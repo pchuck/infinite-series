@@ -1,16 +1,13 @@
 //! 3D Cone visualization - numbers spiral up a cone
 //! Highlighted numbers spike outward from the cone surface
 
+use crate::constants::shapes;
 use crate::draw_number::get_prime_pair_color;
 use crate::helpers::MARGIN_SMALL;
 use crate::visualizations::shared_3d::{
     adjust_brightness, depth_factor, project_3d_to_2d, Point3D, DRAG_SENSITIVITY,
 };
 use eframe::egui;
-
-const CONE_HEIGHT: f32 = 200.0;
-const CONE_BASE_RADIUS: f32 = 100.0;
-const CONE_TURNS: f32 = 10.0;
 
 /// Draw the 3D cone visualization.
 ///
@@ -42,9 +39,9 @@ pub fn draw(app: &mut crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: 
 
     for n in 1..=max_n {
         let t = (n - 1) as f32 / max_n as f32;
-        let angle = t * CONE_TURNS * std::f32::consts::TAU;
-        let height = t * CONE_HEIGHT - CONE_HEIGHT / 2.0;
-        let radius = CONE_BASE_RADIUS * (1.0 - t);
+        let angle = t * shapes::CONE_TURNS * std::f32::consts::TAU;
+        let height = t * shapes::CONE_HEIGHT - shapes::CONE_HEIGHT / 2.0;
+        let radius = shapes::CONE_BASE_RADIUS * (1.0 - t);
 
         let is_highlighted = highlights.contains(&n);
         let spike = if is_highlighted { 15.0 } else { 0.0 };

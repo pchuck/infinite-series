@@ -1,14 +1,13 @@
 //! Number rendering for point-based visualizations
 
 use crate::config::VisualizerConfig;
-use crate::config::SHOW_NUMBERS_MAX;
+use crate::constants::{drawing, limits};
 use crate::types::SeriesType;
 use eframe::egui;
 use std::collections::HashSet;
 
-pub const MIN_CIRCLE_RADIUS: f32 = 0.5;
-pub const MIN_SIZE_FOR_TEXT: f32 = 6.0;
-pub const TEXT_SIZE_FACTOR: f32 = 0.6;
+// Re-export constants for backward compatibility
+pub use crate::constants::drawing::*;
 
 /// Get the color for a prime pair (twin, cousin, or sexy prime).
 ///
@@ -109,8 +108,9 @@ pub fn draw_number(
     let radius = size / 2.0;
     painter.circle_filled(egui::Pos2::new(x, y), radius.max(MIN_CIRCLE_RADIUS), color);
 
-    let show_text =
-        config.show_numbers && size >= MIN_SIZE_FOR_TEXT && config.max_number <= SHOW_NUMBERS_MAX;
+    let show_text = config.show_numbers
+        && size >= drawing::MIN_SIZE_FOR_TEXT
+        && config.max_number <= limits::SHOW_NUMBERS_MAX;
 
     if show_text {
         let text = format!("{}", n);
