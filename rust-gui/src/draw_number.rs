@@ -1,6 +1,6 @@
 //! Number rendering for point-based visualizations
 
-use crate::config::VisualizerConfig;
+use crate::config::{PrimePairType, VisualizerConfig};
 use crate::constants::{drawing, limits};
 use crate::types::SeriesType;
 use eframe::egui;
@@ -9,7 +9,35 @@ use std::collections::HashSet;
 // Re-export constants for backward compatibility
 pub use crate::constants::drawing::*;
 
-/// Get the color for a prime pair (twin, cousin, or sexy prime).
+fn get_prime_pair_types(
+    n: usize,
+    highlights: &HashSet<usize>,
+    config: &VisualizerConfig,
+) -> Vec<PrimePairType> {
+    let mut pair_types = Vec::new();
+
+    if config.show_twin_primes
+        && (highlights.contains(&(n + 2)) || (n > 2 && highlights.contains(&(n - 2))))
+    {
+        pair_types.push(PrimePairType::Twin);
+    }
+
+    if config.show_cousin_primes
+        && (highlights.contains(&(n + 4)) || (n > 4 && highlights.contains(&(n - 4))))
+    {
+        pair_types.push(PrimePairType::Cousin);
+    }
+
+    if config.show_sexy_primes
+        && (highlights.contains(&(n + 6)) || (n > 6 && highlights.contains(&(n - 6))))
+    {
+        pair_types.push(PrimePairType::Sexy);
+    }
+
+    pair_types
+}
+
+/// Get the color for a prime that belongs to one or more prime pair types.
 ///
 /// Returns `None` if the number is not a prime pair or if the series type
 /// is not primes.
@@ -27,25 +55,13 @@ pub fn get_prime_pair_color(
         return None;
     }
 
-    if config.show_twin_primes
-        && (highlights.contains(&(n + 2)) || (n > 2 && highlights.contains(&(n - 2))))
-    {
-        return Some(config.twin_color);
+    let pair_types = get_prime_pair_types(n, highlights, config);
+    
+    if pair_types.is_empty() {
+        return None;
     }
 
-    if config.show_cousin_primes
-        && (highlights.contains(&(n + 4)) || (n > 4 && highlights.contains(&(n - 4))))
-    {
-        return Some(config.cousin_color);
-    }
-
-    if config.show_sexy_primes
-        && (highlights.contains(&(n + 6)) || (n > 6 && highlights.contains(&(n - 6))))
-    {
-        return Some(config.sexy_color);
-    }
-
-    None
+    Some(config.prime_pair_colors.get_color(&pair_types))
 }
 
 /// Draw a single number with appropriate highlighting.
@@ -67,54 +83,49 @@ pub fn draw_number(
 ) {
     let is_highlighted = highlights.contains(&n);
 
-    let (is_twin_prime, is_cousin_prime, is_sexy_prime) =
-        if series_type == SeriesType::Primes && is_highlighted {
-            let twin = config.show_twin_primes
-                && (highlights.contains(&(n + 2)) || (n > 2 && highlights.contains(&(n - 2))));
-            let cousin = config.show_cousin_primes
-                && !twin
-                && (highlights.contains(&(n + 4)) || (n > 4 && highlights.contains(&(n - 4))));
-            let sexy = config.show_sexy_primes
-                && !twin
-                && !cousin
-                && (highlights.contains(&(n + 6)) || (n > 6 && highlights.contains(&(n - 6))));
-            (twin, cousin, sexy)
-        } else {
-            (false, false, false)
-        };
+    if !is_highlighted {
+        let size = config.non_highlight_size as f32;
+        if size == 0.0 {
+            return;
+        }
+        let radius = size / 2.0;
+        painter.circle_filled(
+            egui::Pos2::new(x, y),
+            radius.max(MIN_CIRCLE_RADIUS),
+            config.non_highlight_color,
+        );
+        draw_number_text(n, x, y, painter, config);
+        return;
+    }
 
-    let size = if is_highlighted {
-        config.highlight_size as f32
-    } else {
-        config.non_highlight_size as f32
-    };
-
+    let size = config.highlight_size as f32;
     if size == 0.0 {
         return;
     }
 
-    let color = if is_twin_prime {
-        config.twin_color
-    } else if is_cousin_prime {
-        config.cousin_color
-    } else if is_sexy_prime {
-        config.sexy_color
-    } else if is_highlighted {
-        config.highlight_color
-    } else {
-        config.non_highlight_color
-    };
+    let color = get_prime_pair_color(n, highlights, config, series_type)
+        .unwrap_or(config.highlight_color);
 
     let radius = size / 2.0;
     painter.circle_filled(egui::Pos2::new(x, y), radius.max(MIN_CIRCLE_RADIUS), color);
 
+    draw_number_text(n, x, y, painter, config);
+}
+
+fn draw_number_text(
+    n: usize,
+    x: f32,
+    y: f32,
+    painter: &egui::Painter,
+    config: &VisualizerConfig,
+) {
     let show_text = config.show_numbers
-        && size >= drawing::MIN_SIZE_FOR_TEXT
+        && config.highlight_size as f32 >= drawing::MIN_SIZE_FOR_TEXT
         && config.max_number <= limits::SHOW_NUMBERS_MAX;
 
     if show_text {
         let text = format!("{}", n);
-        let font_id = egui::FontId::proportional(size * TEXT_SIZE_FACTOR);
+        let font_id = egui::FontId::proportional(config.highlight_size as f32 * TEXT_SIZE_FACTOR);
         painter.text(
             egui::Pos2::new(x, y),
             egui::Align2::CENTER_CENTER,
@@ -122,5 +133,49 @@ pub fn draw_number(
             font_id,
             config.background_color,
         );
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::config::{PrimePairType, VisualizerConfig};
+    use std::collections::HashSet;
+
+    #[test]
+    fn test_get_prime_pair_color_blend() {
+        let highlights: HashSet<usize> = [2, 3, 5, 7, 11, 13].into_iter().collect();
+        let mut config = VisualizerConfig::default();
+        config.show_twin_primes = true;
+        config.show_cousin_primes = true;
+        config.show_sexy_primes = true;
+        
+        let color = get_prime_pair_color(7, &highlights, &config, SeriesType::Primes);
+        assert!(color.is_some());
+        
+        let expected_color = config.prime_pair_colors.get_color(&[
+            PrimePairType::Twin,
+            PrimePairType::Cousin,
+            PrimePairType::Sexy,
+        ]);
+        assert_eq!(color, Some(expected_color));
+    }
+
+    #[test]
+    fn test_get_prime_pair_color_none_for_non_prime() {
+        let highlights: HashSet<usize> = [2, 3, 5, 7].into_iter().collect();
+        let config = VisualizerConfig::default();
+        
+        let color = get_prime_pair_color(4, &highlights, &config, SeriesType::Primes);
+        assert!(color.is_none());
+    }
+
+    #[test]
+    fn test_get_prime_pair_color_non_primes_series() {
+        let highlights: HashSet<usize> = [1, 2, 3, 5, 8].into_iter().collect();
+        let config = VisualizerConfig::default();
+        
+        let color = get_prime_pair_color(5, &highlights, &config, SeriesType::Fibonacci);
+        assert!(color.is_none());
     }
 }

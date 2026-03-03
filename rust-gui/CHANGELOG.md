@@ -2,6 +2,29 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.3] - 2026-03-02
+
+### Added
+- Prime pair color blending: primes can now belong to multiple pair types (twin, cousin, sexy) simultaneously
+- Pre-computed blended colors for all 7 combinations (3 single + 3 two-way + 1 three-way)
+- Color picker UI integration with automatic blend recomputation when colors change
+- Added `PrimePairType` enum for tracking which pair types a prime belongs to
+- Added `PrimePairColors` struct with methods for color retrieval and recomputation
+
+### Changed
+- Removed exclusivity between prime pair types: primes can now be highlighted with blended colors representing all applicable pair types
+- `get_prime_pair_color()` now returns blended colors based on all matching pair types instead of priority-based selection
+- Prime pair detection logic changed from exclusive (twin > cousin > sexy) to inclusive (all matching types)
+
+### Fixed
+- Prime 7 and other primes that belong to multiple pair types now correctly display blended colors
+- Removed priority ordering where twin primes would mask cousin/sexy status
+
+### Refactored
+- Extracted color blending logic to `PrimePairColors` struct in config module
+- Simplified `draw_number()` by removing inline pair type detection logic
+- Added 7 unit tests for color blending functions and prime pair color retrieval
+
 ## [1.0.2] - 2026-03-01
 
 ### Added
@@ -43,4 +66,3 @@ All notable changes to this project will be documented in this file.
 ### Summary
 
 - initial release
-

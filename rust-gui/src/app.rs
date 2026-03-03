@@ -98,6 +98,14 @@ impl NumberVisualizerApp {
         );
     }
 
+    pub fn recompute_prime_pair_colors(&mut self) {
+        self.config.prime_pair_colors.recompute(
+            self.config.twin_color,
+            self.config.cousin_color,
+            self.config.sexy_color,
+        );
+    }
+
     fn get_or_compute_series<F, R>(
         cache: &mut Option<(Vec<usize>, HashSet<usize>)>,
         max_number: usize,
@@ -411,16 +419,19 @@ impl eframe::App for NumberVisualizerApp {
                         ui.checkbox(&mut self.config.show_twin_primes, "Twin primes");
                         if self.config.show_twin_primes {
                             ui.color_edit_button_srgba(&mut self.config.twin_color);
+                            self.recompute_prime_pair_colors();
                         }
 
                         ui.checkbox(&mut self.config.show_cousin_primes, "Cousin primes");
                         if self.config.show_cousin_primes {
                             ui.color_edit_button_srgba(&mut self.config.cousin_color);
+                            self.recompute_prime_pair_colors();
                         }
 
                         ui.checkbox(&mut self.config.show_sexy_primes, "Sexy primes");
                         if self.config.show_sexy_primes {
                             ui.color_edit_button_srgba(&mut self.config.sexy_color);
+                            self.recompute_prime_pair_colors();
                         }
                     }
                 }
