@@ -91,11 +91,6 @@ Requires: `trunk` and `wasm32-unknown-unknown` target
 make setup  # install prerequisites
 ```
 
-```bash
-make web-build
-make web-serve
-```
-
 ## Project Structure
 
 ```
