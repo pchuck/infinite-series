@@ -56,7 +56,7 @@ pub fn get_prime_pair_color(
     }
 
     let pair_types = get_prime_pair_types(n, highlights, config);
-    
+
     if pair_types.is_empty() {
         return None;
     }
@@ -103,8 +103,8 @@ pub fn draw_number(
         return;
     }
 
-    let color = get_prime_pair_color(n, highlights, config, series_type)
-        .unwrap_or(config.highlight_color);
+    let color =
+        get_prime_pair_color(n, highlights, config, series_type).unwrap_or(config.highlight_color);
 
     let radius = size / 2.0;
     painter.circle_filled(egui::Pos2::new(x, y), radius.max(MIN_CIRCLE_RADIUS), color);
@@ -112,13 +112,7 @@ pub fn draw_number(
     draw_number_text(n, x, y, painter, config);
 }
 
-fn draw_number_text(
-    n: usize,
-    x: f32,
-    y: f32,
-    painter: &egui::Painter,
-    config: &VisualizerConfig,
-) {
+fn draw_number_text(n: usize, x: f32, y: f32, painter: &egui::Painter, config: &VisualizerConfig) {
     let show_text = config.show_numbers
         && config.highlight_size as f32 >= drawing::MIN_SIZE_FOR_TEXT
         && config.max_number <= limits::SHOW_NUMBERS_MAX;
@@ -149,10 +143,10 @@ mod tests {
         config.show_twin_primes = true;
         config.show_cousin_primes = true;
         config.show_sexy_primes = true;
-        
+
         let color = get_prime_pair_color(7, &highlights, &config, SeriesType::Primes);
         assert!(color.is_some());
-        
+
         let expected_color = config.prime_pair_colors.get_color(&[
             PrimePairType::Twin,
             PrimePairType::Cousin,
@@ -165,7 +159,7 @@ mod tests {
     fn test_get_prime_pair_color_none_for_non_prime() {
         let highlights: HashSet<usize> = [2, 3, 5, 7].into_iter().collect();
         let config = VisualizerConfig::default();
-        
+
         let color = get_prime_pair_color(4, &highlights, &config, SeriesType::Primes);
         assert!(color.is_none());
     }
@@ -174,7 +168,7 @@ mod tests {
     fn test_get_prime_pair_color_non_primes_series() {
         let highlights: HashSet<usize> = [1, 2, 3, 5, 8].into_iter().collect();
         let config = VisualizerConfig::default();
-        
+
         let color = get_prime_pair_color(5, &highlights, &config, SeriesType::Fibonacci);
         assert!(color.is_none());
     }
