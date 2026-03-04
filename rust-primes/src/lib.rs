@@ -18,6 +18,10 @@ pub const PARALLEL_THRESHOLD: usize = 100_000_000;
 
 /// Maximum input size (1 quadrillion)
 /// Beyond this, time required exceeds practical limits
+#[cfg(target_arch = "wasm32")]
+pub const MAX_N: usize = 4_294_967_295;
+
+#[cfg(not(target_arch = "wasm32"))]
 pub const MAX_N: usize = 1_000_000_000_000_000;
 
 /// Error type for prime generation failures
