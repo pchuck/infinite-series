@@ -59,6 +59,7 @@ pub struct NumberVisualizerApp {
 }
 
 impl NumberVisualizerApp {
+    #[allow(dead_code)]
     pub fn new(config: VisualizerConfig) -> Self {
         Self {
             config,
@@ -96,6 +97,31 @@ impl NumberVisualizerApp {
             self.config.visualization,
             crate::config::VisualizationSettings::default(),
         );
+    }
+
+    #[allow(dead_code)]
+    pub fn invalidate_position_cache(&mut self, viz_type: VisualizationType) {
+        self.per_viz_config.invalidate_positions(viz_type);
+    }
+
+    pub fn get_or_compute_positions(
+        &mut self,
+        viz_type: VisualizationType,
+        max_number: usize,
+        modulo: usize,
+        generate_fn: impl FnOnce(usize, usize) -> Vec<(usize, f32, f32)>,
+    ) -> Vec<(usize, f32, f32)> {
+        let cache = &mut self.per_viz_config;
+
+        if let Some(cached) = cache.position_cache.get(&viz_type) {
+            if cached.max_number == max_number && cached.modulo == modulo {
+                return cached.positions.clone();
+            }
+        }
+
+        let positions = generate_fn(max_number, modulo);
+        cache.set_positions(viz_type, positions.clone(), max_number, modulo);
+        positions
     }
 
     pub fn recompute_prime_pair_colors(&mut self) {
@@ -143,6 +169,7 @@ impl NumberVisualizerApp {
             self.hexagonal = None;
             self.happy = None;
             self.cached_max_number = self.config.max_number;
+            self.per_viz_config.invalidate_all_positions();
             self.invalidate_rotation_cache();
         }
 
@@ -267,57 +294,96 @@ impl NumberVisualizerApp {
 
         match self.config.visualization {
             VisualizationType::UlamSpiral => {
-                let positions = viz::generate_ulam_positions(self.config.max_number);
+                let positions = self.get_or_compute_positions(
+                    VisualizationType::UlamSpiral,
+                    self.config.max_number,
+                    0,
+                    |max_n, _| viz::generate_ulam_positions(max_n),
+                );
                 self.hovered_number = mouse_pos
                     .filter(|_| self.config.visualization.supports_hover())
                     .and_then(|mp| viz::find_hovered_ulam(self, mp, rect, &positions));
                 viz::draw_ulam(self, ui, rect, &positions);
             }
             VisualizationType::SacksSpiral => {
-                let positions = viz::generate_sacks_positions(self.config.max_number);
+                let positions = self.get_or_compute_positions(
+                    VisualizationType::SacksSpiral,
+                    self.config.max_number,
+                    0,
+                    |max_n, _| viz::generate_sacks_positions(max_n),
+                );
                 self.hovered_number = mouse_pos
                     .filter(|_| self.config.visualization.supports_hover())
                     .and_then(|mp| viz::find_hovered_sacks(self, mp, rect, &positions));
                 viz::draw_sacks(self, ui, rect, &positions);
             }
             VisualizationType::Grid => {
-                let positions = viz::generate_grid_positions(self.config.max_number);
+                let positions = self.get_or_compute_positions(
+                    VisualizationType::Grid,
+                    self.config.max_number,
+                    0,
+                    |max_n, _| viz::generate_grid_positions(max_n),
+                );
                 self.hovered_number = mouse_pos
                     .filter(|_| self.config.visualization.supports_hover())
                     .and_then(|mp| viz::find_hovered_grid(self, mp, rect, &positions));
                 viz::draw_grid(self, ui, rect, &positions);
             }
             VisualizationType::Row => {
-                let positions = viz::generate_row_positions(self.config.max_number);
+                let positions = self.get_or_compute_positions(
+                    VisualizationType::Row,
+                    self.config.max_number,
+                    0,
+                    |max_n, _| viz::generate_row_positions(max_n),
+                );
                 self.hovered_number = mouse_pos
                     .filter(|_| self.config.visualization.supports_hover())
                     .and_then(|mp| viz::find_hovered_row(self, mp, rect, &positions));
                 viz::draw_row(self, ui, rect, &positions);
             }
             VisualizationType::FermatsSpiral => {
-                let positions = viz::generate_fermats_positions(self.config.max_number);
+                let positions = self.get_or_compute_positions(
+                    VisualizationType::FermatsSpiral,
+                    self.config.max_number,
+                    0,
+                    |max_n, _| viz::generate_fermats_positions(max_n),
+                );
                 self.hovered_number = mouse_pos
                     .filter(|_| self.config.visualization.supports_hover())
                     .and_then(|mp| viz::find_hovered_fermats(self, mp, rect, &positions));
                 viz::draw_fermats(self, ui, rect, &positions);
             }
             VisualizationType::HexagonalLattice => {
-                let positions = viz::generate_hexagonal_positions(self.config.max_number);
+                let positions = self.get_or_compute_positions(
+                    VisualizationType::HexagonalLattice,
+                    self.config.max_number,
+                    0,
+                    |max_n, _| viz::generate_hexagonal_positions(max_n),
+                );
                 self.hovered_number = mouse_pos
                     .filter(|_| self.config.visualization.supports_hover())
                     .and_then(|mp| viz::find_hovered_hexagonal(self, mp, rect, &positions));
                 viz::draw_hexagonal(self, ui, rect, &positions);
             }
             VisualizationType::TriangularLattice => {
-                let positions = viz::generate_triangular_positions(self.config.max_number);
+                let positions = self.get_or_compute_positions(
+                    VisualizationType::TriangularLattice,
+                    self.config.max_number,
+                    0,
+                    |max_n, _| viz::generate_triangular_positions(max_n),
+                );
                 self.hovered_number = mouse_pos
                     .filter(|_| self.config.visualization.supports_hover())
                     .and_then(|mp| viz::find_hovered_triangular(self, mp, rect, &positions));
                 viz::draw_triangular(self, ui, rect, &positions);
             }
             VisualizationType::PrimeWheel => {
-                let positions =
-                    viz::generate_prime_wheel_positions(self.config.max_number, self.config.modulo);
+                let positions = self.get_or_compute_positions(
+                    VisualizationType::PrimeWheel,
+                    self.config.max_number,
+                    self.config.modulo,
+                    viz::generate_prime_wheel_positions,
+                );
                 self.hovered_number = mouse_pos
                     .filter(|_| self.config.visualization.supports_hover())
                     .and_then(|mp| viz::find_hovered_prime_wheel(self, mp, rect, &positions));

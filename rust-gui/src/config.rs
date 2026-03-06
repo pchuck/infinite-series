@@ -28,9 +28,19 @@ impl Default for VisualizationSettings {
 #[derive(Clone, Default)]
 pub struct PerVisualizationConfig {
     pub settings: HashMap<VisualizationType, VisualizationSettings>,
+    pub position_cache: HashMap<VisualizationType, CachedPosition>,
 }
 
+#[derive(Clone, Debug)]
+pub struct CachedPosition {
+    pub positions: Vec<(usize, f32, f32)>,
+    pub max_number: usize,
+    pub modulo: usize,
+}
+
+#[allow(dead_code)]
 impl PerVisualizationConfig {
+    #[allow(dead_code)]
     /// Get the settings for a specific visualization type.
     ///
     /// Returns default settings if no custom settings have been stored for this type.
@@ -44,6 +54,35 @@ impl PerVisualizationConfig {
     /// Store settings for a specific visualization type.
     pub fn set(&mut self, viz_type: VisualizationType, settings: VisualizationSettings) {
         self.settings.insert(viz_type, settings);
+    }
+
+    pub fn get_positions(&self, viz_type: VisualizationType) -> Option<&Vec<(usize, f32, f32)>> {
+        self.position_cache.get(&viz_type).map(|c| &c.positions)
+    }
+
+    pub fn set_positions(
+        &mut self,
+        viz_type: VisualizationType,
+        positions: Vec<(usize, f32, f32)>,
+        max_number: usize,
+        modulo: usize,
+    ) {
+        self.position_cache.insert(
+            viz_type,
+            CachedPosition {
+                positions,
+                max_number,
+                modulo,
+            },
+        );
+    }
+
+    pub fn invalidate_positions(&mut self, viz_type: VisualizationType) {
+        self.position_cache.remove(&viz_type);
+    }
+
+    pub fn invalidate_all_positions(&mut self) {
+        self.position_cache.clear();
     }
 }
 

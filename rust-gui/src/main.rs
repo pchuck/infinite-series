@@ -1,5 +1,3 @@
-#![no_main]
-
 mod app;
 mod config;
 mod constants;
