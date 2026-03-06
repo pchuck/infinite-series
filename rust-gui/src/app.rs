@@ -157,7 +157,28 @@ impl NumberVisualizerApp {
         self.error_message = None;
     }
 
+    fn series_is_loaded(&self) -> bool {
+        match self.series_type {
+            SeriesType::Primes => self.primes.is_some(),
+            SeriesType::Fibonacci => self.fibs.is_some(),
+            SeriesType::Lucas => self.lucas.is_some(),
+            SeriesType::Triangular => self.triangular.is_some(),
+            SeriesType::Collatz => self.collatz.is_some(),
+            SeriesType::PowersOf2 => self.powers.is_some(),
+            SeriesType::Catalan => self.catalan.is_some(),
+            SeriesType::Hexagonal => self.hexagonal.is_some(),
+            SeriesType::Happy => self.happy.is_some(),
+        }
+    }
+
     pub fn ensure_series_loaded(&mut self) {
+        let needs_load =
+            self.config.max_number != self.cached_max_number || !self.series_is_loaded();
+
+        if !needs_load {
+            return;
+        }
+
         if self.config.max_number != self.cached_max_number {
             self.primes = None;
             self.fibs = None;
