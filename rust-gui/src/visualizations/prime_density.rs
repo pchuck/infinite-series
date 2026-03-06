@@ -19,7 +19,7 @@ pub fn draw(app: &crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: egui
 
     let prime_count = app.primes_vec().len();
 
-    let intervals = DENSITY_INTERVALS.max(max_n / DENSITY_INTERVALS);
+    let intervals = (max_n / DENSITY_INTERVALS).clamp(1, 200);
     let interval_size = max_n / intervals;
 
     let mut pi_x: Vec<(f32, f32)> = Vec::with_capacity(intervals + 1);
