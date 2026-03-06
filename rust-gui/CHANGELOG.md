@@ -2,7 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.0.3] - 2026-03-02
+## [1.0.4] - 2026-03-04
+
+### Added
+- Web/WASM support: application can now run in a web browser
+- `index.html` - HTML entry point for WASM builds
+- `Trunk.toml` - Trunk build configuration
+- Makefile targets: `web-build`, `web-serve`
+- Platform-specific `MAX_N` constant: full range for native, limited to 2^32-1 for WASM
+
+### Changed
+- Restructured `main.rs` with `#[cfg(target_arch = "wasm32")]` conditionals for dual native/web builds
+- Added `wasm-bindgen` and `wasm-bindgen-futures` dependencies for WASM
+- Added `console_error_panic_hook` for better error reporting in browser console
+
+### Build Requirements
+- Native desktop: Standard Rust build (see README)
+- Web/WASM: Requires `trunk` (`cargo install trunk`) and `wasm32-unknown-unknown` target
 
 ### Added
 - Prime pair color blending: primes can now belong to multiple pair types (twin, cousin, sexy) simultaneously

@@ -6,16 +6,17 @@ An interactive infinite number sequence visualizer, implemented in Rust and back
 
 ## Quick Start
 
-### Make
+### Native Desktop App
 ```bash
 make run        # Run debug
 make release    # Build optimized
 make run-release
 ```
 
-### Cargo
+### Web/WASM (Browser)
 ```bash
-cargo run
+make web-build    # Build WASM
+make web-serve    # Serve at http://localhost:8080
 ```
 
 ## Supported Series
@@ -77,12 +78,17 @@ cargo run
 
 ## Building
 
+### Native Desktop
 ```bash
-# Debug build
-cargo build
+make build    # debug build
+make release  # release build (optimized)
+```
 
-# Release build (optimized)
-cargo build --release
+### Web/WASM
+
+Requires: `trunk` and `wasm32-unknown-unknown` target
+```bash
+make setup  # install prerequisites
 ```
 
 ## Project Structure
@@ -92,8 +98,11 @@ rust-gui/
 ├── Cargo.toml
 ├── Makefile
 ├── README.md
+├── CHANGELOG.md
+├── index.html          # Web entry point (required for WASM)
+├── Trunk.toml          # Trunk build configuration
 └── src/
-    ├── main.rs              # Entry point
+    ├── main.rs              # Entry point (native + WASM)
     ├── app.rs               # Main application and UI
     ├── config.rs            # Visualization configuration
     ├── draw_number.rs       # Number rendering
@@ -133,6 +142,10 @@ rust-gui/
 - `eframe` - GUI framework
 - `primes` - Local path dependency (../rust-primes)
 - `series` - Local path dependency (../rust-series)
+
+### Web/WASM Dependencies
+- `trunk` - WASM build tool (`cargo install trunk`)
+- `wasm32-unknown-unknown` target (`rustup target add wasm32-unknown-unknown`)
 
 ## Algorithms / Credits
 
