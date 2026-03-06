@@ -99,4 +99,70 @@ mod tests {
         assert_eq!(positions[3], (4, 4.0, 0.0));
         assert_eq!(positions[4], (5, 5.0, 0.0));
     }
+
+    #[test]
+    fn test_compute_layout_centered_vertically() {
+        let positions = generate_positions(10);
+        let rect =
+            egui::Rect::from_min_size(egui::Pos2::new(0.0, 0.0), egui::Vec2::new(400.0, 300.0));
+        let (start_x, center_y, scale) = compute_layout(&positions, rect, 10);
+
+        assert_eq!(center_y, 150.0, "row should be vertically centered");
+        assert!(start_x > rect.left(), "start_x should be within rect");
+        assert!(scale > 0.0, "scale should be positive");
+    }
+
+    #[test]
+    fn test_compute_layout_all_points_fit() {
+        let max_n = 50;
+        let positions = generate_positions(max_n);
+        let rect =
+            egui::Rect::from_min_size(egui::Pos2::new(0.0, 0.0), egui::Vec2::new(400.0, 300.0));
+        let (start_x, _, scale) = compute_layout(&positions, rect, max_n);
+
+        for (_, x, _) in &positions {
+            let screen_x = start_x + *x * scale;
+            assert!(
+                screen_x >= rect.left() && screen_x <= rect.right(),
+                "point maps outside rect horizontally"
+            );
+        }
+    }
+
+    #[test]
+    fn test_find_hovered_at_first_point() {
+        let max_n = 10;
+        let positions = generate_positions(max_n);
+        let rect =
+            egui::Rect::from_min_size(egui::Pos2::new(0.0, 0.0), egui::Vec2::new(400.0, 300.0));
+        let layout: LayoutData = compute_layout(&positions, rect, max_n);
+
+        // First point is at x=1.0, y=0.0, maps to (start_x + 1*scale, center_y)
+        let (start_x, center_y, scale) = layout;
+        let screen_x = start_x + 1.0 * scale;
+        let hovered = find_hovered_row(
+            egui::Pos2::new(screen_x, center_y),
+            &positions,
+            layout,
+            HOVER_THRESHOLD_DEFAULT,
+        );
+        assert_eq!(hovered, Some(1));
+    }
+
+    #[test]
+    fn test_find_hovered_miss() {
+        let max_n = 10;
+        let positions = generate_positions(max_n);
+        let rect =
+            egui::Rect::from_min_size(egui::Pos2::new(0.0, 0.0), egui::Vec2::new(400.0, 300.0));
+        let layout: LayoutData = compute_layout(&positions, rect, max_n);
+
+        let hovered = find_hovered_row(
+            egui::Pos2::new(-1000.0, -1000.0),
+            &positions,
+            layout,
+            HOVER_THRESHOLD_DEFAULT,
+        );
+        assert_eq!(hovered, None);
+    }
 }

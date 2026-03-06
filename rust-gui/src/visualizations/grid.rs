@@ -114,4 +114,69 @@ mod tests {
         assert_eq!(positions[2], (3, 2.0, 0.0));
         assert_eq!(positions[3], (4, 3.0, 0.0));
     }
+
+    #[test]
+    fn test_compute_layout_positive_scale() {
+        let positions = generate_positions(100);
+        let rect =
+            egui::Rect::from_min_size(egui::Pos2::new(0.0, 0.0), egui::Vec2::new(400.0, 400.0));
+        let (start_x, start_y, scale) = compute_layout(&positions, rect, 100);
+
+        assert!(scale > 0.0, "scale should be positive");
+        assert!(start_x > rect.left(), "start_x should be within rect");
+        assert!(start_y > rect.top(), "start_y should be within rect");
+    }
+
+    #[test]
+    fn test_compute_layout_all_points_fit() {
+        let max_n = 100;
+        let positions = generate_positions(max_n);
+        let rect =
+            egui::Rect::from_min_size(egui::Pos2::new(0.0, 0.0), egui::Vec2::new(400.0, 400.0));
+        let (start_x, start_y, scale) = compute_layout(&positions, rect, max_n);
+
+        for (_, x, y) in &positions {
+            let screen_x = start_x + *x * scale;
+            let screen_y = start_y + *y * scale;
+            assert!(
+                screen_x >= rect.left() && screen_x <= rect.right(),
+                "point maps outside rect horizontally"
+            );
+            assert!(
+                screen_y >= rect.top() && screen_y <= rect.bottom(),
+                "point maps outside rect vertically"
+            );
+        }
+    }
+
+    #[test]
+    fn test_find_hovered_at_first_point() {
+        let max_n = 25;
+        let positions = generate_positions(max_n);
+        let rect =
+            egui::Rect::from_min_size(egui::Pos2::new(0.0, 0.0), egui::Vec2::new(400.0, 400.0));
+        let layout: LayoutData = compute_layout(&positions, rect, max_n);
+
+        // First point is at (0.0, 0.0), maps to (start_x, start_y)
+        let (start_x, start_y, _) = layout;
+        let hovered = find_hovered_offset_based(
+            egui::Pos2::new(start_x, start_y),
+            &positions,
+            layout,
+            HOVER_THRESHOLD_DEFAULT,
+        );
+        assert_eq!(hovered, Some(1));
+    }
+
+    #[test]
+    fn test_find_hovered_empty() {
+        let positions: Vec<(usize, f32, f32)> = vec![];
+        let hovered = find_hovered_offset_based(
+            egui::Pos2::new(200.0, 200.0),
+            &positions,
+            (200.0, 200.0, 1.0),
+            HOVER_THRESHOLD_DEFAULT,
+        );
+        assert_eq!(hovered, None);
+    }
 }

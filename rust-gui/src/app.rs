@@ -59,7 +59,6 @@ pub struct NumberVisualizerApp {
 }
 
 impl NumberVisualizerApp {
-    #[allow(dead_code)]
     pub fn new(config: VisualizerConfig) -> Self {
         Self {
             config,
@@ -99,29 +98,34 @@ impl NumberVisualizerApp {
         );
     }
 
-    #[allow(dead_code)]
-    pub fn invalidate_position_cache(&mut self, viz_type: VisualizationType) {
-        self.per_viz_config.invalidate_positions(viz_type);
-    }
-
-    pub fn get_or_compute_positions(
+    /// Ensure positions are computed and cached for the given visualization type.
+    ///
+    /// After calling this, retrieve the cached positions via `cached_positions()`.
+    pub fn ensure_positions_cached(
         &mut self,
         viz_type: VisualizationType,
         max_number: usize,
         modulo: usize,
         generate_fn: impl FnOnce(usize, usize) -> Vec<(usize, f32, f32)>,
-    ) -> Vec<(usize, f32, f32)> {
-        let cache = &mut self.per_viz_config;
+    ) {
+        let needs_compute = !matches!(
+            self.per_viz_config.position_cache.get(&viz_type),
+            Some(cached) if cached.max_number == max_number && cached.modulo == modulo
+        );
 
-        if let Some(cached) = cache.position_cache.get(&viz_type) {
-            if cached.max_number == max_number && cached.modulo == modulo {
-                return cached.positions.clone();
-            }
+        if needs_compute {
+            let positions = generate_fn(max_number, modulo);
+            self.per_viz_config
+                .set_positions(viz_type, positions, max_number, modulo);
         }
+    }
 
-        let positions = generate_fn(max_number, modulo);
-        cache.set_positions(viz_type, positions.clone(), max_number, modulo);
-        positions
+    /// Get a reference to the cached positions for the given visualization type.
+    ///
+    /// Panics if positions have not been cached for this type.
+    /// Always call `ensure_positions_cached()` first.
+    pub fn cached_positions(&self, viz_type: VisualizationType) -> &[(usize, f32, f32)] {
+        &self.per_viz_config.position_cache[&viz_type].positions
     }
 
     pub fn recompute_prime_pair_colors(&mut self) {
@@ -315,100 +319,116 @@ impl NumberVisualizerApp {
 
         match self.config.visualization {
             VisualizationType::UlamSpiral => {
-                let positions = self.get_or_compute_positions(
+                self.ensure_positions_cached(
                     VisualizationType::UlamSpiral,
                     self.config.max_number,
                     0,
                     |max_n, _| viz::generate_ulam_positions(max_n),
                 );
-                self.hovered_number = mouse_pos
+                let positions = self.cached_positions(VisualizationType::UlamSpiral);
+                let hovered = mouse_pos
                     .filter(|_| self.config.visualization.supports_hover())
-                    .and_then(|mp| viz::find_hovered_ulam(self, mp, rect, &positions));
-                viz::draw_ulam(self, ui, rect, &positions);
+                    .and_then(|mp| viz::find_hovered_ulam(self, mp, rect, positions));
+                viz::draw_ulam(self, ui, rect, positions);
+                self.hovered_number = hovered;
             }
             VisualizationType::SacksSpiral => {
-                let positions = self.get_or_compute_positions(
+                self.ensure_positions_cached(
                     VisualizationType::SacksSpiral,
                     self.config.max_number,
                     0,
                     |max_n, _| viz::generate_sacks_positions(max_n),
                 );
-                self.hovered_number = mouse_pos
+                let positions = self.cached_positions(VisualizationType::SacksSpiral);
+                let hovered = mouse_pos
                     .filter(|_| self.config.visualization.supports_hover())
-                    .and_then(|mp| viz::find_hovered_sacks(self, mp, rect, &positions));
-                viz::draw_sacks(self, ui, rect, &positions);
+                    .and_then(|mp| viz::find_hovered_sacks(self, mp, rect, positions));
+                viz::draw_sacks(self, ui, rect, positions);
+                self.hovered_number = hovered;
             }
             VisualizationType::Grid => {
-                let positions = self.get_or_compute_positions(
+                self.ensure_positions_cached(
                     VisualizationType::Grid,
                     self.config.max_number,
                     0,
                     |max_n, _| viz::generate_grid_positions(max_n),
                 );
-                self.hovered_number = mouse_pos
+                let positions = self.cached_positions(VisualizationType::Grid);
+                let hovered = mouse_pos
                     .filter(|_| self.config.visualization.supports_hover())
-                    .and_then(|mp| viz::find_hovered_grid(self, mp, rect, &positions));
-                viz::draw_grid(self, ui, rect, &positions);
+                    .and_then(|mp| viz::find_hovered_grid(self, mp, rect, positions));
+                viz::draw_grid(self, ui, rect, positions);
+                self.hovered_number = hovered;
             }
             VisualizationType::Row => {
-                let positions = self.get_or_compute_positions(
+                self.ensure_positions_cached(
                     VisualizationType::Row,
                     self.config.max_number,
                     0,
                     |max_n, _| viz::generate_row_positions(max_n),
                 );
-                self.hovered_number = mouse_pos
+                let positions = self.cached_positions(VisualizationType::Row);
+                let hovered = mouse_pos
                     .filter(|_| self.config.visualization.supports_hover())
-                    .and_then(|mp| viz::find_hovered_row(self, mp, rect, &positions));
-                viz::draw_row(self, ui, rect, &positions);
+                    .and_then(|mp| viz::find_hovered_row(self, mp, rect, positions));
+                viz::draw_row(self, ui, rect, positions);
+                self.hovered_number = hovered;
             }
             VisualizationType::FermatsSpiral => {
-                let positions = self.get_or_compute_positions(
+                self.ensure_positions_cached(
                     VisualizationType::FermatsSpiral,
                     self.config.max_number,
                     0,
                     |max_n, _| viz::generate_fermats_positions(max_n),
                 );
-                self.hovered_number = mouse_pos
+                let positions = self.cached_positions(VisualizationType::FermatsSpiral);
+                let hovered = mouse_pos
                     .filter(|_| self.config.visualization.supports_hover())
-                    .and_then(|mp| viz::find_hovered_fermats(self, mp, rect, &positions));
-                viz::draw_fermats(self, ui, rect, &positions);
+                    .and_then(|mp| viz::find_hovered_fermats(self, mp, rect, positions));
+                viz::draw_fermats(self, ui, rect, positions);
+                self.hovered_number = hovered;
             }
             VisualizationType::HexagonalLattice => {
-                let positions = self.get_or_compute_positions(
+                self.ensure_positions_cached(
                     VisualizationType::HexagonalLattice,
                     self.config.max_number,
                     0,
                     |max_n, _| viz::generate_hexagonal_positions(max_n),
                 );
-                self.hovered_number = mouse_pos
+                let positions = self.cached_positions(VisualizationType::HexagonalLattice);
+                let hovered = mouse_pos
                     .filter(|_| self.config.visualization.supports_hover())
-                    .and_then(|mp| viz::find_hovered_hexagonal(self, mp, rect, &positions));
-                viz::draw_hexagonal(self, ui, rect, &positions);
+                    .and_then(|mp| viz::find_hovered_hexagonal(self, mp, rect, positions));
+                viz::draw_hexagonal(self, ui, rect, positions);
+                self.hovered_number = hovered;
             }
             VisualizationType::TriangularLattice => {
-                let positions = self.get_or_compute_positions(
+                self.ensure_positions_cached(
                     VisualizationType::TriangularLattice,
                     self.config.max_number,
                     0,
                     |max_n, _| viz::generate_triangular_positions(max_n),
                 );
-                self.hovered_number = mouse_pos
+                let positions = self.cached_positions(VisualizationType::TriangularLattice);
+                let hovered = mouse_pos
                     .filter(|_| self.config.visualization.supports_hover())
-                    .and_then(|mp| viz::find_hovered_triangular(self, mp, rect, &positions));
-                viz::draw_triangular(self, ui, rect, &positions);
+                    .and_then(|mp| viz::find_hovered_triangular(self, mp, rect, positions));
+                viz::draw_triangular(self, ui, rect, positions);
+                self.hovered_number = hovered;
             }
             VisualizationType::PrimeWheel => {
-                let positions = self.get_or_compute_positions(
+                self.ensure_positions_cached(
                     VisualizationType::PrimeWheel,
                     self.config.max_number,
                     self.config.modulo,
                     viz::generate_prime_wheel_positions,
                 );
-                self.hovered_number = mouse_pos
+                let positions = self.cached_positions(VisualizationType::PrimeWheel);
+                let hovered = mouse_pos
                     .filter(|_| self.config.visualization.supports_hover())
-                    .and_then(|mp| viz::find_hovered_prime_wheel(self, mp, rect, &positions));
-                viz::draw_prime_wheel(self, ui, rect);
+                    .and_then(|mp| viz::find_hovered_prime_wheel(self, mp, rect, positions));
+                viz::draw_prime_wheel(self, ui, rect, positions);
+                self.hovered_number = hovered;
             }
             VisualizationType::PrimeDensity => viz::draw_prime_density(self, ui, rect),
             VisualizationType::RiemannZeta => viz::draw_riemann(self, ui, rect),

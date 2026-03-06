@@ -2,6 +2,33 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.5] - 2026-03-06
+
+### Added
+- 55 new unit tests (36 → 91 total) covering `compute_layout`, `find_hovered`, and 3D utilities across all visualization modules
+- `draw_3d_scene()` shared helper in `shared_3d.rs` that handles drag, projection, depth sort, scale fitting, and rendering for all 3D visualizations
+- `ensure_positions_cached()` and `cached_positions()` methods replacing the cloning `get_or_compute_positions()`
+
+### Changed
+- Position cache no longer clones the entire `Vec` on every frame; callers now get a zero-copy `&[...]` reference
+- Hover detection uses a fixed screen-pixel threshold (2px default, 4px for sparse layouts) instead of a scale-proportional threshold that shrank to sub-pixel at large N
+- `prime_wheel::draw()` now accepts and uses cached positions like all other 2D visualization modules
+- `HOVER_THRESHOLD_DEFAULT` changed from 1.2 (logical units) to 2.0 (screen pixels)
+- `HOVER_THRESHOLD_LARGE` changed from 1.5 (logical units) to 4.0 (screen pixels)
+
+### Fixed
+- Hover detection in Row and Prime Wheel visualizations now works at large N values (previously the scale-proportional threshold shrank below 1 pixel, making hover impossible)
+- `console_error_panic_hook` removed from native dependencies (was compiled but never used outside WASM)
+- `PrimePairColors::get_color()` now uses `debug_assert!` for unreachable empty-slice and >3-element cases instead of silently falling back
+
+### Removed
+- Dead code: `invalidate_position_cache()`, `invalidate_positions()`, `get_positions()` methods
+- All `#[allow(dead_code)]` annotations (code was either actively used or truly dead and removed)
+
+### Refactored
+- Reduced 3D visualization code by 42% (1,649 → 961 lines): extracted ~50 lines of identical boilerplate from each of 12 modules into `draw_3d_scene()`
+- Each 3D module now provides only a geometry closure to `draw_3d_scene()`, eliminating duplicated drag handling, depth sorting, scale calculation, and render loops
+
 ## [1.0.4] - 2026-03-04
 
 ### Added

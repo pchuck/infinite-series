@@ -162,4 +162,107 @@ mod tests {
         let positions = generate_positions(0);
         assert!(positions.is_empty());
     }
+
+    #[test]
+    fn test_compute_layout_centering() {
+        let positions = generate_positions(25);
+        let rect =
+            egui::Rect::from_min_size(egui::Pos2::new(0.0, 0.0), egui::Vec2::new(400.0, 400.0));
+        let (center_x, center_y, scale, max_coord) = compute_layout(&positions, rect);
+
+        assert_eq!(center_x, 200.0);
+        assert_eq!(center_y, 200.0);
+        assert!(scale > 0.0, "scale should be positive");
+        assert!(
+            max_coord > 0.0,
+            "max_coord should be positive for non-trivial input"
+        );
+    }
+
+    #[test]
+    fn test_compute_layout_scale_fits_rect() {
+        let positions = generate_positions(100);
+        let rect =
+            egui::Rect::from_min_size(egui::Pos2::new(0.0, 0.0), egui::Vec2::new(400.0, 400.0));
+        let (center_x, center_y, scale, _) = compute_layout(&positions, rect);
+
+        // All points should map within the rect
+        for (_, x, y) in &positions {
+            let screen_x = center_x + *x * scale;
+            let screen_y = center_y + *y * scale;
+            assert!(
+                screen_x >= rect.left() && screen_x <= rect.right(),
+                "point x={} maps to screen_x={} outside rect",
+                x,
+                screen_x
+            );
+            assert!(
+                screen_y >= rect.top() && screen_y <= rect.bottom(),
+                "point y={} maps to screen_y={} outside rect",
+                y,
+                screen_y
+            );
+        }
+    }
+
+    #[test]
+    fn test_compute_layout_single_point() {
+        let positions = generate_positions(1);
+        let rect =
+            egui::Rect::from_min_size(egui::Pos2::new(0.0, 0.0), egui::Vec2::new(400.0, 400.0));
+        let (_, _, scale, max_coord) = compute_layout(&positions, rect);
+
+        // Single point at origin: max_coord=0, scale defaults to 1.0
+        assert_eq!(max_coord, 0.0);
+        assert_eq!(scale, 1.0);
+    }
+
+    #[test]
+    fn test_find_hovered_at_center() {
+        let positions = generate_positions(25);
+        let rect =
+            egui::Rect::from_min_size(egui::Pos2::new(0.0, 0.0), egui::Vec2::new(400.0, 400.0));
+        let (center_x, center_y, _, _) = compute_layout(&positions, rect);
+
+        // Position 1 is at (0,0), which maps to the center
+        let mouse = egui::Pos2::new(center_x, center_y);
+        let hovered = find_hovered_center_based(
+            mouse,
+            &positions,
+            (center_x, center_y, compute_layout(&positions, rect).2),
+            HOVER_THRESHOLD_DEFAULT,
+        );
+        assert_eq!(hovered, Some(1));
+    }
+
+    #[test]
+    fn test_find_hovered_miss() {
+        let positions = generate_positions(10);
+        let rect =
+            egui::Rect::from_min_size(egui::Pos2::new(0.0, 0.0), egui::Vec2::new(400.0, 400.0));
+
+        // Way outside the visualization
+        let mouse = egui::Pos2::new(-1000.0, -1000.0);
+        let (center_x, center_y, scale, _) = compute_layout(&positions, rect);
+        let hovered = find_hovered_center_based(
+            mouse,
+            &positions,
+            (center_x, center_y, scale),
+            HOVER_THRESHOLD_DEFAULT,
+        );
+        assert_eq!(hovered, None);
+    }
+
+    #[test]
+    fn test_find_hovered_empty() {
+        let positions = generate_positions(0);
+        let mouse = egui::Pos2::new(200.0, 200.0);
+        let hovered = find_hovered_center_based(
+            mouse,
+            &positions,
+            (200.0, 200.0, 1.0),
+            HOVER_THRESHOLD_DEFAULT,
+        );
+        assert_eq!(hovered, None);
+    }
 }

@@ -123,3 +123,96 @@ pub fn find_hovered(
     let layout: LayoutDataCentered = compute_layout(positions, rect);
     find_hovered_centered(mouse_pos, positions, layout, HOVER_THRESHOLD_LARGE)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_generate_positions_count() {
+        let positions = generate_positions(50);
+        assert_eq!(positions.len(), 50);
+    }
+
+    #[test]
+    fn test_generate_positions_start_at_origin() {
+        let positions = generate_positions(1);
+        assert_eq!(positions[0], (1, 0.0, 0.0));
+    }
+
+    #[test]
+    fn test_empty_positions() {
+        let positions = generate_positions(0);
+        assert!(positions.is_empty());
+    }
+
+    #[test]
+    fn test_compute_layout_centering() {
+        let positions = generate_positions(50);
+        let rect =
+            egui::Rect::from_min_size(egui::Pos2::new(0.0, 0.0), egui::Vec2::new(400.0, 400.0));
+        let (center_x, center_y, scale, _, _) = compute_layout(&positions, rect);
+
+        assert_eq!(center_x, 200.0);
+        assert_eq!(center_y, 200.0);
+        assert!(scale > 0.0, "scale should be positive");
+    }
+
+    #[test]
+    fn test_compute_layout_all_points_fit() {
+        let positions = generate_positions(100);
+        let rect =
+            egui::Rect::from_min_size(egui::Pos2::new(0.0, 0.0), egui::Vec2::new(400.0, 400.0));
+        let (center_x, center_y, scale, mid_x, mid_y) = compute_layout(&positions, rect);
+
+        for (_, x, y) in &positions {
+            let screen_x = center_x + (*x - mid_x) * scale;
+            let screen_y = center_y - (*y - mid_y) * scale;
+            assert!(
+                screen_x >= rect.left() && screen_x <= rect.right(),
+                "point maps outside rect horizontally"
+            );
+            assert!(
+                screen_y >= rect.top() && screen_y <= rect.bottom(),
+                "point maps outside rect vertically"
+            );
+        }
+    }
+
+    #[test]
+    fn test_find_hovered_at_first_point() {
+        let positions = generate_positions(50);
+        let rect =
+            egui::Rect::from_min_size(egui::Pos2::new(0.0, 0.0), egui::Vec2::new(400.0, 400.0));
+        let layout: LayoutDataCentered = compute_layout(&positions, rect);
+
+        let (cx, cy, scale, mid_x, mid_y) = layout;
+        let (_, x1, y1) = positions[0];
+        let screen_x = cx + (x1 - mid_x) * scale;
+        let screen_y = cy - (y1 - mid_y) * scale;
+
+        let hovered = find_hovered_centered(
+            egui::Pos2::new(screen_x, screen_y),
+            &positions,
+            layout,
+            HOVER_THRESHOLD_LARGE,
+        );
+        assert_eq!(hovered, Some(1));
+    }
+
+    #[test]
+    fn test_find_hovered_miss() {
+        let positions = generate_positions(50);
+        let rect =
+            egui::Rect::from_min_size(egui::Pos2::new(0.0, 0.0), egui::Vec2::new(400.0, 400.0));
+        let layout: LayoutDataCentered = compute_layout(&positions, rect);
+
+        let hovered = find_hovered_centered(
+            egui::Pos2::new(-5000.0, -5000.0),
+            &positions,
+            layout,
+            HOVER_THRESHOLD_LARGE,
+        );
+        assert_eq!(hovered, None);
+    }
+}

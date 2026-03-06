@@ -91,3 +91,103 @@ pub fn find_hovered(
     let layout = compute_layout(positions, rect);
     find_hovered_center_flip_y(mouse_pos, positions, layout, HOVER_THRESHOLD_DEFAULT)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_generate_positions_count() {
+        let positions = generate_positions(100);
+        assert_eq!(positions.len(), 100);
+    }
+
+    #[test]
+    fn test_generate_positions_monotonic_radius() {
+        let positions = generate_positions(100);
+        let mut prev_r: f32 = 0.0;
+        for (_, x, y) in &positions {
+            let r = (x * x + y * y).sqrt();
+            assert!(r >= prev_r - 0.001, "radius should not decrease");
+            prev_r = r;
+        }
+    }
+
+    #[test]
+    fn test_empty_positions() {
+        let positions = generate_positions(0);
+        assert!(positions.is_empty());
+    }
+
+    #[test]
+    fn test_compute_layout_centering() {
+        let positions = generate_positions(50);
+        let rect =
+            egui::Rect::from_min_size(egui::Pos2::new(0.0, 0.0), egui::Vec2::new(400.0, 400.0));
+        let (center_x, center_y, scale) = compute_layout(&positions, rect);
+
+        assert_eq!(center_x, 200.0);
+        assert_eq!(center_y, 200.0);
+        assert!(scale > 0.0, "scale should be positive");
+    }
+
+    #[test]
+    fn test_compute_layout_scale_fits_rect() {
+        let positions = generate_positions(100);
+        let rect =
+            egui::Rect::from_min_size(egui::Pos2::new(0.0, 0.0), egui::Vec2::new(400.0, 400.0));
+        let (center_x, center_y, scale) = compute_layout(&positions, rect);
+
+        // Fermats flips Y, so screen_y = center_y - y * scale
+        for (_, x, y) in &positions {
+            let screen_x = center_x + *x * scale;
+            let screen_y = center_y - *y * scale;
+            assert!(
+                screen_x >= rect.left() && screen_x <= rect.right(),
+                "point maps outside rect horizontally"
+            );
+            assert!(
+                screen_y >= rect.top() && screen_y <= rect.bottom(),
+                "point maps outside rect vertically"
+            );
+        }
+    }
+
+    #[test]
+    fn test_find_hovered_near_first_point() {
+        let positions = generate_positions(50);
+        let rect =
+            egui::Rect::from_min_size(egui::Pos2::new(0.0, 0.0), egui::Vec2::new(400.0, 400.0));
+        let layout = compute_layout(&positions, rect);
+
+        let (cx, cy, scale) = layout;
+        let (_, x1, y1) = positions[0];
+        // Fermats uses flipped Y
+        let screen_x = cx + x1 * scale;
+        let screen_y = cy - y1 * scale;
+
+        let hovered = find_hovered_center_flip_y(
+            egui::Pos2::new(screen_x, screen_y),
+            &positions,
+            layout,
+            HOVER_THRESHOLD_DEFAULT,
+        );
+        assert_eq!(hovered, Some(1));
+    }
+
+    #[test]
+    fn test_find_hovered_miss() {
+        let positions = generate_positions(50);
+        let rect =
+            egui::Rect::from_min_size(egui::Pos2::new(0.0, 0.0), egui::Vec2::new(400.0, 400.0));
+        let layout = compute_layout(&positions, rect);
+
+        let hovered = find_hovered_center_flip_y(
+            egui::Pos2::new(-5000.0, -5000.0),
+            &positions,
+            layout,
+            HOVER_THRESHOLD_DEFAULT,
+        );
+        assert_eq!(hovered, None);
+    }
+}

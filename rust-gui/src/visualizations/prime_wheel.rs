@@ -63,37 +63,26 @@ pub fn compute_layout(
 ///
 /// Renders numbers in concentric rings colored by their modulo residue.
 /// Prime numbers are shown in highlight color on their respective spokes.
-pub fn draw(app: &crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: egui::Rect) {
-    let positions = generate_positions(app.config.max_number, app.config.modulo);
-
+/// Uses cached positions and `compute_layout` for screen coordinate mapping.
+pub fn draw(
+    app: &crate::app::NumberVisualizerApp,
+    ui: &mut egui::Ui,
+    rect: egui::Rect,
+    positions: &[(usize, f32, f32)],
+) {
     if positions.is_empty() {
         return;
     }
 
-    let modulo = app.config.modulo as f32;
+    let (center_x, center_y, scale, modulo) =
+        compute_layout(positions, rect, app.config.modulo, app.config.max_number);
+
     let max_ring = (app.config.max_number / app.config.modulo) as f32 + 2.0;
-
-    let available = rect.width().min(rect.height()) / 2.0 - MARGIN_SMALL;
-    let scale = if max_ring > 0.0 {
-        available / max_ring
-    } else {
-        available
-    };
-
-    let center_x = rect.center().x;
-    let center_y = rect.center().y;
     let painter = ui.painter();
 
-    for (n, _, _) in &positions {
-        let remainder = *n % app.config.modulo;
-        let quotient = *n / app.config.modulo;
-
-        let theta =
-            remainder as f32 * 2.0 * std::f32::consts::PI / modulo - std::f32::consts::PI / 2.0;
-        let r = (quotient as f32 + 1.0) * scale;
-
-        let screen_x = center_x + r * theta.cos();
-        let screen_y = center_y + r * theta.sin();
+    for (n, x, y) in positions {
+        let screen_x = center_x + *x * scale;
+        let screen_y = center_y + *y * scale;
         draw_number(
             *n,
             screen_x,
@@ -127,7 +116,8 @@ pub fn draw(app: &crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: egui
 
 /// Find the number at the given mouse position.
 ///
-/// Returns the closest number within the hover threshold, or None if no number is close enough.
+/// Returns the closest number within the hover threshold (in screen pixels),
+/// or None if no number is close enough.
 pub fn find_hovered(
     app: &crate::app::NumberVisualizerApp,
     mouse_pos: egui::Pos2,
@@ -138,33 +128,108 @@ pub fn find_hovered(
         return None;
     }
 
-    let (center_x, center_y, scale, modulo) =
+    let (center_x, center_y, scale, _) =
         compute_layout(positions, rect, app.config.modulo, app.config.max_number);
 
+    let threshold_sq = HOVER_THRESHOLD_DEFAULT * HOVER_THRESHOLD_DEFAULT;
     let mut closest_n: Option<usize> = None;
     let mut min_distance_sq = f32::INFINITY;
 
-    for (n, _, _) in positions {
-        let remainder = *n % app.config.modulo;
-        let quotient = *n / app.config.modulo;
-
-        let theta =
-            remainder as f32 * 2.0 * std::f32::consts::PI / modulo - std::f32::consts::PI / 2.0;
-        let r = (quotient as f32 + 1.0) * scale;
-
-        let screen_x = center_x + r * theta.cos();
-        let screen_y = center_y + r * theta.sin();
+    for (n, x, y) in positions {
+        let screen_x = center_x + *x * scale;
+        let screen_y = center_y + *y * scale;
 
         let dx = mouse_pos.x - screen_x;
         let dy = mouse_pos.y - screen_y;
         let distance_sq = dx * dx + dy * dy;
 
-        if distance_sq < min_distance_sq && distance_sq < (scale * HOVER_THRESHOLD_DEFAULT).powi(2)
-        {
+        if distance_sq < min_distance_sq && distance_sq < threshold_sq {
             min_distance_sq = distance_sq;
             closest_n = Some(*n);
         }
     }
 
     closest_n
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_generate_positions_count() {
+        let positions = generate_positions(100, 6);
+        assert_eq!(positions.len(), 100);
+    }
+
+    #[test]
+    fn test_generate_positions_modulo_2() {
+        let positions = generate_positions(10, 2);
+        assert_eq!(positions.len(), 10);
+        // All positions should have valid coordinates
+        for (n, x, y) in &positions {
+            assert!(*n >= 1 && *n <= 10);
+            assert!(x.is_finite());
+            assert!(y.is_finite());
+        }
+    }
+
+    #[test]
+    fn test_empty_positions() {
+        let positions = generate_positions(0, 6);
+        assert!(positions.is_empty());
+    }
+
+    #[test]
+    fn test_compute_layout_centering() {
+        let positions = generate_positions(50, 6);
+        let rect =
+            egui::Rect::from_min_size(egui::Pos2::new(0.0, 0.0), egui::Vec2::new(400.0, 400.0));
+        let (center_x, center_y, scale, modulo_f) = compute_layout(&positions, rect, 6, 50);
+
+        assert_eq!(center_x, 200.0);
+        assert_eq!(center_y, 200.0);
+        assert!(scale > 0.0, "scale should be positive");
+        assert_eq!(modulo_f, 6.0);
+    }
+
+    #[test]
+    fn test_compute_layout_scale_fits_rect() {
+        let positions = generate_positions(100, 6);
+        let rect =
+            egui::Rect::from_min_size(egui::Pos2::new(0.0, 0.0), egui::Vec2::new(400.0, 400.0));
+        let (center_x, center_y, scale, _) = compute_layout(&positions, rect, 6, 100);
+
+        for (_, x, y) in &positions {
+            let screen_x = center_x + *x * scale;
+            let screen_y = center_y + *y * scale;
+            assert!(
+                screen_x >= rect.left() && screen_x <= rect.right(),
+                "point maps outside rect horizontally"
+            );
+            assert!(
+                screen_y >= rect.top() && screen_y <= rect.bottom(),
+                "point maps outside rect vertically"
+            );
+        }
+    }
+
+    #[test]
+    fn test_positions_ring_structure() {
+        let modulo = 6;
+        let positions = generate_positions(12, modulo);
+        // Numbers 1-6 should be in ring 0 (quotient=0 for n<modulo, except n=modulo)
+        // Verify each number has correct ring assignment encoded in radius
+        for (n, x, y) in &positions {
+            let r = (x * x + y * y).sqrt();
+            let expected_ring = (*n / modulo) as f32 + 1.0;
+            assert!(
+                (r - expected_ring).abs() < 0.01,
+                "n={} should be at ring {}, got r={}",
+                n,
+                expected_ring,
+                r
+            );
+        }
+    }
 }

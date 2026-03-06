@@ -21,18 +21,19 @@ pub type LayoutData = (f32, f32, f32);
 /// Find the closest number to mouse position using center-based layout.
 ///
 /// Layout provides: (center_x, center_y, scale)
+/// `threshold_px` is the maximum distance in screen pixels.
 pub fn find_hovered_center_based(
     mouse_pos: egui::Pos2,
     positions: &[(usize, f32, f32)],
     layout: LayoutData,
-    threshold: f32,
+    threshold_px: f32,
 ) -> Option<usize> {
     if positions.is_empty() {
         return None;
     }
 
     let (center_x, center_y, scale) = layout;
-    let threshold_sq = (scale * threshold).powi(2);
+    let threshold_sq = threshold_px * threshold_px;
     let mut closest_n: Option<usize> = None;
     let mut min_distance_sq = f32::INFINITY;
 
@@ -68,18 +69,20 @@ pub fn find_hovered_offset_based(
 }
 
 /// Find the closest number for row visualization (fixed Y coordinate).
+///
+/// `threshold_px` is the maximum distance in screen pixels.
 pub fn find_hovered_row(
     mouse_pos: egui::Pos2,
     positions: &[(usize, f32, f32)],
     layout: LayoutData,
-    threshold: f32,
+    threshold_px: f32,
 ) -> Option<usize> {
     if positions.is_empty() {
         return None;
     }
 
     let (start_x, center_y, scale) = layout;
-    let threshold_sq = (scale * threshold).powi(2);
+    let threshold_sq = threshold_px * threshold_px;
     let mut closest_n: Option<usize> = None;
     let mut min_distance_sq = f32::INFINITY;
 
@@ -99,18 +102,20 @@ pub fn find_hovered_row(
 }
 
 /// Find the closest number for center-based layout with Y-axis flip (used by Fermats spiral).
+///
+/// `threshold_px` is the maximum distance in screen pixels.
 pub fn find_hovered_center_flip_y(
     mouse_pos: egui::Pos2,
     positions: &[(usize, f32, f32)],
     layout: LayoutData,
-    threshold: f32,
+    threshold_px: f32,
 ) -> Option<usize> {
     if positions.is_empty() {
         return None;
     }
 
     let (center_x, center_y, scale) = layout;
-    let threshold_sq = (scale * threshold).powi(2);
+    let threshold_sq = threshold_px * threshold_px;
     let mut closest_n: Option<usize> = None;
     let mut min_distance_sq = f32::INFINITY;
 
@@ -136,18 +141,20 @@ pub fn find_hovered_center_flip_y(
 pub type LayoutDataCentered = (f32, f32, f32, f32, f32);
 
 /// Find the closest number for centered layout (bounding box based).
+///
+/// `threshold_px` is the maximum distance in screen pixels.
 pub fn find_hovered_centered(
     mouse_pos: egui::Pos2,
     positions: &[(usize, f32, f32)],
     layout: LayoutDataCentered,
-    threshold: f32,
+    threshold_px: f32,
 ) -> Option<usize> {
     if positions.is_empty() {
         return None;
     }
 
     let (center_x, center_y, scale, mid_x, mid_y) = layout;
-    let threshold_sq = (scale * threshold).powi(2);
+    let threshold_sq = threshold_px * threshold_px;
     let mut closest_n: Option<usize> = None;
     let mut min_distance_sq = f32::INFINITY;
 

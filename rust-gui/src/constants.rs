@@ -47,10 +47,11 @@ pub mod visualization {
 
     /// Small margin used for visualization bounds
     pub const MARGIN_SMALL: f32 = 20.0;
-    /// Default hover threshold for point-based visualizations
-    pub const HOVER_THRESHOLD_DEFAULT: f32 = 1.2;
-    /// Large hover threshold for sparse visualizations
-    pub const HOVER_THRESHOLD_LARGE: f32 = 1.5;
+    /// Default hover threshold in screen pixels for point-based visualizations.
+    /// The nearest point within this many pixels of the mouse cursor is highlighted.
+    pub const HOVER_THRESHOLD_DEFAULT: f32 = 2.0;
+    /// Larger hover threshold in screen pixels for sparse visualizations.
+    pub const HOVER_THRESHOLD_LARGE: f32 = 4.0;
 }
 
 pub mod spiral {

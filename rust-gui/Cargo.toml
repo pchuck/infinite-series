@@ -1,6 +1,6 @@
 [package]
 name = "number-visualizer"
-version = "1.0.4"
+version = "1.0.5"
 edition = "2021"
 description = "Interactive visualization of number sequences (primes, fibonacci, lucas, triangular, collatz, powers of 2)"
 
@@ -8,9 +8,6 @@ description = "Interactive visualization of number sequences (primes, fibonacci,
 eframe = "0.31"
 primes = { path = "../rust-primes" }
 series = { path = "../rust-series" }
-
-[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-console_error_panic_hook = "0.1"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen = "0.2"

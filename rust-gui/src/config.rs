@@ -38,9 +38,7 @@ pub struct CachedPosition {
     pub modulo: usize,
 }
 
-#[allow(dead_code)]
 impl PerVisualizationConfig {
-    #[allow(dead_code)]
     /// Get the settings for a specific visualization type.
     ///
     /// Returns default settings if no custom settings have been stored for this type.
@@ -54,10 +52,6 @@ impl PerVisualizationConfig {
     /// Store settings for a specific visualization type.
     pub fn set(&mut self, viz_type: VisualizationType, settings: VisualizationSettings) {
         self.settings.insert(viz_type, settings);
-    }
-
-    pub fn get_positions(&self, viz_type: VisualizationType) -> Option<&Vec<(usize, f32, f32)>> {
-        self.position_cache.get(&viz_type).map(|c| &c.positions)
     }
 
     pub fn set_positions(
@@ -75,10 +69,6 @@ impl PerVisualizationConfig {
                 modulo,
             },
         );
-    }
-
-    pub fn invalidate_positions(&mut self, viz_type: VisualizationType) {
-        self.position_cache.remove(&viz_type);
     }
 
     pub fn invalidate_all_positions(&mut self) {
@@ -121,10 +111,20 @@ impl PrimePairColors {
     }
 
     /// Get the color for a prime that belongs to the given pair types.
+    ///
+    /// # Panics (debug builds only)
+    /// Panics if `pair_types` is empty or has more than 3 elements, as these
+    /// cases indicate a bug in the caller. In release builds, falls back to `self.twin`.
     pub fn get_color(&self, pair_types: &[PrimePairType]) -> egui::Color32 {
-        if pair_types.is_empty() {
-            return self.twin;
-        }
+        debug_assert!(
+            !pair_types.is_empty(),
+            "get_color() called with empty pair_types; caller should check before calling"
+        );
+        debug_assert!(
+            pair_types.len() <= 3,
+            "get_color() called with {} pair types; only 3 types exist",
+            pair_types.len()
+        );
 
         match pair_types.len() {
             1 => match pair_types[0] {
@@ -152,6 +152,7 @@ impl PrimePairColors {
                 }
             }
             3 => self.twin_cousin_sexy,
+            // Unreachable given the debug_asserts above; fallback for release safety.
             _ => self.twin,
         }
     }
