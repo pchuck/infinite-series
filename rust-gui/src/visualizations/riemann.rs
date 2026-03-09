@@ -1,6 +1,11 @@
 //! Riemann zeta visualization
 
+use crate::app::NumberVisualizerApp;
+use crate::config::VisualizerConfig;
 use crate::helpers::MARGIN_SMALL;
+use crate::types::{SeriesType, VisualizationType};
+use crate::visualizations::params::VizParams;
+use crate::visualizations::traits::Visualizer;
 use eframe::egui;
 
 /// Minimum number of zeros to display.
@@ -161,4 +166,54 @@ pub fn draw(app: &crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: egui
         egui::FontId::proportional(10.0),
         egui::Color32::from_rgba_unmultiplied(150, 150, 150, 255),
     );
+}
+
+pub struct RiemannZeta;
+
+impl Visualizer for RiemannZeta {
+    fn viz_type(&self) -> VisualizationType {
+        VisualizationType::RiemannZeta
+    }
+
+    fn name(&self) -> &'static str {
+        "Riemann Zeta"
+    }
+
+    fn description(&self) -> &'static str {
+        VisualizationType::RiemannZeta.description()
+    }
+
+    fn supports_series(&self, series: SeriesType) -> bool {
+        series == SeriesType::Primes
+    }
+
+    fn supports_hover(&self) -> bool {
+        false
+    }
+
+    fn uses_point_rendering(&self) -> bool {
+        false
+    }
+
+    fn generate_positions(&self, _max_n: usize, _params: &VizParams) -> Vec<(usize, f32, f32)> {
+        Vec::new()
+    }
+
+    fn draw(
+        &self,
+        app: &mut NumberVisualizerApp,
+        ui: &mut egui::Ui,
+        rect: egui::Rect,
+        _positions: &[(usize, f32, f32)],
+    ) {
+        draw(app, ui, rect);
+    }
+
+    fn config_ui(&self, ui: &mut egui::Ui, config: &mut VisualizerConfig, _series: SeriesType) {
+        ui.label("Riemann Zeta");
+        ui.add(
+            egui::Slider::new(&mut config.num_zeros, NUM_ZEROS_MIN..=NUM_ZEROS_MAX)
+                .text("Zeros to show"),
+        );
+    }
 }

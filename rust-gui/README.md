@@ -109,7 +109,11 @@ rust-gui/
     ├── helpers.rs           # Utility constants
     ├── types.rs             # Series and visualization types
     └── visualizations/
-        ├── mod.rs
+        ├── mod.rs           # Module exports and registry
+        ├── traits.rs        # Visualizer trait definitions
+        ├── registry.rs      # Visualization registry
+        ├── params.rs        # VizParams for configuration
+        ├── shared_3d.rs    # Shared 3D rendering utilities
         ├── ulam.rs
         ├── sacks.rs
         ├── grid.rs
@@ -136,6 +140,9 @@ rust-gui/
         ├── icosahedron_3d.rs
         └── trefoil_3d.rs
 ```
+
+## Extending
+* [Adding new visualizations](EXTENDING.md)
 
 ## Dependencies
 

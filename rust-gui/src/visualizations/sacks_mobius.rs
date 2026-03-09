@@ -1,11 +1,14 @@
 //! Sacks Mobius spiral visualization
 
+use crate::app::NumberVisualizerApp;
 use crate::draw_number::draw_number;
 use crate::helpers::{
     gap_color, gap_stroke_width, MARGIN_SMALL, SACKS_MOBIUS_RADIUS_MULTIPLIER,
     SACKS_THETA_MULTIPLIER,
 };
-use crate::types::SeriesType;
+use crate::types::{SeriesType, VisualizationType};
+use crate::visualizations::params::VizParams;
+use crate::visualizations::traits::Visualizer;
 use eframe::egui;
 
 /// Draw the Sacks Mobius spiral visualization.
@@ -81,5 +84,47 @@ pub fn draw(app: &crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: egui
             &app.config,
             SeriesType::Primes,
         );
+    }
+}
+
+pub struct SacksMobiusSpiral;
+
+impl Visualizer for SacksMobiusSpiral {
+    fn viz_type(&self) -> VisualizationType {
+        VisualizationType::SacksMobiusSpiral
+    }
+
+    fn name(&self) -> &'static str {
+        "Sacks Mobius Spiral"
+    }
+
+    fn description(&self) -> &'static str {
+        VisualizationType::SacksMobiusSpiral.description()
+    }
+
+    fn supports_series(&self, series: SeriesType) -> bool {
+        series == SeriesType::Primes
+    }
+
+    fn supports_hover(&self) -> bool {
+        false
+    }
+
+    fn uses_point_rendering(&self) -> bool {
+        true
+    }
+
+    fn generate_positions(&self, max_n: usize, _params: &VizParams) -> Vec<(usize, f32, f32)> {
+        crate::visualizations::generate_sacks_positions(max_n)
+    }
+
+    fn draw(
+        &self,
+        app: &mut NumberVisualizerApp,
+        ui: &mut egui::Ui,
+        rect: egui::Rect,
+        _positions: &[(usize, f32, f32)],
+    ) {
+        draw(app, ui, rect);
     }
 }

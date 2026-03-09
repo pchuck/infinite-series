@@ -1,10 +1,14 @@
 //! Triangular lattice visualization
 
+use crate::app::NumberVisualizerApp;
 use crate::draw_number::draw_number;
 use crate::helpers::{
     calculate_bounds, calculate_scale, find_hovered_centered, LayoutDataCentered,
     HOVER_THRESHOLD_LARGE, MARGIN_SMALL,
 };
+use crate::types::{SeriesType, VisualizationType};
+use crate::visualizations::params::VizParams;
+use crate::visualizations::traits::Visualizer;
 use eframe::egui;
 
 /// Generate positions for triangular lattice.
@@ -122,6 +126,58 @@ pub fn find_hovered(
 
     let layout: LayoutDataCentered = compute_layout(positions, rect);
     find_hovered_centered(mouse_pos, positions, layout, HOVER_THRESHOLD_LARGE)
+}
+
+pub struct TriangularLattice;
+
+impl Visualizer for TriangularLattice {
+    fn viz_type(&self) -> VisualizationType {
+        VisualizationType::TriangularLattice
+    }
+
+    fn name(&self) -> &'static str {
+        "Triangular Lattice"
+    }
+
+    fn description(&self) -> &'static str {
+        VisualizationType::TriangularLattice.description()
+    }
+
+    fn supports_series(&self, _series: SeriesType) -> bool {
+        true
+    }
+
+    fn supports_hover(&self) -> bool {
+        true
+    }
+
+    fn uses_point_rendering(&self) -> bool {
+        true
+    }
+
+    fn generate_positions(&self, max_n: usize, _params: &VizParams) -> Vec<(usize, f32, f32)> {
+        generate_positions(max_n)
+    }
+
+    fn draw(
+        &self,
+        app: &mut NumberVisualizerApp,
+        ui: &mut egui::Ui,
+        rect: egui::Rect,
+        positions: &[(usize, f32, f32)],
+    ) {
+        draw(app, ui, rect, positions);
+    }
+
+    fn find_hovered(
+        &self,
+        app: &NumberVisualizerApp,
+        mouse_pos: egui::Pos2,
+        rect: egui::Rect,
+        positions: &[(usize, f32, f32)],
+    ) -> Option<usize> {
+        find_hovered(app, mouse_pos, rect, positions)
+    }
 }
 
 #[cfg(test)]

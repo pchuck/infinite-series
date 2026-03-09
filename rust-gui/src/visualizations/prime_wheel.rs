@@ -1,8 +1,12 @@
 //! Prime wheel visualization
 
+use crate::app::NumberVisualizerApp;
+use crate::config::VisualizerConfig;
 use crate::draw_number::draw_number;
 use crate::helpers::{HOVER_THRESHOLD_DEFAULT, MARGIN_SMALL};
-use crate::types::SeriesType;
+use crate::types::{SeriesType, VisualizationType};
+use crate::visualizations::params::VizParams;
+use crate::visualizations::traits::Visualizer;
 use eframe::egui;
 
 /// Minimum modulo value for the prime wheel.
@@ -150,6 +154,64 @@ pub fn find_hovered(
     }
 
     closest_n
+}
+
+pub struct PrimeWheel;
+
+impl Visualizer for PrimeWheel {
+    fn viz_type(&self) -> VisualizationType {
+        VisualizationType::PrimeWheel
+    }
+
+    fn name(&self) -> &'static str {
+        "Prime Wheel"
+    }
+
+    fn description(&self) -> &'static str {
+        VisualizationType::PrimeWheel.description()
+    }
+
+    fn supports_series(&self, series: SeriesType) -> bool {
+        series == SeriesType::Primes
+    }
+
+    fn supports_hover(&self) -> bool {
+        true
+    }
+
+    fn uses_point_rendering(&self) -> bool {
+        true
+    }
+
+    fn generate_positions(&self, max_n: usize, params: &VizParams) -> Vec<(usize, f32, f32)> {
+        let modulo = params.modulo.unwrap_or(30);
+        generate_positions(max_n, modulo)
+    }
+
+    fn draw(
+        &self,
+        app: &mut NumberVisualizerApp,
+        ui: &mut egui::Ui,
+        rect: egui::Rect,
+        positions: &[(usize, f32, f32)],
+    ) {
+        draw(app, ui, rect, positions);
+    }
+
+    fn find_hovered(
+        &self,
+        app: &NumberVisualizerApp,
+        mouse_pos: egui::Pos2,
+        rect: egui::Rect,
+        positions: &[(usize, f32, f32)],
+    ) -> Option<usize> {
+        find_hovered(app, mouse_pos, rect, positions)
+    }
+
+    fn config_ui(&self, ui: &mut egui::Ui, config: &mut VisualizerConfig, _series: SeriesType) {
+        ui.label("Prime Wheel");
+        ui.add(egui::Slider::new(&mut config.modulo, MODULO_MIN..=MODULO_MAX).text("Modulo"));
+    }
 }
 
 #[cfg(test)]

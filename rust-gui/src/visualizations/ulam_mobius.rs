@@ -1,10 +1,13 @@
 //! Ulam Mobius spiral visualization
 
+use crate::app::NumberVisualizerApp;
 use crate::draw_number::draw_number;
 use crate::helpers::{
     calculate_bounds, calculate_scale, gap_color, gap_stroke_width, MARGIN_SMALL,
 };
-use crate::types::SeriesType;
+use crate::types::{SeriesType, VisualizationType};
+use crate::visualizations::params::VizParams;
+use crate::visualizations::traits::Visualizer;
 use crate::visualizations::ulam::generate_positions as generate_ulam_positions;
 use eframe::egui;
 
@@ -72,5 +75,47 @@ pub fn draw(app: &crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: egui
             &app.config,
             SeriesType::Primes,
         );
+    }
+}
+
+pub struct UlamMobiusSpiral;
+
+impl Visualizer for UlamMobiusSpiral {
+    fn viz_type(&self) -> VisualizationType {
+        VisualizationType::UlamMobiusSpiral
+    }
+
+    fn name(&self) -> &'static str {
+        "Ulam Mobius Spiral"
+    }
+
+    fn description(&self) -> &'static str {
+        VisualizationType::UlamMobiusSpiral.description()
+    }
+
+    fn supports_series(&self, series: SeriesType) -> bool {
+        series == SeriesType::Primes
+    }
+
+    fn supports_hover(&self) -> bool {
+        false
+    }
+
+    fn uses_point_rendering(&self) -> bool {
+        true
+    }
+
+    fn generate_positions(&self, max_n: usize, _params: &VizParams) -> Vec<(usize, f32, f32)> {
+        generate_ulam_positions(max_n)
+    }
+
+    fn draw(
+        &self,
+        app: &mut NumberVisualizerApp,
+        ui: &mut egui::Ui,
+        rect: egui::Rect,
+        _positions: &[(usize, f32, f32)],
+    ) {
+        draw(app, ui, rect);
     }
 }

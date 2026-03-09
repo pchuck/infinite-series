@@ -1,8 +1,12 @@
 //! 3D Cube visualization - numbers distributed on cube surface
 //! Highlighted numbers bulge outward from the faces
 
+use crate::app::NumberVisualizerApp;
 use crate::constants::shapes;
+use crate::types::{SeriesType, VisualizationType};
+use crate::visualizations::params::VizParams;
 use crate::visualizations::shared_3d::{draw_3d_scene, Point3D};
+use crate::visualizations::traits::Visualizer;
 use eframe::egui;
 
 /// Calculate a point on a cube face.
@@ -41,4 +45,46 @@ pub fn draw(app: &mut crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: 
         let spike = if is_highlighted { 12.0 } else { 0.0 };
         cube_face_point(face, u, v, spike)
     });
+}
+
+pub struct Cube3D;
+
+impl Visualizer for Cube3D {
+    fn viz_type(&self) -> VisualizationType {
+        VisualizationType::Cube3D
+    }
+
+    fn name(&self) -> &'static str {
+        "3D Cube"
+    }
+
+    fn description(&self) -> &'static str {
+        VisualizationType::Cube3D.description()
+    }
+
+    fn supports_series(&self, _series: SeriesType) -> bool {
+        true
+    }
+
+    fn supports_hover(&self) -> bool {
+        false
+    }
+
+    fn uses_point_rendering(&self) -> bool {
+        true
+    }
+
+    fn generate_positions(&self, _max_n: usize, _params: &VizParams) -> Vec<(usize, f32, f32)> {
+        Vec::new()
+    }
+
+    fn draw(
+        &self,
+        app: &mut NumberVisualizerApp,
+        ui: &mut egui::Ui,
+        rect: egui::Rect,
+        _positions: &[(usize, f32, f32)],
+    ) {
+        draw(app, ui, rect);
+    }
 }

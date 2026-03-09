@@ -1,8 +1,12 @@
 //! 3D Klein Bottle visualization - numbers on an immersed Klein bottle
 //! Highlighted numbers bulge outward from the surface
 
+use crate::app::NumberVisualizerApp;
 use crate::constants::shapes;
+use crate::types::{SeriesType, VisualizationType};
+use crate::visualizations::params::VizParams;
 use crate::visualizations::shared_3d::{draw_3d_scene, Point3D};
+use crate::visualizations::traits::Visualizer;
 use eframe::egui;
 
 /// Draw the 3D Klein bottle visualization.
@@ -30,4 +34,46 @@ pub fn draw(app: &mut crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: 
 
         Point3D::new(x, y, z)
     });
+}
+
+pub struct Klein3D;
+
+impl Visualizer for Klein3D {
+    fn viz_type(&self) -> VisualizationType {
+        VisualizationType::Klein3D
+    }
+
+    fn name(&self) -> &'static str {
+        "3D Klein Bottle"
+    }
+
+    fn description(&self) -> &'static str {
+        VisualizationType::Klein3D.description()
+    }
+
+    fn supports_series(&self, _series: SeriesType) -> bool {
+        true
+    }
+
+    fn supports_hover(&self) -> bool {
+        false
+    }
+
+    fn uses_point_rendering(&self) -> bool {
+        true
+    }
+
+    fn generate_positions(&self, _max_n: usize, _params: &VizParams) -> Vec<(usize, f32, f32)> {
+        Vec::new()
+    }
+
+    fn draw(
+        &self,
+        app: &mut NumberVisualizerApp,
+        ui: &mut egui::Ui,
+        rect: egui::Rect,
+        _positions: &[(usize, f32, f32)],
+    ) {
+        draw(app, ui, rect);
+    }
 }

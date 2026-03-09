@@ -1,7 +1,12 @@
 //! Ulam spiral visualization
 
+use crate::app::NumberVisualizerApp;
+use crate::config::VisualizerConfig;
 use crate::draw_number::draw_number;
 use crate::helpers::{find_hovered_center_based, HOVER_THRESHOLD_DEFAULT, MARGIN_SMALL};
+use crate::types::{SeriesType, VisualizationType};
+use crate::visualizations::params::VizParams;
+use crate::visualizations::traits::Visualizer;
 use eframe::egui;
 
 /// Generate positions for Ulam spiral (square spiral).
@@ -132,6 +137,58 @@ pub fn find_hovered(
         (center_x, center_y, scale),
         HOVER_THRESHOLD_DEFAULT,
     )
+}
+
+pub struct UlamSpiral;
+
+impl Visualizer for UlamSpiral {
+    fn viz_type(&self) -> VisualizationType {
+        VisualizationType::UlamSpiral
+    }
+
+    fn name(&self) -> &'static str {
+        "Ulam Spiral"
+    }
+
+    fn description(&self) -> &'static str {
+        VisualizationType::UlamSpiral.description()
+    }
+
+    fn supports_series(&self, _series: SeriesType) -> bool {
+        true
+    }
+
+    fn supports_hover(&self) -> bool {
+        true
+    }
+
+    fn uses_point_rendering(&self) -> bool {
+        true
+    }
+
+    fn generate_positions(&self, max_n: usize, _params: &VizParams) -> Vec<(usize, f32, f32)> {
+        generate_positions(max_n)
+    }
+
+    fn draw(
+        &self,
+        app: &mut NumberVisualizerApp,
+        ui: &mut egui::Ui,
+        rect: egui::Rect,
+        positions: &[(usize, f32, f32)],
+    ) {
+        draw(app, ui, rect, positions);
+    }
+
+    fn find_hovered(
+        &self,
+        app: &NumberVisualizerApp,
+        mouse_pos: egui::Pos2,
+        rect: egui::Rect,
+        positions: &[(usize, f32, f32)],
+    ) -> Option<usize> {
+        find_hovered(app, mouse_pos, rect, positions)
+    }
 }
 
 #[cfg(test)]

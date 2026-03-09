@@ -15,13 +15,8 @@ use crate::config::{
     HOVER_TEXT_OFFSET_Y, MAX_NUMBER_MAX, MAX_NUMBER_MIN, SIDE_PANEL_MIN_WIDTH, UI_MARGIN,
 };
 use crate::types::{SeriesType, VisualizationType};
-use crate::visualizations as viz;
-use crate::visualizations::density_gradient::GRID_SIZE_MAX;
-use crate::visualizations::density_gradient::GRID_SIZE_MIN;
-use crate::visualizations::prime_wheel::MODULO_MAX;
-use crate::visualizations::prime_wheel::MODULO_MIN;
-use crate::visualizations::riemann::NUM_ZEROS_MAX;
-use crate::visualizations::riemann::NUM_ZEROS_MIN;
+use crate::visualizations::VizParams;
+use crate::visualizations::REGISTRY;
 
 static EMPTY_SET: LazyLock<HashSet<usize>> = LazyLock::new(HashSet::new);
 static EMPTY_VEC: LazyLock<Vec<usize>> = LazyLock::new(Vec::new);
@@ -317,137 +312,58 @@ impl NumberVisualizerApp {
         let mouse_pos = ui.input(|i| i.pointer.hover_pos());
         self.hovered_number = None;
 
-        match self.config.visualization {
-            VisualizationType::UlamSpiral => {
-                self.ensure_positions_cached(
-                    VisualizationType::UlamSpiral,
-                    self.config.max_number,
-                    0,
-                    |max_n, _| viz::generate_ulam_positions(max_n),
-                );
-                let positions = self.cached_positions(VisualizationType::UlamSpiral);
-                let hovered = mouse_pos
-                    .filter(|_| self.config.visualization.supports_hover())
-                    .and_then(|mp| viz::find_hovered_ulam(self, mp, rect, positions));
-                viz::draw_ulam(self, ui, rect, positions);
-                self.hovered_number = hovered;
-            }
-            VisualizationType::SacksSpiral => {
-                self.ensure_positions_cached(
-                    VisualizationType::SacksSpiral,
-                    self.config.max_number,
-                    0,
-                    |max_n, _| viz::generate_sacks_positions(max_n),
-                );
-                let positions = self.cached_positions(VisualizationType::SacksSpiral);
-                let hovered = mouse_pos
-                    .filter(|_| self.config.visualization.supports_hover())
-                    .and_then(|mp| viz::find_hovered_sacks(self, mp, rect, positions));
-                viz::draw_sacks(self, ui, rect, positions);
-                self.hovered_number = hovered;
-            }
-            VisualizationType::Grid => {
-                self.ensure_positions_cached(
-                    VisualizationType::Grid,
-                    self.config.max_number,
-                    0,
-                    |max_n, _| viz::generate_grid_positions(max_n),
-                );
-                let positions = self.cached_positions(VisualizationType::Grid);
-                let hovered = mouse_pos
-                    .filter(|_| self.config.visualization.supports_hover())
-                    .and_then(|mp| viz::find_hovered_grid(self, mp, rect, positions));
-                viz::draw_grid(self, ui, rect, positions);
-                self.hovered_number = hovered;
-            }
-            VisualizationType::Row => {
-                self.ensure_positions_cached(
-                    VisualizationType::Row,
-                    self.config.max_number,
-                    0,
-                    |max_n, _| viz::generate_row_positions(max_n),
-                );
-                let positions = self.cached_positions(VisualizationType::Row);
-                let hovered = mouse_pos
-                    .filter(|_| self.config.visualization.supports_hover())
-                    .and_then(|mp| viz::find_hovered_row(self, mp, rect, positions));
-                viz::draw_row(self, ui, rect, positions);
-                self.hovered_number = hovered;
-            }
-            VisualizationType::FermatsSpiral => {
-                self.ensure_positions_cached(
-                    VisualizationType::FermatsSpiral,
-                    self.config.max_number,
-                    0,
-                    |max_n, _| viz::generate_fermats_positions(max_n),
-                );
-                let positions = self.cached_positions(VisualizationType::FermatsSpiral);
-                let hovered = mouse_pos
-                    .filter(|_| self.config.visualization.supports_hover())
-                    .and_then(|mp| viz::find_hovered_fermats(self, mp, rect, positions));
-                viz::draw_fermats(self, ui, rect, positions);
-                self.hovered_number = hovered;
-            }
-            VisualizationType::HexagonalLattice => {
-                self.ensure_positions_cached(
-                    VisualizationType::HexagonalLattice,
-                    self.config.max_number,
-                    0,
-                    |max_n, _| viz::generate_hexagonal_positions(max_n),
-                );
-                let positions = self.cached_positions(VisualizationType::HexagonalLattice);
-                let hovered = mouse_pos
-                    .filter(|_| self.config.visualization.supports_hover())
-                    .and_then(|mp| viz::find_hovered_hexagonal(self, mp, rect, positions));
-                viz::draw_hexagonal(self, ui, rect, positions);
-                self.hovered_number = hovered;
-            }
-            VisualizationType::TriangularLattice => {
-                self.ensure_positions_cached(
-                    VisualizationType::TriangularLattice,
-                    self.config.max_number,
-                    0,
-                    |max_n, _| viz::generate_triangular_positions(max_n),
-                );
-                let positions = self.cached_positions(VisualizationType::TriangularLattice);
-                let hovered = mouse_pos
-                    .filter(|_| self.config.visualization.supports_hover())
-                    .and_then(|mp| viz::find_hovered_triangular(self, mp, rect, positions));
-                viz::draw_triangular(self, ui, rect, positions);
-                self.hovered_number = hovered;
-            }
-            VisualizationType::PrimeWheel => {
-                self.ensure_positions_cached(
-                    VisualizationType::PrimeWheel,
-                    self.config.max_number,
-                    self.config.modulo,
-                    viz::generate_prime_wheel_positions,
-                );
-                let positions = self.cached_positions(VisualizationType::PrimeWheel);
-                let hovered = mouse_pos
-                    .filter(|_| self.config.visualization.supports_hover())
-                    .and_then(|mp| viz::find_hovered_prime_wheel(self, mp, rect, positions));
-                viz::draw_prime_wheel(self, ui, rect, positions);
-                self.hovered_number = hovered;
-            }
-            VisualizationType::PrimeDensity => viz::draw_prime_density(self, ui, rect),
-            VisualizationType::RiemannZeta => viz::draw_riemann(self, ui, rect),
-            VisualizationType::SacksMobiusSpiral => viz::draw_sacks_mobius(self, ui, rect),
-            VisualizationType::UlamMobiusSpiral => viz::draw_ulam_mobius(self, ui, rect),
-            VisualizationType::PrimeDensityGradient => viz::draw_density_gradient(self, ui, rect),
-            VisualizationType::Helix3D => viz::draw_helix_3d(self, ui, rect),
-            VisualizationType::Sphere3D => viz::draw_sphere_3d(self, ui, rect),
-            VisualizationType::Torus3D => viz::draw_torus_3d(self, ui, rect),
-            VisualizationType::Cone3D => viz::draw_cone_3d(self, ui, rect),
-            VisualizationType::Cylinder3D => viz::draw_cylinder_3d(self, ui, rect),
-            VisualizationType::Cube3D => viz::draw_cube_3d(self, ui, rect),
-            VisualizationType::Mobius3D => viz::draw_mobius_3d(self, ui, rect),
-            VisualizationType::Klein3D => viz::draw_klein_3d(self, ui, rect),
-            VisualizationType::Pyramid3D => viz::draw_pyramid_3d(self, ui, rect),
-            VisualizationType::Dodecahedron3D => viz::draw_dodecahedron_3d(self, ui, rect),
-            VisualizationType::Icosahedron3D => viz::draw_icosahedron_3d(self, ui, rect),
-            VisualizationType::Trefoil3D => viz::draw_trefoil_3d(self, ui, rect),
+        let viz_type = self.config.visualization;
+        let max_n = self.config.max_number;
+        let modulo = self.config.modulo;
+
+        let (needs_positions, supports_hover, generate_fn) = {
+            let viz = match REGISTRY.get(viz_type) {
+                Some(v) => v,
+                None => return,
+            };
+
+            let params = VizParams::default()
+                .with_modulo(modulo)
+                .with_grid_size(self.config.grid_size)
+                .with_num_zeros(self.config.num_zeros);
+
+            let needs = !viz.generate_positions(max_n, &params).is_empty();
+            let hover = viz.supports_hover();
+            (
+                needs,
+                hover,
+                Box::new(move |max_n: usize, mod_val: usize| {
+                    let p = VizParams::default().with_modulo(mod_val);
+                    REGISTRY
+                        .get(viz_type)
+                        .unwrap()
+                        .generate_positions(max_n, &p)
+                }) as Box<dyn FnOnce(usize, usize) -> Vec<(usize, f32, f32)>>,
+            )
+        };
+
+        if needs_positions {
+            self.ensure_positions_cached(viz_type, max_n, modulo, generate_fn);
+            let positions = self.cached_positions(viz_type);
+
+            let hovered = mouse_pos.filter(|_| supports_hover).and_then(|mp| {
+                REGISTRY
+                    .get(viz_type)
+                    .unwrap()
+                    .find_hovered(self, mp, rect, positions)
+            });
+            self.hovered_number = hovered;
         }
+
+        let positions = if needs_positions {
+            self.cached_positions(viz_type).to_vec()
+        } else {
+            Vec::new()
+        };
+        REGISTRY
+            .get(viz_type)
+            .unwrap()
+            .draw(self, ui, rect, &positions);
     }
 }
 
@@ -555,37 +471,9 @@ impl eframe::App for NumberVisualizerApp {
                 ui.label("Background:");
                 ui.color_edit_button_srgba(&mut self.config.background_color);
 
-                if self.config.visualization.uses_modulo() {
+                if let Some(viz) = REGISTRY.get(self.config.visualization) {
                     ui.separator();
-                    ui.label("Prime Wheel");
-                    ui.add(
-                        egui::Slider::new(&mut self.config.modulo, MODULO_MIN..=MODULO_MAX)
-                            .text("Modulo"),
-                    );
-                }
-
-                if self.config.visualization.uses_grid_size() {
-                    ui.separator();
-                    ui.label("Density Grid");
-                    ui.add(
-                        egui::Slider::new(
-                            &mut self.config.grid_size,
-                            GRID_SIZE_MIN..=GRID_SIZE_MAX,
-                        )
-                        .text("Grid size"),
-                    );
-                }
-
-                if self.config.visualization.uses_num_zeros() {
-                    ui.separator();
-                    ui.label("Riemann Zeta");
-                    ui.add(
-                        egui::Slider::new(
-                            &mut self.config.num_zeros,
-                            NUM_ZEROS_MIN..=NUM_ZEROS_MAX,
-                        )
-                        .text("Zeros to show"),
-                    );
+                    viz.config_ui(ui, &mut self.config, self.series_type);
                 }
 
                 ui.separator();

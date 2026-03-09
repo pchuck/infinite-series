@@ -1,9 +1,13 @@
 //! Fermat's spiral visualization
 
+use crate::app::NumberVisualizerApp;
 use crate::draw_number::draw_number;
 use crate::helpers::{
     find_hovered_center_flip_y, GOLDEN_ANGLE, HOVER_THRESHOLD_DEFAULT, MARGIN_SMALL,
 };
+use crate::types::{SeriesType, VisualizationType};
+use crate::visualizations::params::VizParams;
+use crate::visualizations::traits::Visualizer;
 use eframe::egui;
 
 /// Generate positions for Fermat's spiral (phyllotaxis pattern).
@@ -90,6 +94,58 @@ pub fn find_hovered(
 
     let layout = compute_layout(positions, rect);
     find_hovered_center_flip_y(mouse_pos, positions, layout, HOVER_THRESHOLD_DEFAULT)
+}
+
+pub struct FermatsSpiral;
+
+impl Visualizer for FermatsSpiral {
+    fn viz_type(&self) -> VisualizationType {
+        VisualizationType::FermatsSpiral
+    }
+
+    fn name(&self) -> &'static str {
+        "Fermat's Spiral"
+    }
+
+    fn description(&self) -> &'static str {
+        VisualizationType::FermatsSpiral.description()
+    }
+
+    fn supports_series(&self, _series: SeriesType) -> bool {
+        true
+    }
+
+    fn supports_hover(&self) -> bool {
+        true
+    }
+
+    fn uses_point_rendering(&self) -> bool {
+        true
+    }
+
+    fn generate_positions(&self, max_n: usize, _params: &VizParams) -> Vec<(usize, f32, f32)> {
+        generate_positions(max_n)
+    }
+
+    fn draw(
+        &self,
+        app: &mut NumberVisualizerApp,
+        ui: &mut egui::Ui,
+        rect: egui::Rect,
+        positions: &[(usize, f32, f32)],
+    ) {
+        draw(app, ui, rect, positions);
+    }
+
+    fn find_hovered(
+        &self,
+        app: &NumberVisualizerApp,
+        mouse_pos: egui::Pos2,
+        rect: egui::Rect,
+        positions: &[(usize, f32, f32)],
+    ) -> Option<usize> {
+        find_hovered(app, mouse_pos, rect, positions)
+    }
 }
 
 #[cfg(test)]

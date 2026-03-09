@@ -1,8 +1,12 @@
 //! 3D Pyramid visualization - evenly distributed point cloud on all faces
 //! Highlighted numbers spike outward from the pyramid faces
 
+use crate::app::NumberVisualizerApp;
 use crate::constants::shapes;
+use crate::types::{SeriesType, VisualizationType};
+use crate::visualizations::params::VizParams;
 use crate::visualizations::shared_3d::{draw_3d_scene, Point3D};
+use crate::visualizations::traits::Visualizer;
 use eframe::egui;
 
 /// Calculate a point on the pyramid surface.
@@ -87,4 +91,46 @@ pub fn draw(app: &mut crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: 
         let spike = if is_highlighted { 12.0 } else { 0.0 };
         point_on_pyramid_surface(seed, u, v, spike)
     });
+}
+
+pub struct Pyramid3D;
+
+impl Visualizer for Pyramid3D {
+    fn viz_type(&self) -> VisualizationType {
+        VisualizationType::Pyramid3D
+    }
+
+    fn name(&self) -> &'static str {
+        "3D Pyramid"
+    }
+
+    fn description(&self) -> &'static str {
+        VisualizationType::Pyramid3D.description()
+    }
+
+    fn supports_series(&self, _series: SeriesType) -> bool {
+        true
+    }
+
+    fn supports_hover(&self) -> bool {
+        false
+    }
+
+    fn uses_point_rendering(&self) -> bool {
+        true
+    }
+
+    fn generate_positions(&self, _max_n: usize, _params: &VizParams) -> Vec<(usize, f32, f32)> {
+        Vec::new()
+    }
+
+    fn draw(
+        &self,
+        app: &mut NumberVisualizerApp,
+        ui: &mut egui::Ui,
+        rect: egui::Rect,
+        _positions: &[(usize, f32, f32)],
+    ) {
+        draw(app, ui, rect);
+    }
 }

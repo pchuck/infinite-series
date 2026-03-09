@@ -1,8 +1,12 @@
 //! 3D Dodecahedron visualization - numbers distributed on 12 pentagonal faces
 //! Highlighted numbers bulge outward from the surface
 
+use crate::app::NumberVisualizerApp;
 use crate::constants::shapes;
+use crate::types::{SeriesType, VisualizationType};
+use crate::visualizations::params::VizParams;
 use crate::visualizations::shared_3d::{draw_3d_scene, Point3D};
+use crate::visualizations::traits::Visualizer;
 use eframe::egui;
 
 /// Return the 20 vertices of a regular dodecahedron centered at the origin.
@@ -127,4 +131,46 @@ pub fn draw(app: &mut crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: 
         let spike = if is_highlighted { 0.15 } else { 0.0 };
         point_on_pentagon(&vertices, &faces[face_idx], r, theta, spike)
     });
+}
+
+pub struct Dodecahedron3D;
+
+impl Visualizer for Dodecahedron3D {
+    fn viz_type(&self) -> VisualizationType {
+        VisualizationType::Dodecahedron3D
+    }
+
+    fn name(&self) -> &'static str {
+        "3D Dodecahedron"
+    }
+
+    fn description(&self) -> &'static str {
+        VisualizationType::Dodecahedron3D.description()
+    }
+
+    fn supports_series(&self, _series: SeriesType) -> bool {
+        true
+    }
+
+    fn supports_hover(&self) -> bool {
+        false
+    }
+
+    fn uses_point_rendering(&self) -> bool {
+        true
+    }
+
+    fn generate_positions(&self, _max_n: usize, _params: &VizParams) -> Vec<(usize, f32, f32)> {
+        Vec::new()
+    }
+
+    fn draw(
+        &self,
+        app: &mut NumberVisualizerApp,
+        ui: &mut egui::Ui,
+        rect: egui::Rect,
+        _positions: &[(usize, f32, f32)],
+    ) {
+        draw(app, ui, rect);
+    }
 }

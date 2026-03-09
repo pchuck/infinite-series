@@ -1,8 +1,12 @@
 //! 3D Torus visualization - numbers wrapped around a donut shape
 //! Highlighted numbers bulge outward from the torus surface
 
+use crate::app::NumberVisualizerApp;
 use crate::constants::shapes;
+use crate::types::{SeriesType, VisualizationType};
+use crate::visualizations::params::VizParams;
 use crate::visualizations::shared_3d::{draw_3d_scene, Point3D};
+use crate::visualizations::traits::Visualizer;
 use eframe::egui;
 
 /// Draw the 3D torus visualization.
@@ -31,4 +35,46 @@ pub fn draw(app: &mut crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: 
 
         Point3D::new(x, y, z)
     });
+}
+
+pub struct Torus3D;
+
+impl Visualizer for Torus3D {
+    fn viz_type(&self) -> VisualizationType {
+        VisualizationType::Torus3D
+    }
+
+    fn name(&self) -> &'static str {
+        "3D Torus"
+    }
+
+    fn description(&self) -> &'static str {
+        VisualizationType::Torus3D.description()
+    }
+
+    fn supports_series(&self, _series: SeriesType) -> bool {
+        true
+    }
+
+    fn supports_hover(&self) -> bool {
+        false
+    }
+
+    fn uses_point_rendering(&self) -> bool {
+        true
+    }
+
+    fn generate_positions(&self, _max_n: usize, _params: &VizParams) -> Vec<(usize, f32, f32)> {
+        Vec::new()
+    }
+
+    fn draw(
+        &self,
+        app: &mut NumberVisualizerApp,
+        ui: &mut egui::Ui,
+        rect: egui::Rect,
+        _positions: &[(usize, f32, f32)],
+    ) {
+        draw(app, ui, rect);
+    }
 }

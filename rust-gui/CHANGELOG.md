@@ -2,6 +2,29 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.6] - 2026-03-09
+
+### Added
+- Trait-based visualization plugin system with `Visualizer` trait
+- `VisualizationRegistry` for runtime lookup of visualizations
+- `VizParams` struct for flexible visualization configuration
+- 4 new registry tests for validation
+
+### Changed
+- Refactored all 25 visualization modules to implement `Visualizer` trait directly
+- Simplified `app.rs`: replaced 30+ case match with registry lookup (~30 lines → ~10 lines)
+- Registry reduced from ~1100 lines to ~100 lines (imports + register calls)
+
+### Fixed
+- 3D visualization crash: app no longer tries to retrieve cached positions for visualizations that don't use 2D positions
+
+### Removed
+- Unused methods from `VisualizationType`: `uses_modulo()`, `uses_num_zeros()`, `uses_grid_size()`, `supports_hover()`
+- Unused `std::cell::RefCell` import from app.rs
+
+### Documentation
+- Added "Adding New Visualizations" section to README with step-by-step guide
+
 ## [1.0.5] - 2026-03-06
 
 ### Added

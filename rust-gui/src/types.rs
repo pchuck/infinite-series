@@ -1,7 +1,7 @@
 //! Series and visualization types
 
 /// Represents different number sequences that can be visualized.
-#[derive(Clone, Copy, PartialEq, Eq, Default)]
+#[derive(Clone, Copy, PartialEq, Eq, Default, Debug)]
 pub enum SeriesType {
     #[default]
     Primes,
@@ -46,7 +46,7 @@ impl std::fmt::Display for SeriesType {
 }
 
 /// Represents different visualization layouts for number sequences.
-#[derive(Clone, Copy, PartialEq, Eq, Default, Hash)]
+#[derive(Clone, Copy, PartialEq, Eq, Default, Hash, Debug)]
 pub enum VisualizationType {
     #[default]
     UlamSpiral,
@@ -181,18 +181,6 @@ impl VisualizationType {
         )
     }
 
-    pub fn uses_modulo(self) -> bool {
-        matches!(self, Self::PrimeWheel)
-    }
-
-    pub fn uses_num_zeros(self) -> bool {
-        matches!(self, Self::RiemannZeta)
-    }
-
-    pub fn uses_grid_size(self) -> bool {
-        matches!(self, Self::PrimeDensityGradient)
-    }
-
     pub fn description(self) -> &'static str {
         match self {
             Self::UlamSpiral => "Classic diagonal pattern on a square grid spiral",
@@ -225,20 +213,6 @@ impl VisualizationType {
             Self::Icosahedron3D => "3D icosahedron (20 triangular faces), highlights bulge",
             Self::Trefoil3D => "3D trefoil knot (mathematical knot), highlights bulge",
         }
-    }
-
-    pub fn supports_hover(self) -> bool {
-        matches!(
-            self,
-            Self::UlamSpiral
-                | Self::SacksSpiral
-                | Self::Grid
-                | Self::Row
-                | Self::FermatsSpiral
-                | Self::HexagonalLattice
-                | Self::TriangularLattice
-                | Self::PrimeWheel
-        )
     }
 }
 
@@ -301,14 +275,6 @@ mod tests {
         assert!(VisualizationType::RiemannZeta.is_primes_only());
         assert!(!VisualizationType::UlamSpiral.is_primes_only());
         assert!(!VisualizationType::Grid.is_primes_only());
-    }
-
-    #[test]
-    fn test_visualization_supports_hover() {
-        assert!(VisualizationType::UlamSpiral.supports_hover());
-        assert!(VisualizationType::SacksSpiral.supports_hover());
-        assert!(!VisualizationType::PrimeDensity.supports_hover());
-        assert!(!VisualizationType::RiemannZeta.supports_hover());
     }
 
     #[test]

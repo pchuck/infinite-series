@@ -1,6 +1,11 @@
 //! Prime density gradient visualization
 
+use crate::app::NumberVisualizerApp;
+use crate::config::VisualizerConfig;
 use crate::helpers::MARGIN_SMALL;
+use crate::types::{SeriesType, VisualizationType};
+use crate::visualizations::params::VizParams;
+use crate::visualizations::traits::Visualizer;
 use eframe::egui;
 
 /// Minimum grid size for the density gradient heatmap.
@@ -82,5 +87,55 @@ pub fn draw(app: &crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: egui
                 color,
             );
         }
+    }
+}
+
+pub struct PrimeDensityGradient;
+
+impl Visualizer for PrimeDensityGradient {
+    fn viz_type(&self) -> VisualizationType {
+        VisualizationType::PrimeDensityGradient
+    }
+
+    fn name(&self) -> &'static str {
+        "Prime Density Gradient"
+    }
+
+    fn description(&self) -> &'static str {
+        VisualizationType::PrimeDensityGradient.description()
+    }
+
+    fn supports_series(&self, series: SeriesType) -> bool {
+        series == SeriesType::Primes
+    }
+
+    fn supports_hover(&self) -> bool {
+        false
+    }
+
+    fn uses_point_rendering(&self) -> bool {
+        true
+    }
+
+    fn generate_positions(&self, _max_n: usize, _params: &VizParams) -> Vec<(usize, f32, f32)> {
+        Vec::new()
+    }
+
+    fn draw(
+        &self,
+        app: &mut NumberVisualizerApp,
+        ui: &mut egui::Ui,
+        rect: egui::Rect,
+        _positions: &[(usize, f32, f32)],
+    ) {
+        draw(app, ui, rect);
+    }
+
+    fn config_ui(&self, ui: &mut egui::Ui, config: &mut VisualizerConfig, _series: SeriesType) {
+        ui.label("Density Grid");
+        ui.add(
+            egui::Slider::new(&mut config.grid_size, GRID_SIZE_MIN..=GRID_SIZE_MAX)
+                .text("Grid size"),
+        );
     }
 }
