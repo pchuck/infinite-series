@@ -8,7 +8,8 @@
 //! - (f32, f32, f32, f32, f32) - center_x, center_y, scale, mid_x, mid_y: Bounding box centering
 
 pub mod cone_3d;
-pub mod cube_3d;
+pub mod cube_quadratic_3d;
+pub mod cube_simple_3d;
 pub mod cylinder_3d;
 pub mod density_gradient;
 pub mod dodecahedron_3d;
@@ -42,7 +43,8 @@ pub use registry::{VisualizationRegistry, REGISTRY};
 pub use traits::{Visualizer, Visualizer3D};
 
 pub use cone_3d::{draw as draw_cone_3d, Cone3D};
-pub use cube_3d::{draw as draw_cube_3d, Cube3D};
+pub use cube_quadratic_3d::{draw as draw_cube_quadratic_3d, CubeQuadratic3D};
+pub use cube_simple_3d::{draw as draw_cube_simple_3d, CubeSimple3D};
 pub use cylinder_3d::{draw as draw_cylinder_3d, Cylinder3D};
 pub use density_gradient::{draw as draw_density_gradient, PrimeDensityGradient};
 pub use dodecahedron_3d::{draw as draw_dodecahedron_3d, Dodecahedron3D};

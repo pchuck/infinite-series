@@ -13,10 +13,10 @@ use crate::visualizations::params::VizParams;
 use crate::visualizations::traits::Visualizer;
 
 pub use crate::visualizations::{
-    Cone3D, Cube3D, Cylinder3D, Dodecahedron3D, FermatsSpiral, Grid, Helix3D, HexagonalLattice,
-    Icosahedron3D, Klein3D, Mobius3D, PrimeDensity, PrimeDensityGradient, PrimeWheel, Pyramid3D,
-    RiemannZeta, Row, SacksMobiusSpiral, SacksSpiral, Sphere3D, Torus3D, Trefoil3D,
-    TriangularLattice, UlamMobiusSpiral, UlamSpiral,
+    Cone3D, CubeQuadratic3D, CubeSimple3D, Cylinder3D, Dodecahedron3D, FermatsSpiral, Grid,
+    Helix3D, HexagonalLattice, Icosahedron3D, Klein3D, Mobius3D, PrimeDensity,
+    PrimeDensityGradient, PrimeWheel, Pyramid3D, RiemannZeta, Row, SacksMobiusSpiral, SacksSpiral,
+    Sphere3D, Torus3D, Trefoil3D, TriangularLattice, UlamMobiusSpiral, UlamSpiral,
 };
 
 /// Registry for looking up visualizations by type
@@ -46,7 +46,8 @@ impl VisualizationRegistry {
         registry.register(Torus3D);
         registry.register(Cone3D);
         registry.register(Cylinder3D);
-        registry.register(Cube3D);
+        registry.register(CubeQuadratic3D);
+        registry.register(CubeSimple3D);
         registry.register(Mobius3D);
         registry.register(Klein3D);
         registry.register(Pyramid3D);

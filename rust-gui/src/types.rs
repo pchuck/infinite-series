@@ -67,7 +67,8 @@ pub enum VisualizationType {
     Torus3D,
     Cone3D,
     Cylinder3D,
-    Cube3D,
+    CubeQuadratic3D,
+    CubeSimple3D,
     Mobius3D,
     Klein3D,
     Pyramid3D,
@@ -96,7 +97,8 @@ impl VisualizationType {
         VisualizationType::Torus3D,
         VisualizationType::Cone3D,
         VisualizationType::Cylinder3D,
-        VisualizationType::Cube3D,
+        VisualizationType::CubeQuadratic3D,
+        VisualizationType::CubeSimple3D,
         VisualizationType::Mobius3D,
         VisualizationType::Klein3D,
         VisualizationType::Pyramid3D,
@@ -118,7 +120,8 @@ impl VisualizationType {
         VisualizationType::Torus3D,
         VisualizationType::Cone3D,
         VisualizationType::Cylinder3D,
-        VisualizationType::Cube3D,
+        VisualizationType::CubeQuadratic3D,
+        VisualizationType::CubeSimple3D,
         VisualizationType::Mobius3D,
         VisualizationType::Klein3D,
         VisualizationType::Pyramid3D,
@@ -171,7 +174,8 @@ impl VisualizationType {
                 | Self::Torus3D
                 | Self::Cone3D
                 | Self::Cylinder3D
-                | Self::Cube3D
+                | Self::CubeQuadratic3D
+                | Self::CubeSimple3D
                 | Self::Mobius3D
                 | Self::Klein3D
                 | Self::Pyramid3D
@@ -205,7 +209,10 @@ impl VisualizationType {
             Self::Torus3D => "3D torus (donut) with numbers wrapped around, highlights bulge",
             Self::Cone3D => "3D cone with numbers spiraling up, highlights spike outward",
             Self::Cylinder3D => "3D cylinder with numbers spiraling around, highlights spike",
-            Self::Cube3D => "3D cube with numbers on faces, highlights bulge outward",
+            Self::CubeQuadratic3D => {
+                "3D cube with quadratic residue mapping (n|7), highlights bulge outward"
+            }
+            Self::CubeSimple3D => "3D cube with even distribution on all 6 faces",
             Self::Mobius3D => "3D Mobius strip with numbers on twisted surface",
             Self::Klein3D => "3D Klein bottle (non-orientable surface), highlights bulge",
             Self::Pyramid3D => "3D pyramid with numbers on faces, highlights spike outward",
@@ -237,7 +244,8 @@ impl std::fmt::Display for VisualizationType {
             VisualizationType::Torus3D => write!(f, "3D Torus"),
             VisualizationType::Cone3D => write!(f, "3D Cone"),
             VisualizationType::Cylinder3D => write!(f, "3D Cylinder"),
-            VisualizationType::Cube3D => write!(f, "3D Cube"),
+            VisualizationType::CubeQuadratic3D => write!(f, "3D Cube Quadratic"),
+            VisualizationType::CubeSimple3D => write!(f, "3D Cube Simple"),
             VisualizationType::Mobius3D => write!(f, "3D Mobius Strip"),
             VisualizationType::Klein3D => write!(f, "3D Klein Bottle"),
             VisualizationType::Pyramid3D => write!(f, "3D Pyramid"),

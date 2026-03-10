@@ -61,7 +61,12 @@ impl Exporter {
             VisualizationType::Torus3D => Self::render_torus_3d(&mut img, app, width, height),
             VisualizationType::Cone3D => Self::render_cone_3d(&mut img, app, width, height),
             VisualizationType::Cylinder3D => Self::render_cylinder_3d(&mut img, app, width, height),
-            VisualizationType::Cube3D => Self::render_cube_3d(&mut img, app, width, height),
+            VisualizationType::CubeQuadratic3D => {
+                Self::render_cube_quadratic_3d(&mut img, app, width, height)
+            }
+            VisualizationType::CubeSimple3D => {
+                Self::render_cube_quadratic_3d(&mut img, app, width, height)
+            }
             VisualizationType::Mobius3D => Self::render_mobius_3d(&mut img, app, width, height),
             VisualizationType::Klein3D => Self::render_klein_3d(&mut img, app, width, height),
             VisualizationType::Pyramid3D => Self::render_pyramid_3d(&mut img, app, width, height),
@@ -905,7 +910,7 @@ impl Exporter {
         Self::render_3d_projected(img, app, width, height, &mut projected);
     }
 
-    fn render_cube_3d(
+    fn render_cube_quadratic_3d(
         img: &mut ImageBuffer<Rgba<u8>, Vec<u8>>,
         app: &NumberVisualizerApp,
         width: u32,
