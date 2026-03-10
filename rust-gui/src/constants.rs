@@ -159,7 +159,7 @@ pub mod shapes {
     /// Number of spiral turns for cylinder
     pub const CYLINDER_TURNS: f32 = 8.0;
     /// Size of 3D cube
-    pub const CUBE_SIZE: f32 = 80.0;
+    //pub const CUBE_SIZE: f32 = 80.0;
     /// Major radius for Möbius strip
     pub const MOBIUS_RADIUS: f32 = 80.0;
     /// Width of Möbius strip
