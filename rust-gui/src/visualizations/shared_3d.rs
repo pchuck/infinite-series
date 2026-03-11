@@ -37,7 +37,7 @@ pub fn project_3d_to_2d(point: &Point3D, rotation_y: f32, rotation_x: f32) -> (f
     let y2 = y1 * cos_x - z1 * sin_x;
     let z2 = y1 * sin_x + z1 * cos_x;
 
-    let scale = projection::PERSPECTIVE / (projection::PERSPECTIVE + z2 + projection::OFFSET);
+    let scale = projection::PERSPECTIVE / (projection::PERSPECTIVE - z2 + projection::OFFSET);
 
     (x1 * scale, y2 * scale, z2)
 }

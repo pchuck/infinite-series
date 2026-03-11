@@ -50,7 +50,8 @@ make web-serve    # Serve at http://localhost:8080
 | **3D Torus** | Numbers wrapped around donut shape, highlights bulge |
 | **3D Cone** | Spiral ascending a cone, highlights spike outward |
 | **3D Cylinder** | Spiral around cylinder, highlights spike outward |
-| **3D Cube** | Numbers on cube faces, highlights bulge outward |
+| **3D Cube Simple** | Numbers on cube faces with random distribution |
+| **3D Cube Quadratic** | Numbers on cube faces by quadratic residue (n|7) |
 | **3D Mobius Strip** | Numbers on a twisted one-sided surface |
 | **3D Klein Bottle** | Numbers on non-orientable surface (immersed form) |
 | **3D Pyramid** | Numbers on pyramid faces, highlights spike outward |
@@ -132,7 +133,9 @@ rust-gui/
         ├── torus_3d.rs
         ├── cone_3d.rs
         ├── cylinder_3d.rs
-        ├── cube_3d.rs
+        ├── cube_simple_3d.rs
+        ├── cube_quadratic_3d.rs
+        ├── cube_3d_old.rs     # Reference implementation
         ├── mobius_3d.rs
         ├── klein_3d.rs
         ├── pyramid_3d.rs
