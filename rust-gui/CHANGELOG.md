@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.0] - 2026-03-10
+
+### Added
+- Two new 3D cube visualizations: "3D Cube Simple" and "3D Cube Quadratic"
+- Spike distance slider (0-10) in control panel for all 3D visualizations
+
+### Changed
+- Fixed 3D cube rendering: points now distributed on cube faces instead of floating in space
+- Fixed perspective/depth: closer points now appear larger (was reversed)
+- Rotation now persists when changing max number
+
 ## [1.0.6] - 2026-03-09
 
 ### Added
