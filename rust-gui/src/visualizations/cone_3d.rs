@@ -16,6 +16,7 @@ use eframe::egui;
 /// Supports mouse drag for rotation.
 pub fn draw(app: &mut crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: egui::Rect) {
     let max_n = app.config.max_number;
+    let spike_distance = app.config.spike_distance;
 
     draw_3d_scene(app, ui, rect, "cone_3d", |n, is_highlighted| {
         let t = (n - 1) as f32 / max_n as f32;
@@ -23,7 +24,7 @@ pub fn draw(app: &mut crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: 
         let height = t * shapes::CONE_HEIGHT - shapes::CONE_HEIGHT / 2.0;
         let radius = shapes::CONE_BASE_RADIUS * (1.0 - t);
 
-        let spike = if is_highlighted { 15.0 } else { 0.0 };
+        let spike = if is_highlighted { spike_distance } else { 0.0 };
         let r = radius + spike;
 
         let x = r * angle.cos();

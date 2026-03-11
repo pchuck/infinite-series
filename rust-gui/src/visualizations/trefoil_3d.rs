@@ -34,6 +34,7 @@ fn trefoil_point(t: f32) -> (f32, f32, f32) {
 pub fn draw(app: &mut crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: egui::Rect) {
     let max_n = app.config.max_number;
     let golden_ratio = (1.0 + 5.0f32.sqrt()) / 2.0;
+    let spike_distance = app.config.spike_distance;
 
     draw_3d_scene(app, ui, rect, "trefoil_3d", |n, is_highlighted| {
         let t = (n - 1) as f32 / max_n as f32;
@@ -61,7 +62,7 @@ pub fn draw(app: &mut crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: 
         let bz = bz / bx_len;
 
         let tube_r = if is_highlighted {
-            shapes::KNOT_TUBE_RADIUS + 8.0
+            shapes::KNOT_TUBE_RADIUS + spike_distance
         } else {
             shapes::KNOT_TUBE_RADIUS
         };

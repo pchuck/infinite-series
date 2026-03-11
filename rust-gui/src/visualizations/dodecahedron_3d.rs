@@ -119,6 +119,7 @@ pub fn draw(app: &mut crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: 
     let vertices = dodecahedron_vertices();
     let faces = dodecahedron_faces();
     let golden_ratio = (1.0 + 5.0f32.sqrt()) / 2.0;
+    let spike_distance = app.config.spike_distance;
 
     draw_3d_scene(app, ui, rect, "dodecahedron_3d", |n, is_highlighted| {
         let t = (n - 1) as f32;
@@ -128,7 +129,11 @@ pub fn draw(app: &mut crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: 
         let r = local.sqrt() * 0.9;
         let theta = (local * golden_ratio * 5.0).fract() * std::f32::consts::TAU;
 
-        let spike = if is_highlighted { 0.15 } else { 0.0 };
+        let spike = if is_highlighted {
+            spike_distance / 50.0
+        } else {
+            0.0
+        };
         point_on_pentagon(&vertices, &faces[face_idx], r, theta, spike)
     });
 }

@@ -18,6 +18,7 @@ pub fn draw(app: &mut crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: 
     let max_n = app.config.max_number;
     let angle_step = helix::TURNS * std::f32::consts::TAU / max_n as f32;
     let height_step = helix::HEIGHT_FACTOR * helix::RADIUS / max_n as f32;
+    let spike_distance = app.config.spike_distance;
 
     draw_3d_scene(app, ui, rect, "helix_3d", |n, is_highlighted| {
         let t = (n - 1) as f32;
@@ -27,7 +28,11 @@ pub fn draw(app: &mut crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: 
         let x = helix::RADIUS * angle.cos();
         let z = helix::RADIUS * angle.sin();
 
-        let spike = if is_highlighted { 25.0 } else { 0.0 };
+        let spike = if is_highlighted {
+            spike_distance * 2.0
+        } else {
+            0.0
+        };
         let spike_x = x + spike * angle.cos();
         let spike_z = z + spike * angle.sin();
 

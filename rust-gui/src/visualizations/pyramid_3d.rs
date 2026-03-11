@@ -81,6 +81,7 @@ fn point_on_pyramid_surface(seed: f32, u: f32, v: f32, spike: f32) -> Point3D {
 pub fn draw(app: &mut crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: egui::Rect) {
     let max_n = app.config.max_number;
     let golden_ratio = (1.0 + 5.0f32.sqrt()) / 2.0;
+    let spike_distance = app.config.spike_distance;
 
     draw_3d_scene(app, ui, rect, "pyramid_3d", |n, is_highlighted| {
         let t = (n - 1) as f32;
@@ -88,7 +89,7 @@ pub fn draw(app: &mut crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: 
         let u = (t * golden_ratio).fract();
         let v = (t * golden_ratio * golden_ratio).fract();
 
-        let spike = if is_highlighted { 12.0 } else { 0.0 };
+        let spike = if is_highlighted { spike_distance } else { 0.0 };
         point_on_pyramid_surface(seed, u, v, spike)
     });
 }

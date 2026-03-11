@@ -197,6 +197,7 @@ pub struct VisualizerConfig {
     pub show_sexy_primes: bool,
     pub sexy_color: egui::Color32,
     pub grid_size: usize,
+    pub spike_distance: f32,
     #[doc(hidden)]
     pub prime_pair_colors: PrimePairColors,
 }
@@ -225,6 +226,7 @@ impl Default for VisualizerConfig {
             show_sexy_primes: false,
             sexy_color,
             grid_size: GRID_SIZE_DEFAULT,
+            spike_distance: 8.0,
             prime_pair_colors: PrimePairColors::new(twin_color, cousin_color, sexy_color),
         }
     }

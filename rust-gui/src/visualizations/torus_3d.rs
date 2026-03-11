@@ -17,6 +17,7 @@ use eframe::egui;
 pub fn draw(app: &mut crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: egui::Rect) {
     let max_n = app.config.max_number;
     let golden_ratio = (1.0 + 5.0f32.sqrt()) / 2.0;
+    let spike_distance = app.config.spike_distance;
 
     draw_3d_scene(app, ui, rect, "torus_3d", |n, is_highlighted| {
         let t = (n - 1) as f32;
@@ -24,7 +25,7 @@ pub fn draw(app: &mut crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: 
         let v = t * golden_ratio / max_n as f32 * std::f32::consts::TAU;
 
         let minor_r = if is_highlighted {
-            shapes::TORUS_MINOR_RADIUS + 10.0
+            shapes::TORUS_MINOR_RADIUS + spike_distance
         } else {
             shapes::TORUS_MINOR_RADIUS
         };

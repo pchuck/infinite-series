@@ -94,6 +94,7 @@ pub fn draw(app: &mut crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: 
 
     let highlights = app.highlights();
     let golden_ratio = (1.0 + 5.0f32.sqrt()) / 2.0;
+    let spike_distance = app.config.spike_distance;
 
     let mut face_counts = [0usize; 6];
     for n in 1..=max_n {
@@ -117,7 +118,7 @@ pub fn draw(app: &mut crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: 
         let v = (t * golden_ratio * golden_ratio).fract() * 2.0 - 1.0;
 
         let is_highlighted = highlights.contains(&n);
-        let spike = if is_highlighted { 12.0 } else { 0.0 };
+        let spike = if is_highlighted { spike_distance } else { 0.0 };
 
         let point = cube_face_point(face, u, v, spike);
         let (px, py, pz) = project_3d_to_2d(&point, rotation_y, rotation_x);

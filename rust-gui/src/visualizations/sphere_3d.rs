@@ -31,11 +31,12 @@ fn fibonacci_sphere_point(n: usize, total: usize) -> (f32, f32, f32) {
 /// Supports mouse drag for rotation.
 pub fn draw(app: &mut crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: egui::Rect) {
     let max_n = app.config.max_number;
+    let spike_distance = app.config.spike_distance;
 
     draw_3d_scene(app, ui, rect, "sphere_3d", |n, is_highlighted| {
         let (nx, ny, nz) = fibonacci_sphere_point(n - 1, max_n);
         let radius = if is_highlighted {
-            shapes::SPHERE_RADIUS + 15.0
+            shapes::SPHERE_RADIUS + spike_distance
         } else {
             shapes::SPHERE_RADIUS
         };

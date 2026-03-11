@@ -86,13 +86,6 @@ impl NumberVisualizerApp {
         self.per_viz_config.set(self.config.visualization, settings);
     }
 
-    pub fn invalidate_rotation_cache(&mut self) {
-        self.per_viz_config.set(
-            self.config.visualization,
-            crate::config::VisualizationSettings::default(),
-        );
-    }
-
     /// Ensure positions are computed and cached for the given visualization type.
     ///
     /// After calling this, retrieve the cached positions via `cached_positions()`.
@@ -190,7 +183,6 @@ impl NumberVisualizerApp {
             self.happy = None;
             self.cached_max_number = self.config.max_number;
             self.per_viz_config.invalidate_all_positions();
-            self.invalidate_rotation_cache();
         }
 
         self.clear_error();
@@ -431,6 +423,12 @@ impl eframe::App for NumberVisualizerApp {
                     ui.add(egui::Slider::new(
                         &mut self.config.non_highlight_size,
                         0..=10,
+                    ));
+
+                    ui.label("Spike distance:");
+                    ui.add(egui::Slider::new(
+                        &mut self.config.spike_distance,
+                        0.0..=10.0,
                     ));
 
                     ui.checkbox(&mut self.config.show_numbers, "Show numbers");

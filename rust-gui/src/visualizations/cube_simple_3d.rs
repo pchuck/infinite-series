@@ -47,6 +47,7 @@ pub fn draw(app: &mut crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: 
     }
 
     let highlights = app.highlights();
+    let spike_distance = app.config.spike_distance;
 
     let mut projected: Vec<(f32, f32, f32, usize, bool)> = Vec::with_capacity(max_n);
 
@@ -56,7 +57,7 @@ pub fn draw(app: &mut crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: 
         let v: f32 = ((n * 23 % 1000) as f32 / 1000.0) * 2.0 - 1.0;
 
         let is_highlighted = highlights.contains(&n);
-        let spike = if is_highlighted { 12.0 } else { 0.0 };
+        let spike = if is_highlighted { spike_distance } else { 0.0 };
 
         let point = cube_face_point(face, u, v, spike);
         let (px, py, pz) = project_3d_to_2d(&point, rotation_y, rotation_x);
