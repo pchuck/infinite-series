@@ -93,7 +93,6 @@ pub fn draw(app: &mut crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: 
     }
 
     let highlights = app.highlights();
-    let golden_ratio = (1.0 + 5.0f32.sqrt()) / 2.0;
     let spike_distance = app.config.spike_distance;
 
     let mut face_counts = [0usize; 6];
@@ -112,10 +111,12 @@ pub fn draw(app: &mut crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: 
         face_positions[face] += 1;
 
         let face_count = face_counts[face];
-        let t = local_idx as f32 / face_count as f32;
+        let side = ((face_count as f32).sqrt().ceil() as usize).max(1);
+        let side_i = local_idx % side;
+        let side_j = local_idx / side;
 
-        let u = (t * golden_ratio).fract() * 2.0 - 1.0;
-        let v = (t * golden_ratio * golden_ratio).fract() * 2.0 - 1.0;
+        let u = (side_i as f32 + 0.5) / side as f32 * 2.0 - 1.0;
+        let v = (side_j as f32 + 0.5) / side as f32 * 2.0 - 1.0;
 
         let is_highlighted = highlights.contains(&n);
         let spike = if is_highlighted { spike_distance } else { 0.0 };

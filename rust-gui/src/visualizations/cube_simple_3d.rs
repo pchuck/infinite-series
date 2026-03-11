@@ -49,12 +49,28 @@ pub fn draw(app: &mut crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: 
     let highlights = app.highlights();
     let spike_distance = app.config.spike_distance;
 
+    let mut face_counts = [0usize; 6];
+    for n in 1..=max_n {
+        let face = ((n * 6) / max_n) % 6;
+        face_counts[face] += 1;
+    }
+
+    let mut face_positions = [0usize; 6];
+
     let mut projected: Vec<(f32, f32, f32, usize, bool)> = Vec::with_capacity(max_n);
 
     for n in 1..=max_n {
-        let face = ((n * 9973) / max_n) % 6;
-        let u: f32 = ((n * 17 % 1000) as f32 / 1000.0) * 2.0 - 1.0;
-        let v: f32 = ((n * 23 % 1000) as f32 / 1000.0) * 2.0 - 1.0;
+        let face = ((n * 6) / max_n) % 6;
+        let local_idx = face_positions[face];
+        face_positions[face] += 1;
+
+        let face_count = face_counts[face];
+        let side = ((face_count as f32).sqrt().ceil() as usize).max(1);
+        let side_i = local_idx % side;
+        let side_j = local_idx / side;
+
+        let u = (side_i as f32 + 0.5) / side as f32 * 2.0 - 1.0;
+        let v = (side_j as f32 + 0.5) / side as f32 * 2.0 - 1.0;
 
         let is_highlighted = highlights.contains(&n);
         let spike = if is_highlighted { spike_distance } else { 0.0 };
