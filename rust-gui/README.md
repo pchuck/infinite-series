@@ -50,7 +50,7 @@ make web-serve    # Serve at http://localhost:8080
 | **3D Torus** | Numbers wrapped around donut shape, highlights bulge |
 | **3D Cone** | Spiral ascending a cone, highlights spike outward |
 | **3D Cylinder** | Spiral around cylinder, highlights spike outward |
-| **3D Cube Simple** | Numbers on cube faces with random distribution |
+| **3D Cube Simple** | Numbers on cube faces, sequential grid tiling |
 | **3D Cube Quadratic** | Numbers on cube faces by quadratic residue (n|7) |
 | **3D Mobius Strip** | Numbers on a twisted one-sided surface |
 | **3D Klein Bottle** | Numbers on non-orientable surface (immersed form) |
@@ -74,7 +74,7 @@ make web-serve    # Serve at http://localhost:8080
 - **Series Type**: Switch between Primes, Fibonacci, Lucas, Triangular, Collatz, Powers of 2, Catalan, Hexagonal, and Happy numbers
 - **Visualization**: Select the visualization type
 - **Max Number**: Set the upper bound for the sequence
-- **Display**: Adjust point sizes, colors, and visibility options
+- **Display**: Adjust point sizes, colors, spike distance, and visibility options
 - **3D Rotation**: Drag left/right to rotate, drag up/down to tilt (3D visualizations only)
 
 ## Building
