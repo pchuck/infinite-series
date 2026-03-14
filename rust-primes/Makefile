@@ -3,7 +3,7 @@
 # Default target
 all: build
 
-N ?= 10000000000 # 10M
+N ?= 10000000000 # 10B
 
 build:
 	cargo build

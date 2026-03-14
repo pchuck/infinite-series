@@ -67,8 +67,8 @@ pub fn estimate_prime_count(n: usize) -> usize {
 /// `base_primes_odd` are odd primes up to sqrt(n) (excludes 2).
 /// `is_prime` is a reusable buffer (at least (high - low) / 2 elements).
 ///
-/// Memory note: allocates `segment_size` bools,
-/// Odd-only uses max 50%; memory-inefficient, but simplifies the logic.
+/// Memory note: allocates `segment_size` bools for simplicity,
+/// though odd-only indexing means only ~50% are needed.
 ///
 /// Returns primes found in [max(low, 2), high).
 fn sieve_segment_odd_only(
