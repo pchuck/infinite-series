@@ -31,6 +31,8 @@ Run `make benchmark` to generate benchmark data for the current system.
 | System | Python (primes/s) | Go (primes/s) | Rust (primes/s) |
 |--------|-------------------|---------------|-----------------|
 | Ryzen 9 7900X (Linux) | 2,004,809 | 61,862,555 | 88,468,221 |
+| Ryzen 9 7950X (Linux) | 2,081,523 | 67,656,939 | 110,742,428 |
+| Apple M3 Ultra (macOS) | 4,893,819 | 288,442,776 | 437,251,921 |
 
 ## Key Observations
 
