@@ -1,7 +1,5 @@
 # Performance Benchmarks
 
-Testing environment: AMD Ryzen 9 7900X 12-Core Processor
-
 ## Sequential (Single-threaded)
 
 | Input | Python | Go | Rust | Rust Speedup |
@@ -45,6 +43,6 @@ Run `make benchmark` to generate benchmark data for the current system.
 
 ### Rust vs Go
 
-- **Rust**: ~20% faster, zero-cost abstractions, no runtime overhead, `thread::scope` for safe borrowing
+- **Rust**: ~20-50% faster, zero-cost abstractions, no runtime overhead, `thread::scope` for safe borrowing
 - **Go**: Simpler concurrency model, faster compilation, easier debugging, goroutines are lightweight
-- **Both**: 7-8x faster than Python on large inputs
+- **Both**: 20-50x faster than Python on large inputs (see System Benchmarks)

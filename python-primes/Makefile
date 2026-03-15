@@ -6,16 +6,16 @@ all: run
 N ?= 10000000
 
 run:
-	python3 prime_generator.py 1000
+	python prime_generator.py 1000
 
 run-quiet:
-	python3 prime_generator.py $(N) 2>/dev/null
+	python prime_generator.py $(N) 2>/dev/null
 
 run-progress:
-	python3 prime_generator.py $(N) --progress > /dev/null
+	python prime_generator.py $(N) --progress > /dev/null
 
 run-progress-parallel:
-	python3 prime_generator.py $(N) --parallel --quiet
+	python prime_generator.py $(N) --parallel --quiet
 
 test:
 	python -m pytest test_generators.py -v

@@ -64,7 +64,7 @@ cargo run -- -c 100 -s happy     # Happy numbers
 #### Performance Comparison (Rust vs Go vs Python)
 
 ```bash
-make compare    # Run all implementations (10M primes)
+make benchmark   # Run all implementations (1B primes)
 make build      # Build all
 make test       # Run all tests
 make clean      # Clean build artifacts
