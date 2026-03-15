@@ -8,6 +8,9 @@ benchmark:
 	@echo "Performance Comparison: $(COUNT)"
 	@echo "=========================================="
 	@echo ""
+	@echo "System:"
+	@uname -s && uname -m && uname -r && (if [ "$$(uname -s)" = "Linux" ]; then cat /proc/cpuinfo | grep "model name" | head -1 | cut -d: -f2 | xargs; fi)
+	@echo ""
 	@echo "Rust:"
 	@cd rust-primes && $(MAKE) run-release-parallel N=$(COUNT)
 	@echo ""
