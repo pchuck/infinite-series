@@ -1,7 +1,7 @@
 .PHONY: help benchmark build test clean
 
 all: help
-COUNT=50000000
+COUNT=1000000000 # 1B
 DEST=/dev/null
 
 benchmark:
@@ -9,7 +9,7 @@ benchmark:
 	@echo "=========================================="
 	@echo ""
 	@echo "Rust:"
-	@cd rust-primes && $(MAKE) run-release-parallel_cli N=$(COUNT)
+	@cd rust-primes && $(MAKE) run-release-parallel N=$(COUNT)
 	@echo ""
 	@echo "Go:"
 	@cd golang-primes && $(MAKE) run-progress-parallel N=$(COUNT)

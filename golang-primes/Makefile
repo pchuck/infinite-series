@@ -18,7 +18,7 @@ run-progress: build
 	./primes --progress $(N) > /dev/null
 
 run-progress-parallel: build
-	./primes --progress --parallel $(N) > /dev/null
+	./primes --quiet --parallel $(N)
 
 test:
 	go test ./...
