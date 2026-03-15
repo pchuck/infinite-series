@@ -1,0 +1,325 @@
+//! Ulam spiral visualization
+
+use crate::app::NumberVisualizerApp;
+use crate::config::VisualizerConfig;
+use crate::draw_number::draw_number;
+use crate::helpers::{find_hovered_center_based, HOVER_THRESHOLD_DEFAULT, MARGIN_SMALL};
+use crate::types::{SeriesType, VisualizationType};
+use crate::visualizations::params::VizParams;
+use crate::visualizations::traits::Visualizer;
+use eframe::egui;
+
+/// Generate positions for Ulam spiral (square spiral).
+///
+/// Numbers spiral outward from the center in a square pattern.
+/// Returns a vector of (number, x, y) tuples where (0,0) is the center.
+pub fn generate_positions(max_n: usize) -> Vec<(usize, f32, f32)> {
+    let mut positions = Vec::with_capacity(max_n);
+
+    if max_n == 0 {
+        return positions;
+    }
+
+    let mut x = 0i32;
+    let mut y = 0i32;
+    let mut dx = 1i32;
+    let mut dy = 0i32;
+    let mut steps_in_direction = 1;
+    let mut steps_since_turn = 0;
+    let mut turn_count = 0;
+
+    for n in 1..=max_n {
+        positions.push((n, x as f32, y as f32));
+
+        if n == max_n {
+            break;
+        }
+
+        x += dx;
+        y += dy;
+        steps_since_turn += 1;
+
+        if steps_since_turn == steps_in_direction {
+            steps_since_turn = 0;
+
+            let (new_dx, new_dy) = match turn_count % 4 {
+                0 => (0, 1),
+                1 => (-1, 0),
+                2 => (0, -1),
+                _ => (1, 0),
+            };
+            dx = new_dx;
+            dy = new_dy;
+
+            turn_count += 1;
+            if turn_count % 2 == 0 {
+                steps_in_direction += 1;
+            }
+        }
+    }
+
+    positions
+}
+
+/// Compute layout for Ulam spiral visualization.
+///
+/// Returns: (center_x, center_y, scale, max_coord)
+/// - center_x, center_y: Center of the visualization
+/// - scale: Pixels per unit
+/// - max_coord: Maximum coordinate magnitude for bounds calculation
+pub fn compute_layout(positions: &[(usize, f32, f32)], rect: egui::Rect) -> (f32, f32, f32, f32) {
+    let mut max_coord = 0.0f32;
+    for (_, x, y) in positions {
+        max_coord = max_coord.max(x.abs()).max(y.abs());
+    }
+
+    let available = rect.width().min(rect.height()) / 2.0 - MARGIN_SMALL;
+    let scale = if max_coord > 0.0 {
+        available / max_coord
+    } else {
+        1.0
+    };
+
+    let center_x = rect.center().x;
+    let center_y = rect.center().y;
+
+    (center_x, center_y, scale, max_coord)
+}
+
+/// Draw the Ulam spiral visualization.
+///
+/// Renders all numbers as circles on a square spiral, with highlights shown in highlight color.
+pub fn draw(
+    app: &crate::app::NumberVisualizerApp,
+    ui: &mut egui::Ui,
+    rect: egui::Rect,
+    positions: &[(usize, f32, f32)],
+) {
+    if positions.is_empty() {
+        return;
+    }
+
+    let (center_x, center_y, scale, _) = compute_layout(positions, rect);
+    let painter = ui.painter();
+
+    for (n, x, y) in positions {
+        let screen_x = center_x + *x * scale;
+        let screen_y = center_y + *y * scale;
+        draw_number(
+            *n,
+            screen_x,
+            screen_y,
+            painter,
+            app.highlights(),
+            &app.config,
+            app.series_type,
+        );
+    }
+}
+
+/// Find the number at the given mouse position.
+///
+/// Returns the closest number within the hover threshold, or None if no number is close enough.
+pub fn find_hovered(
+    _app: &crate::app::NumberVisualizerApp,
+    mouse_pos: egui::Pos2,
+    rect: egui::Rect,
+    positions: &[(usize, f32, f32)],
+) -> Option<usize> {
+    if positions.is_empty() {
+        return None;
+    }
+
+    let (center_x, center_y, scale, _) = compute_layout(positions, rect);
+    find_hovered_center_based(
+        mouse_pos,
+        positions,
+        (center_x, center_y, scale),
+        HOVER_THRESHOLD_DEFAULT,
+    )
+}
+
+pub struct UlamSpiral;
+
+impl Visualizer for UlamSpiral {
+    fn viz_type(&self) -> VisualizationType {
+        VisualizationType::UlamSpiral
+    }
+
+    fn name(&self) -> &'static str {
+        "Ulam Spiral"
+    }
+
+    fn description(&self) -> &'static str {
+        VisualizationType::UlamSpiral.description()
+    }
+
+    fn supports_series(&self, _series: SeriesType) -> bool {
+        true
+    }
+
+    fn supports_hover(&self) -> bool {
+        true
+    }
+
+    fn uses_point_rendering(&self) -> bool {
+        true
+    }
+
+    fn generate_positions(&self, max_n: usize, _params: &VizParams) -> Vec<(usize, f32, f32)> {
+        generate_positions(max_n)
+    }
+
+    fn draw(
+        &self,
+        app: &mut NumberVisualizerApp,
+        ui: &mut egui::Ui,
+        rect: egui::Rect,
+        positions: &[(usize, f32, f32)],
+    ) {
+        draw(app, ui, rect, positions);
+    }
+
+    fn find_hovered(
+        &self,
+        app: &NumberVisualizerApp,
+        mouse_pos: egui::Pos2,
+        rect: egui::Rect,
+        positions: &[(usize, f32, f32)],
+    ) -> Option<usize> {
+        find_hovered(app, mouse_pos, rect, positions)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_generate_positions_count() {
+        let positions = generate_positions(10);
+        assert_eq!(positions.len(), 10);
+    }
+
+    #[test]
+    fn test_generate_positions_start_at_center() {
+        let positions = generate_positions(1);
+        assert_eq!(positions[0], (1, 0.0, 0.0));
+    }
+
+    #[test]
+    fn test_generate_positions_spiral_outward() {
+        let positions = generate_positions(9);
+        assert_eq!(positions[0], (1, 0.0, 0.0));
+        assert_eq!(positions[8].0, 9);
+    }
+
+    #[test]
+    fn test_empty_positions() {
+        let positions = generate_positions(0);
+        assert!(positions.is_empty());
+    }
+
+    #[test]
+    fn test_compute_layout_centering() {
+        let positions = generate_positions(25);
+        let rect =
+            egui::Rect::from_min_size(egui::Pos2::new(0.0, 0.0), egui::Vec2::new(400.0, 400.0));
+        let (center_x, center_y, scale, max_coord) = compute_layout(&positions, rect);
+
+        assert_eq!(center_x, 200.0);
+        assert_eq!(center_y, 200.0);
+        assert!(scale > 0.0, "scale should be positive");
+        assert!(
+            max_coord > 0.0,
+            "max_coord should be positive for non-trivial input"
+        );
+    }
+
+    #[test]
+    fn test_compute_layout_scale_fits_rect() {
+        let positions = generate_positions(100);
+        let rect =
+            egui::Rect::from_min_size(egui::Pos2::new(0.0, 0.0), egui::Vec2::new(400.0, 400.0));
+        let (center_x, center_y, scale, _) = compute_layout(&positions, rect);
+
+        // All points should map within the rect
+        for (_, x, y) in &positions {
+            let screen_x = center_x + *x * scale;
+            let screen_y = center_y + *y * scale;
+            assert!(
+                screen_x >= rect.left() && screen_x <= rect.right(),
+                "point x={} maps to screen_x={} outside rect",
+                x,
+                screen_x
+            );
+            assert!(
+                screen_y >= rect.top() && screen_y <= rect.bottom(),
+                "point y={} maps to screen_y={} outside rect",
+                y,
+                screen_y
+            );
+        }
+    }
+
+    #[test]
+    fn test_compute_layout_single_point() {
+        let positions = generate_positions(1);
+        let rect =
+            egui::Rect::from_min_size(egui::Pos2::new(0.0, 0.0), egui::Vec2::new(400.0, 400.0));
+        let (_, _, scale, max_coord) = compute_layout(&positions, rect);
+
+        // Single point at origin: max_coord=0, scale defaults to 1.0
+        assert_eq!(max_coord, 0.0);
+        assert_eq!(scale, 1.0);
+    }
+
+    #[test]
+    fn test_find_hovered_at_center() {
+        let positions = generate_positions(25);
+        let rect =
+            egui::Rect::from_min_size(egui::Pos2::new(0.0, 0.0), egui::Vec2::new(400.0, 400.0));
+        let (center_x, center_y, _, _) = compute_layout(&positions, rect);
+
+        // Position 1 is at (0,0), which maps to the center
+        let mouse = egui::Pos2::new(center_x, center_y);
+        let hovered = find_hovered_center_based(
+            mouse,
+            &positions,
+            (center_x, center_y, compute_layout(&positions, rect).2),
+            HOVER_THRESHOLD_DEFAULT,
+        );
+        assert_eq!(hovered, Some(1));
+    }
+
+    #[test]
+    fn test_find_hovered_miss() {
+        let positions = generate_positions(10);
+        let rect =
+            egui::Rect::from_min_size(egui::Pos2::new(0.0, 0.0), egui::Vec2::new(400.0, 400.0));
+
+        // Way outside the visualization
+        let mouse = egui::Pos2::new(-1000.0, -1000.0);
+        let (center_x, center_y, scale, _) = compute_layout(&positions, rect);
+        let hovered = find_hovered_center_based(
+            mouse,
+            &positions,
+            (center_x, center_y, scale),
+            HOVER_THRESHOLD_DEFAULT,
+        );
+        assert_eq!(hovered, None);
+    }
+
+    #[test]
+    fn test_find_hovered_empty() {
+        let positions = generate_positions(0);
+        let mouse = egui::Pos2::new(200.0, 200.0);
+        let hovered = find_hovered_center_based(
+            mouse,
+            &positions,
+            (200.0, 200.0, 1.0),
+            HOVER_THRESHOLD_DEFAULT,
+        );
+        assert_eq!(hovered, None);
+    }
+}

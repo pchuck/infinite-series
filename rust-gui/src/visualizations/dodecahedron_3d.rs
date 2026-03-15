@@ -1,0 +1,181 @@
+//! 3D Dodecahedron visualization - numbers distributed on 12 pentagonal faces
+//! Highlighted numbers bulge outward from the surface
+
+use crate::app::NumberVisualizerApp;
+use crate::constants::shapes;
+use crate::types::{SeriesType, VisualizationType};
+use crate::visualizations::params::VizParams;
+use crate::visualizations::shared_3d::{draw_3d_scene, Point3D};
+use crate::visualizations::traits::Visualizer;
+use eframe::egui;
+
+/// Return the 20 vertices of a regular dodecahedron centered at the origin.
+///
+/// Uses the golden ratio phi to construct the vertex coordinates.
+fn dodecahedron_vertices() -> Vec<[f32; 3]> {
+    let phi = (1.0 + 5.0f32.sqrt()) / 2.0;
+    let inv_phi = 1.0 / phi;
+
+    vec![
+        [1.0, 1.0, 1.0],
+        [1.0, 1.0, -1.0],
+        [1.0, -1.0, 1.0],
+        [1.0, -1.0, -1.0],
+        [-1.0, 1.0, 1.0],
+        [-1.0, 1.0, -1.0],
+        [-1.0, -1.0, 1.0],
+        [-1.0, -1.0, -1.0],
+        [0.0, inv_phi, phi],
+        [0.0, inv_phi, -phi],
+        [0.0, -inv_phi, phi],
+        [0.0, -inv_phi, -phi],
+        [inv_phi, phi, 0.0],
+        [inv_phi, -phi, 0.0],
+        [-inv_phi, phi, 0.0],
+        [-inv_phi, -phi, 0.0],
+        [phi, 0.0, inv_phi],
+        [phi, 0.0, -inv_phi],
+        [-phi, 0.0, inv_phi],
+        [-phi, 0.0, -inv_phi],
+    ]
+}
+
+/// Return the 12 pentagonal faces of a dodecahedron.
+///
+/// Each face is defined by indices into the vertices array.
+fn dodecahedron_faces() -> Vec<[usize; 5]> {
+    vec![
+        [0, 8, 10, 2, 16],
+        [0, 16, 17, 1, 12],
+        [0, 12, 14, 4, 8],
+        [1, 17, 3, 11, 9],
+        [1, 9, 5, 14, 12],
+        [2, 10, 6, 15, 13],
+        [2, 13, 3, 17, 16],
+        [3, 13, 15, 7, 11],
+        [4, 14, 5, 19, 18],
+        [4, 18, 6, 10, 8],
+        [5, 9, 11, 7, 19],
+        [6, 18, 19, 7, 15],
+    ]
+}
+
+/// Calculate a point on a pentagonal face.
+///
+/// Distributes points radially within a pentagon defined by 5 vertices.
+fn point_on_pentagon(
+    vertices: &[[f32; 3]],
+    face: &[usize; 5],
+    r: f32,
+    theta: f32,
+    spike: f32,
+) -> Point3D {
+    let v0 = vertices[face[0]];
+    let v1 = vertices[face[1]];
+    let v2 = vertices[face[2]];
+    let v3 = vertices[face[3]];
+    let v4 = vertices[face[4]];
+
+    let center = [
+        (v0[0] + v1[0] + v2[0] + v3[0] + v4[0]) / 5.0,
+        (v0[1] + v1[1] + v2[1] + v3[1] + v4[1]) / 5.0,
+        (v0[2] + v1[2] + v2[2] + v3[2] + v4[2]) / 5.0,
+    ];
+
+    let mut corners = [[0.0f32; 3]; 5];
+    for i in 0..5 {
+        let vi = vertices[face[i]];
+        corners[i] = [vi[0] - center[0], vi[1] - center[1], vi[2] - center[2]];
+    }
+
+    let sector = ((theta / (2.0 * std::f32::consts::PI)) * 5.0).floor() as usize % 5;
+    let sector_theta = theta - sector as f32 * 2.0 * std::f32::consts::PI / 5.0;
+    let angle_norm = sector_theta / (2.0 * std::f32::consts::PI / 5.0);
+
+    let c1 = corners[sector];
+    let c2 = corners[(sector + 1) % 5];
+
+    let x = center[0] + r * (c1[0] * (1.0 - angle_norm) + c2[0] * angle_norm);
+    let y = center[1] + r * (c1[1] * (1.0 - angle_norm) + c2[1] * angle_norm);
+    let z = center[2] + r * (c1[2] * (1.0 - angle_norm) + c2[2] * angle_norm);
+
+    let len = (x * x + y * y + z * z).sqrt();
+    let normal = [x / len, y / len, z / len];
+
+    Point3D::new(
+        (x + normal[0] * spike) * shapes::DODECAHEDRON_SCALE,
+        (y + normal[1] * spike) * shapes::DODECAHEDRON_SCALE,
+        (z + normal[2] * spike) * shapes::DODECAHEDRON_SCALE,
+    )
+}
+
+/// Draw the 3D dodecahedron visualization.
+///
+/// Renders numbers distributed on 12 pentagonal faces of a dodecahedron (Platonic solid).
+/// Highlighted numbers (primes, Fibonacci, etc.) bulge outward from the faces.
+/// Supports mouse drag for rotation.
+pub fn draw(app: &mut crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: egui::Rect) {
+    let max_n = app.config.max_number;
+    let vertices = dodecahedron_vertices();
+    let faces = dodecahedron_faces();
+    let golden_ratio = (1.0 + 5.0f32.sqrt()) / 2.0;
+    let spike_distance = app.config.spike_distance;
+
+    draw_3d_scene(app, ui, rect, "dodecahedron_3d", |n, is_highlighted| {
+        let t = (n - 1) as f32;
+        let face_idx = ((n - 1) * 12 / max_n) % 12;
+
+        let local = (t * golden_ratio).fract();
+        let r = local.sqrt() * 0.9;
+        let theta = (local * golden_ratio * 5.0).fract() * std::f32::consts::TAU;
+
+        let spike = if is_highlighted {
+            spike_distance / 50.0
+        } else {
+            0.0
+        };
+        point_on_pentagon(&vertices, &faces[face_idx], r, theta, spike)
+    });
+}
+
+pub struct Dodecahedron3D;
+
+impl Visualizer for Dodecahedron3D {
+    fn viz_type(&self) -> VisualizationType {
+        VisualizationType::Dodecahedron3D
+    }
+
+    fn name(&self) -> &'static str {
+        "3D Dodecahedron"
+    }
+
+    fn description(&self) -> &'static str {
+        VisualizationType::Dodecahedron3D.description()
+    }
+
+    fn supports_series(&self, _series: SeriesType) -> bool {
+        true
+    }
+
+    fn supports_hover(&self) -> bool {
+        false
+    }
+
+    fn uses_point_rendering(&self) -> bool {
+        true
+    }
+
+    fn generate_positions(&self, _max_n: usize, _params: &VizParams) -> Vec<(usize, f32, f32)> {
+        Vec::new()
+    }
+
+    fn draw(
+        &self,
+        app: &mut NumberVisualizerApp,
+        ui: &mut egui::Ui,
+        rect: egui::Rect,
+        _positions: &[(usize, f32, f32)],
+    ) {
+        draw(app, ui, rect);
+    }
+}

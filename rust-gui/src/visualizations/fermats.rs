@@ -1,0 +1,249 @@
+//! Fermat's spiral visualization
+
+use crate::app::NumberVisualizerApp;
+use crate::draw_number::draw_number;
+use crate::helpers::{
+    find_hovered_center_flip_y, GOLDEN_ANGLE, HOVER_THRESHOLD_DEFAULT, MARGIN_SMALL,
+};
+use crate::types::{SeriesType, VisualizationType};
+use crate::visualizations::params::VizParams;
+use crate::visualizations::traits::Visualizer;
+use eframe::egui;
+
+/// Generate positions for Fermat's spiral (phyllotaxis pattern).
+///
+/// Uses the golden angle to distribute numbers in a sunflower-like pattern.
+/// Each number n is placed at polar coordinates (r = sqrt(n), theta = n * golden_angle).
+pub fn generate_positions(max_n: usize) -> Vec<(usize, f32, f32)> {
+    (1..=max_n)
+        .map(|n| {
+            let n_f = n as f32;
+            let r = n_f.sqrt();
+            let theta = n_f * GOLDEN_ANGLE;
+            let x = r * theta.cos();
+            let y = r * theta.sin();
+            (n, x, y)
+        })
+        .collect()
+}
+
+/// Compute layout for Fermat's spiral visualization.
+///
+/// Returns: (center_x, center_y, scale)
+/// - center_x, center_y: Center of the spiral
+/// - scale: Pixels per unit radius
+pub fn compute_layout(positions: &[(usize, f32, f32)], rect: egui::Rect) -> (f32, f32, f32) {
+    let mut max_r = 0.0f32;
+    for (_, x, y) in positions {
+        let r = (x * x + y * y).sqrt();
+        max_r = max_r.max(r);
+    }
+
+    let available = rect.width().min(rect.height()) / 2.0 - MARGIN_SMALL;
+    let scale = if max_r > 0.0 { available / max_r } else { 1.0 };
+
+    let center_x = rect.center().x;
+    let center_y = rect.center().y;
+
+    (center_x, center_y, scale)
+}
+
+/// Draw the Fermat's spiral visualization.
+///
+/// Renders all numbers as circles, with highlights shown in highlight color.
+pub fn draw(
+    app: &crate::app::NumberVisualizerApp,
+    ui: &mut egui::Ui,
+    rect: egui::Rect,
+    positions: &[(usize, f32, f32)],
+) {
+    if positions.is_empty() {
+        return;
+    }
+
+    let (center_x, center_y, scale) = compute_layout(positions, rect);
+    let painter = ui.painter();
+
+    for (n, x, y) in positions {
+        let screen_x = center_x + *x * scale;
+        let screen_y = center_y - *y * scale;
+        draw_number(
+            *n,
+            screen_x,
+            screen_y,
+            painter,
+            app.highlights(),
+            &app.config,
+            app.series_type,
+        );
+    }
+}
+
+/// Find the number at the given mouse position.
+///
+/// Returns the closest number within the hover threshold, or None if no number is close enough.
+pub fn find_hovered(
+    _app: &crate::app::NumberVisualizerApp,
+    mouse_pos: egui::Pos2,
+    rect: egui::Rect,
+    positions: &[(usize, f32, f32)],
+) -> Option<usize> {
+    if positions.is_empty() {
+        return None;
+    }
+
+    let layout = compute_layout(positions, rect);
+    find_hovered_center_flip_y(mouse_pos, positions, layout, HOVER_THRESHOLD_DEFAULT)
+}
+
+pub struct FermatsSpiral;
+
+impl Visualizer for FermatsSpiral {
+    fn viz_type(&self) -> VisualizationType {
+        VisualizationType::FermatsSpiral
+    }
+
+    fn name(&self) -> &'static str {
+        "Fermat's Spiral"
+    }
+
+    fn description(&self) -> &'static str {
+        VisualizationType::FermatsSpiral.description()
+    }
+
+    fn supports_series(&self, _series: SeriesType) -> bool {
+        true
+    }
+
+    fn supports_hover(&self) -> bool {
+        true
+    }
+
+    fn uses_point_rendering(&self) -> bool {
+        true
+    }
+
+    fn generate_positions(&self, max_n: usize, _params: &VizParams) -> Vec<(usize, f32, f32)> {
+        generate_positions(max_n)
+    }
+
+    fn draw(
+        &self,
+        app: &mut NumberVisualizerApp,
+        ui: &mut egui::Ui,
+        rect: egui::Rect,
+        positions: &[(usize, f32, f32)],
+    ) {
+        draw(app, ui, rect, positions);
+    }
+
+    fn find_hovered(
+        &self,
+        app: &NumberVisualizerApp,
+        mouse_pos: egui::Pos2,
+        rect: egui::Rect,
+        positions: &[(usize, f32, f32)],
+    ) -> Option<usize> {
+        find_hovered(app, mouse_pos, rect, positions)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_generate_positions_count() {
+        let positions = generate_positions(100);
+        assert_eq!(positions.len(), 100);
+    }
+
+    #[test]
+    fn test_generate_positions_monotonic_radius() {
+        let positions = generate_positions(100);
+        let mut prev_r: f32 = 0.0;
+        for (_, x, y) in &positions {
+            let r = (x * x + y * y).sqrt();
+            assert!(r >= prev_r - 0.001, "radius should not decrease");
+            prev_r = r;
+        }
+    }
+
+    #[test]
+    fn test_empty_positions() {
+        let positions = generate_positions(0);
+        assert!(positions.is_empty());
+    }
+
+    #[test]
+    fn test_compute_layout_centering() {
+        let positions = generate_positions(50);
+        let rect =
+            egui::Rect::from_min_size(egui::Pos2::new(0.0, 0.0), egui::Vec2::new(400.0, 400.0));
+        let (center_x, center_y, scale) = compute_layout(&positions, rect);
+
+        assert_eq!(center_x, 200.0);
+        assert_eq!(center_y, 200.0);
+        assert!(scale > 0.0, "scale should be positive");
+    }
+
+    #[test]
+    fn test_compute_layout_scale_fits_rect() {
+        let positions = generate_positions(100);
+        let rect =
+            egui::Rect::from_min_size(egui::Pos2::new(0.0, 0.0), egui::Vec2::new(400.0, 400.0));
+        let (center_x, center_y, scale) = compute_layout(&positions, rect);
+
+        // Fermats flips Y, so screen_y = center_y - y * scale
+        for (_, x, y) in &positions {
+            let screen_x = center_x + *x * scale;
+            let screen_y = center_y - *y * scale;
+            assert!(
+                screen_x >= rect.left() && screen_x <= rect.right(),
+                "point maps outside rect horizontally"
+            );
+            assert!(
+                screen_y >= rect.top() && screen_y <= rect.bottom(),
+                "point maps outside rect vertically"
+            );
+        }
+    }
+
+    #[test]
+    fn test_find_hovered_near_first_point() {
+        let positions = generate_positions(50);
+        let rect =
+            egui::Rect::from_min_size(egui::Pos2::new(0.0, 0.0), egui::Vec2::new(400.0, 400.0));
+        let layout = compute_layout(&positions, rect);
+
+        let (cx, cy, scale) = layout;
+        let (_, x1, y1) = positions[0];
+        // Fermats uses flipped Y
+        let screen_x = cx + x1 * scale;
+        let screen_y = cy - y1 * scale;
+
+        let hovered = find_hovered_center_flip_y(
+            egui::Pos2::new(screen_x, screen_y),
+            &positions,
+            layout,
+            HOVER_THRESHOLD_DEFAULT,
+        );
+        assert_eq!(hovered, Some(1));
+    }
+
+    #[test]
+    fn test_find_hovered_miss() {
+        let positions = generate_positions(50);
+        let rect =
+            egui::Rect::from_min_size(egui::Pos2::new(0.0, 0.0), egui::Vec2::new(400.0, 400.0));
+        let layout = compute_layout(&positions, rect);
+
+        let hovered = find_hovered_center_flip_y(
+            egui::Pos2::new(-5000.0, -5000.0),
+            &positions,
+            layout,
+            HOVER_THRESHOLD_DEFAULT,
+        );
+        assert_eq!(hovered, None);
+    }
+}
