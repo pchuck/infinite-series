@@ -9,7 +9,17 @@ benchmark:
 	@echo "=========================================="
 	@echo ""
 	@echo "System:"
-	@uname -s && uname -m && uname -r && (if [ "$$(uname -s)" = "Linux" ]; then cat /proc/cpuinfo | grep "model name" | head -1 | cut -d: -f2 | xargs; fi)
+	@uname -s && uname -m && uname -r
+	@if [ "$$(uname -s)" = "Linux" ]; then \
+		echo "CPU: $$(cat /proc/cpuinfo | grep 'model name' | head -1 | cut -d: -f2 | xargs)"; \
+		echo "Cores: $$(nproc)"; \
+	elif [ "$$(uname -s)" = "Darwin" ]; then \
+		echo "CPU: $$(sysctl -n machdep.cpu.brand_string)"; \
+		echo "Cores: $$(sysctl -n hw.ncpu)"; \
+	elif [ "$$(uname -s)" = "MINGW"* ] || [ "$$(uname -s)" = "MSYS"* ]; then \
+		echo "CPU: $$(wmic cpu get Name | tail -1)"; \
+		echo "Cores: $$(wmic cpu get NumberOfCores | tail -1)"; \
+	fi
 	@echo ""
 	@echo "Rust:"
 	@cd rust-primes && $(MAKE) run-release-parallel N=$(COUNT)
