@@ -3,7 +3,7 @@
 //! Provides three algorithms:
 //! - Classic Sieve of Eratosthenes (best for n < 1M)
 //! - Segmented Sieve (best for n >= 1M)
-//! - Parallel Segmented Sieve (best for n >= 100M)
+//! - Parallel Segmented Sieve (best for n >= 10M)
 //!
 //! All algorithms use odd-only sieves for 2x memory and work reduction.
 
@@ -13,8 +13,8 @@ use std::sync::Arc;
 /// Default segment size for segmented sieve (1M elements)
 pub const DEFAULT_SEGMENT_SIZE: usize = 1_000_000;
 
-/// Minimum input size for parallel processing (100M)
-pub const PARALLEL_THRESHOLD: usize = 100_000_000;
+/// Minimum input size for parallel processing (10M)
+pub const PARALLEL_THRESHOLD: usize = 10_000_000;
 
 /// Maximum input size (1 quadrillion)
 /// Beyond this, time required exceeds practical limits

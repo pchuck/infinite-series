@@ -25,3 +25,7 @@ codegen-units = 1
 [[bin]]
 name = "primes_cli"
 path = "src/primes_cli.rs"
+
+[[bin]]
+name = "bench_thresholds"
+path = "scripts/benchmark_thresholds.rs"

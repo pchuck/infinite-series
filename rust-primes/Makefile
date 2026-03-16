@@ -70,6 +70,10 @@ bench-save-baseline:
 bench-check:
 	cargo bench --bench prime_benchmarks -- --baseline reference --noise-threshold 0.09
 
+benchmark-thresholds:
+	@echo "Running threshold benchmark to find optimal algorithm cutoffs..."
+	cargo run --release --bin bench_thresholds
+
 help:
 	@echo "Rust Prime Generator - Makefile Targets"
 	@echo ""
@@ -87,6 +91,7 @@ help:
 	@echo "  make bench-report             - Open benchmark HTML report"
 	@echo "  make bench-save-baseline      - Save benchmark baseline"
 	@echo "  make bench-check              - Run benchmark against baseline"
+	@echo "  make benchmark-thresholds     - Benchmark to find optimal thresholds"
 	@echo "  make clean                    - Clean build artifacts"
 	@echo "  make rebuild                  - Clean and rebuild"
 	@echo "  make setup                    - Check/install Rust"
