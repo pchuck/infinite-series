@@ -44,6 +44,8 @@ impl std::fmt::Display for PrimeGenError {
     }
 }
 
+impl std::error::Error for PrimeGenError {}
+
 /// Estimate the number of primes up to n using the Prime Number Theorem.
 /// Returns a safe capacity for Vec::with_capacity (at least 1).
 #[must_use]
