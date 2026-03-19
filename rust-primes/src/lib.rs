@@ -153,7 +153,7 @@ fn sieve_segment_odd_only(
 /// assert_eq!(sieve_of_eratosthenes(1).unwrap(), Vec::<usize>::new());
 /// assert_eq!(sieve_of_eratosthenes(2).unwrap(), Vec::<usize>::new());
 /// ```
-#[must_use]
+#[must_use = "Result should be handled to avoid silent failures"]
 pub fn sieve_of_eratosthenes(n: usize) -> Result<Vec<usize>, PrimeGenError> {
     if n <= 2 {
         return Ok(Vec::new());
@@ -226,7 +226,7 @@ pub fn sieve_of_eratosthenes(n: usize) -> Result<Vec<usize>, PrimeGenError> {
 /// }) as std::sync::Arc<dyn Fn(usize) + Send + Sync>);
 /// let _ = segmented_sieve(1000, 100, progress);
 /// ```
-#[must_use]
+#[must_use = "Result should be handled to avoid silent failures"]
 pub fn segmented_sieve(
     n: usize,
     segment_size: usize,
@@ -295,7 +295,7 @@ pub fn segmented_sieve(
 /// let result = parallel_segmented_sieve(1_000_000, 4, 1_000_000, Some(progress));
 /// assert!(result.is_ok());
 /// ```
-#[must_use]
+#[must_use = "Result should be handled to avoid silent failures"]
 pub fn parallel_segmented_sieve(
     n: usize,
     workers: usize,
@@ -414,7 +414,7 @@ pub fn parallel_segmented_sieve(
 /// assert!(primes.is_ok());
 /// # Ok::<_, primes::PrimeGenError>(())
 /// ```
-#[must_use]
+#[must_use = "Result should be handled to avoid silent failures"]
 pub fn generate_primes(
     n: usize,
     parallel: bool,
