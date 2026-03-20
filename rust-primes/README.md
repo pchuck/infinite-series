@@ -11,7 +11,7 @@ A high-performance prime number generator with CLI.
 High performance prime generation using a parallel segmented sieve and highly optimized code.
 
 Performance varies by hardware:
-- Apple M3 Ultra: ~346M primes/s (parallel, 100M)
+- Apple M3 Ultra:   ~346M primes/s (parallel, 100M)
 - AMD Ryzen 9 7950X: ~67M primes/s (parallel, 100M)  
 - AMD Ryzen 9 7900X: ~55M primes/s (parallel, 100M), ~29M/s (sequential)
 
@@ -32,7 +32,7 @@ Note: CLI performance includes I/O overhead. Micro-benchmarks (using Criterion) 
 - Performance varies by hardware and CPU architecture
 - Parallel processing uses all available threads by default
 - I/O overhead affects CLI timing; micro-benchmarks show pure computation performance
-- For n < 100M, parallel flag is ignored (warning shown)
+- For n < 5M, parallel flag is ignored (warning shown)
 
 
 ## Quick Start
@@ -62,7 +62,7 @@ cargo test
 # Run with progress bar
 cargo run -- -n 10000000 -P
 
-# Run parallel (for n >= 100M)
+# Run parallel test
 cargo run -- -n 100000000 -p
 ```
 
@@ -78,7 +78,7 @@ cargo run -- -n 1000000 --quiet
 # With progress bar
 cargo run -- -n 10000000 -P
 
-# Parallel processing (for n >= 100M)
+# Parallel processing
 cargo run -- -n 100000000 -p -P
 ```
 
@@ -88,13 +88,13 @@ cargo run -- -n 100000000 -p -P
 |--------|-------------|
 | `-n, --n` | Upper bound (exclusive) for prime generation |
 | `-P, --progress` | Show progress bar |
-| `-p, --parallel` | Use parallel processing (for n >= 100M) |
+| `-p, --parallel` | Use parallel processing (for n >= 5M) |
 | `-w, --workers` | Number of worker threads (default: all available) |
 | `--segment` | Segment size for segmented sieve (default: 1M) |
 | `-q, --quiet` | Only print count (no prime list) |
 
 **Notes:**
-- Parallel processing automatically enabled for n >= 100M when `-p` flag is used
+- Parallel processing automatically enabled for n >= 20M when `-p` flag is used
 - Progress bar shows segments processed, not percentage of primes found
 - Quiet mode is useful for scripting and benchmarking without I/O overhead
 
@@ -109,8 +109,8 @@ Auto-selects the best algorithm based on input size:
 | n Range | Algorithm | Memory |
 |---------|-----------|--------|
 | n < 1M | Classic Sieve (odd-only) | O(n/2) |
-| 1M <= n < 100M | Segmented Sieve (odd-only) | O(sqrt(n) + segment/2) |
-| n >= 100M | Parallel Segmented Sieve (odd-only) | O(sqrt(n) + segment/2) per worker |
+| 1M <= n < 20M | Segmented Sieve (odd-only) | O(sqrt(n) + segment/2) |
+| n >= 20M | Parallel Segmented Sieve (odd-only) | O(sqrt(n) + segment/2) per worker |
 
 **Notes:**
 - Parallel processing automatically selects segment size based on input
