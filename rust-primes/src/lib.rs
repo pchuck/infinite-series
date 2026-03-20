@@ -3,7 +3,7 @@
 //! Provides three algorithms:
 //! - Classic Sieve of Eratosthenes (best for n < 1M)
 //! - Segmented Sieve (best for n >= 1M)
-//! - Parallel Segmented Sieve (best for n >= 10M)
+//! - Parallel Segmented Sieve (best for n >= 5M, see scripts/README.md)
 //!
 //! All algorithms use odd-only sieves for 2x memory and work reduction.
 
@@ -13,8 +13,9 @@ use std::sync::Arc;
 /// Default segment size for segmented sieve (1M elements)
 pub const DEFAULT_SEGMENT_SIZE: usize = 1_000_000;
 
-/// Minimum input size for parallel processing (10M)
-pub const PARALLEL_THRESHOLD: usize = 10_000_000;
+/// Minimum input size for parallel processing (5M)
+/// See scripts/README.md for benchmark-based threshold analysis
+pub const PARALLEL_THRESHOLD: usize = 5_000_000;
 
 /// Maximum input size (1 quadrillion)
 /// Beyond this, time required exceeds practical limits
@@ -269,7 +270,7 @@ pub fn segmented_sieve(
 }
 
 /// Parallel Segmented Sieve (odd-only)
-/// Best for n >= 100,000,000
+/// Best for n >= 5,000,000
 /// Uses multiple threads for concurrent segment processing
 ///
 /// Memory: O(sqrt(n) + segment_size) per worker (see segmented_sieve for details).
@@ -402,7 +403,7 @@ pub fn parallel_segmented_sieve(
 /// let primes = generate_primes(1_000_000, false, None, None, None)?;
 /// assert_eq!(primes.len(), 78498);
 ///
-/// // Parallel processing for very large inputs (n >= 100M)
+/// // Parallel processing for large inputs (n >= 5M)
 /// let result = generate_primes(100_000_000, true, None, None, None);
 /// assert!(result.is_ok());
 ///

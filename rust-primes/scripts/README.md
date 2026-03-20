@@ -34,7 +34,7 @@ The benchmark tests all three prime generation algorithms across a range of inpu
 
 - **Classic Sieve**: For small inputs (n < 1M)
 - **Segmented Sieve**: For medium inputs (1M ≤ n < 10M)  
-- **Parallel Segmented Sieve**: For large inputs (n ≥ 10M)
+- **Parallel Segmented Sieve**: For large inputs (n ≥ 5M)
 
 It outputs timing data for each algorithm and determines optimal crossover points.
 
@@ -53,7 +53,10 @@ Current hardcoded thresholds in `src/lib.rs`:
 
 ```rust
 pub const DEFAULT_SEGMENT_SIZE: usize = 1_000_000;
-pub const PARALLEL_THRESHOLD: usize = 10_000_000;  // Changed from 100M to 10M
+pub const PARALLEL_THRESHOLD: usize = 5_000_000;
 ```
 
-These values were determined empirically using the benchmark script.
+These values were determined empirically using this benchmark script.
+
+**Conservative choice**: Benchmark shows crossover at ~2M, but 5M provides extra margin
+for thread startup overhead and cache effects on different hardware.

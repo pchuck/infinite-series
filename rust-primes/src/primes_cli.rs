@@ -24,7 +24,7 @@ struct Args {
     #[arg(short = 'P', long)]
     progress: bool,
 
-    /// Use parallel processing (for n >= 100M)
+    /// Use parallel processing (for n >= 5M)
     #[arg(short, long)]
     parallel: bool,
 
