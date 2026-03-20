@@ -174,8 +174,10 @@ pub fn sieve_of_eratosthenes(n: usize) -> Result<Vec<usize>, PrimeGenError> {
     while current <= limit {
         let idx = (current - 3) / 2;
         if idx < sieve_size && sieve[idx] {
-            // Mark multiples starting at current*current
-            let start_idx = (current * current - 3) / 2;
+            let Some(squared) = current.checked_mul(current) else {
+                break;
+            };
+            let start_idx = squared.saturating_sub(3) / 2;
             let step = current;
             let mut j = start_idx;
             while j < sieve_size {
@@ -251,8 +253,10 @@ pub fn segmented_sieve(
     let mut is_prime = vec![true; segment_size];
 
     for seg_idx in 0..segments {
-        let low = seg_idx * segment_size;
-        let high = min(low + segment_size, n);
+        let Some(low) = seg_idx.checked_mul(segment_size) else {
+            break;
+        };
+        let high = min(low.saturating_add(segment_size), n);
 
         if high <= 2 {
             continue;
@@ -341,8 +345,10 @@ pub fn parallel_segmented_sieve(
                 let mut is_prime = vec![true; segment_size];
 
                 for seg_idx in start_seg..end_seg {
-                    let low = seg_idx * segment_size;
-                    let high = min(low + segment_size, n);
+                    let Some(low) = seg_idx.checked_mul(segment_size) else {
+                        break;
+                    };
+                    let high = min(low.saturating_add(segment_size), n);
 
                     if high <= 2 {
                         continue;
