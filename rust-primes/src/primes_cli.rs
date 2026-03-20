@@ -91,8 +91,6 @@ fn main() {
             .unwrap_or(4)
     });
 
-    let algorithm_segment = args.segment.unwrap_or(DEFAULT_SEGMENT_SIZE_CLI);
-
     let progress_ticks = if args.progress {
         n.div_ceil(DEFAULT_PROGRESS_SEGMENT_SIZE)
     } else {
@@ -114,7 +112,7 @@ fn main() {
                 n,
                 args.parallel && n >= PARALLEL_THRESHOLD,
                 Some(workers),
-                Some(algorithm_segment),
+                Some(segment),
                 Some(Arc::new(move |delta: usize| {
                     progress_callback.update(delta);
                 })),
