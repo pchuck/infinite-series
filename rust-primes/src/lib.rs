@@ -13,6 +13,9 @@ use std::sync::Arc;
 /// Default segment size for segmented sieve (1M elements)
 pub const DEFAULT_SEGMENT_SIZE: usize = 1_000_000;
 
+/// Maximum number of worker threads
+pub const MAX_WORKERS: usize = 256;
+
 /// Minimum input size for parallel processing (5M)
 /// See scripts/README.md for benchmark-based threshold analysis
 pub const PARALLEL_THRESHOLD: usize = 5_000_000;
@@ -448,13 +451,21 @@ pub fn generate_primes(
             .unwrap_or(4)
     });
 
-    if workers == 0 {
-        return Err(PrimeGenError::InvalidInput(
-            "workers must be at least 1".to_string(),
-        ));
+    if workers == 0 || workers > MAX_WORKERS {
+        return Err(PrimeGenError::InvalidInput(format!(
+            "workers must be between 1 and {}",
+            MAX_WORKERS
+        )));
     }
 
     let segment_size = segment_size.unwrap_or(DEFAULT_SEGMENT_SIZE);
+
+    if segment_size == 0 || segment_size > MAX_N {
+        return Err(PrimeGenError::InvalidInput(format!(
+            "segment_size must be between 1 and {}",
+            MAX_N
+        )));
+    }
 
     if parallel && n >= PARALLEL_THRESHOLD {
         parallel_segmented_sieve(n, workers, segment_size, progress)
