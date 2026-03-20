@@ -224,7 +224,8 @@ pub fn sieve_of_eratosthenes(n: usize) -> Result<Vec<usize>, PrimeGenError> {
 /// let progress = Some(std::sync::Arc::new(|delta: usize| {
 ///     let _ = delta; // Use the parameter
 /// }) as std::sync::Arc<dyn Fn(usize) + Send + Sync>);
-/// let _ = segmented_sieve(1000, 100, progress);
+/// let result = segmented_sieve(1000, 100, progress);
+/// assert!(result.is_ok());
 /// ```
 #[must_use = "Result should be handled to avoid silent failures"]
 pub fn segmented_sieve(
