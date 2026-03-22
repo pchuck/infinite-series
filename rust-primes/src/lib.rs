@@ -14,7 +14,7 @@ use std::sync::Arc;
 pub const DEFAULT_SEGMENT_SIZE: usize = 1_000_000;
 
 /// Maximum number of worker threads
-pub const MAX_WORKERS: usize = 16536;
+pub const MAX_WORKERS: usize = 16384;
 
 /// Minimum input size for parallel processing (5M)
 /// See scripts/README.md for benchmark-based threshold analysis
