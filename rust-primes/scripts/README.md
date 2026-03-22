@@ -33,7 +33,7 @@ python scripts/benchmark_thresholds.py
 The benchmark tests all three prime generation algorithms across a range of input sizes:
 
 - **Classic Sieve**: For small inputs (n < 1M)
-- **Segmented Sieve**: For medium inputs (1M ≤ n < 10M)  
+- **Segmented Sieve**: For medium inputs (1M ≤ n < 5M)  
 - **Parallel Segmented Sieve**: For large inputs (n ≥ 5M)
 
 It outputs timing data for each algorithm and determines optimal crossover points.

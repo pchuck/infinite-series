@@ -94,7 +94,7 @@ cargo run -- -n 100000000 -p -P
 | `-q, --quiet` | Only print count (no prime list) |
 
 **Notes:**
-- Parallel processing automatically enabled for n >= 20M when `-p` flag is used
+- Parallel processing automatically enabled for n >= 5M when `-p` flag is used
 - Progress bar shows segments processed, not percentage of primes found
 - Quiet mode is useful for scripting and benchmarking without I/O overhead
 
@@ -109,8 +109,8 @@ Auto-selects the best algorithm based on input size:
 | n Range | Algorithm | Memory |
 |---------|-----------|--------|
 | n < 1M | Classic Sieve (odd-only) | O(n/2) |
-| 1M <= n < 20M | Segmented Sieve (odd-only) | O(sqrt(n) + segment/2) |
-| n >= 20M | Parallel Segmented Sieve (odd-only) | O(sqrt(n) + segment/2) per worker |
+| 1M <= n < 5M | Segmented Sieve (odd-only) | O(sqrt(n) + segment/2) |
+| n >= 5M | Parallel Segmented Sieve (odd-only) | O(sqrt(n) + segment/2) per worker |
 
 **Notes:**
 - Parallel processing automatically selects segment size based on input
