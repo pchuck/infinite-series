@@ -92,7 +92,7 @@ fn main() {
     });
 
     let progress_ticks = if args.progress {
-        n.div_ceil(DEFAULT_PROGRESS_SEGMENT_SIZE)
+        n.div_ceil(segment)
     } else {
         0
     };
