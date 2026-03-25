@@ -149,9 +149,9 @@ fn bench_classic(n: usize) -> f64 {
     let start = std::time::Instant::now();
 
     // Warm up
-    let _ = primes::sieve_of_eratosthenes(1000);
+    let _ = primes::sieve_of_eratosthenes(1000, None);
 
-    let result = primes::sieve_of_eratosthenes(n);
+    let result = primes::sieve_of_eratosthenes(n, None);
     let elapsed = start.elapsed().as_secs_f64();
 
     if result.is_ok() {

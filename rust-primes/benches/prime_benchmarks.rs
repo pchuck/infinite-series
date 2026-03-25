@@ -11,7 +11,7 @@ fn bench_classic_sieve(c: &mut Criterion) {
     for &n in &[1_000, 10_000, 100_000, 1_000_000] {
         group.throughput(Throughput::Elements(n as u64));
         group.bench_function(format!("n_{}", n), |b| {
-            b.iter(|| sieve_of_eratosthenes(black_box(n)))
+            b.iter(|| sieve_of_eratosthenes(black_box(n), None))
         });
     }
 
