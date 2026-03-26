@@ -100,8 +100,6 @@ fn main() {
     let compute_start = Instant::now();
 
     let primes: Vec<usize> = if args.progress {
-        // note: progress bar completes immediately when classic sieve is used
-        // since generate_primes doesn't invoke the callback in that code path.
         let progress_bar = Arc::new(ProgressBar::new(progress_ticks.max(1), "Generating primes"));
 
         let progress_callback = Arc::clone(&progress_bar);
