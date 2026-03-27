@@ -50,6 +50,10 @@ impl std::fmt::Display for PrimeGenError {
 
 impl std::error::Error for PrimeGenError {}
 
+/// Maximum safe value for sqrt calculation using f64 precision.
+/// Above this limit, f64 loses integer precision (2^53).
+pub const SAFE_SQRT_PRECISION_LIMIT: usize = 9_000_000_000_000_000;
+
 /// Estimate the number of primes up to n using the Prime Number Theorem.
 /// Returns a safe capacity for Vec::with_capacity (at least 1).
 #[must_use]
@@ -64,6 +68,37 @@ pub fn estimate_prime_count(n: usize) -> usize {
         n
     };
     estimated.max(1)
+}
+
+/// Validate that segment_size won't cause overflow in segment boundary calculations.
+fn validate_segment_size(n: usize, segment_size: usize) -> Result<(), String> {
+    if segment_size == 0 {
+        return Err("segment_size cannot be zero".to_string());
+    }
+
+    let segments = n.div_ceil(segment_size);
+    if segments.checked_mul(segment_size).is_none() {
+        return Err(format!(
+            "segment_size={} would cause overflow in segment boundary calculations (n={}, segments={})",
+            segment_size, n, segments
+        ));
+    }
+
+    Ok(())
+}
+
+/// Validate workers parameter.
+fn validate_workers(workers: usize) -> Result<(), String> {
+    if workers == 0 {
+        return Err(format!("workers={} is invalid: must be >= 1", workers));
+    }
+    if workers > MAX_WORKERS {
+        return Err(format!(
+            "workers={} exceeds maximum allowed value of {}",
+            workers, MAX_WORKERS
+        ));
+    }
+    Ok(())
 }
 
 /// Process a single segment using odd-only sieve.
@@ -250,9 +285,11 @@ pub fn segmented_sieve(
     segment_size: usize,
     progress: Option<Arc<dyn Fn(usize) + Send + Sync>>,
 ) -> Result<Vec<usize>, PrimeGenError> {
-    if n <= 2 || segment_size == 0 {
+    if n <= 2 {
         return Ok(Vec::new());
     }
+
+    validate_segment_size(n, segment_size).map_err(PrimeGenError::InvalidInput)?;
 
     let base_limit = (n as f64).sqrt() as usize;
     let all_base_primes = sieve_of_eratosthenes(base_limit + 1, None)?;
@@ -322,9 +359,13 @@ pub fn parallel_segmented_sieve(
     segment_size: usize,
     progress: Option<Arc<dyn Fn(usize) + Send + Sync>>,
 ) -> Result<Vec<usize>, PrimeGenError> {
-    if n <= 2 || segment_size == 0 {
+    if n <= 2 {
         return Ok(Vec::new());
     }
+
+    validate_workers(workers).map_err(PrimeGenError::InvalidInput)?;
+
+    validate_segment_size(n, segment_size).map_err(PrimeGenError::InvalidInput)?;
 
     let base_limit = (n as f64).sqrt() as usize;
     let all_base_primes = sieve_of_eratosthenes(base_limit + 1, None)?;
@@ -448,35 +489,59 @@ pub fn generate_primes(
         return Ok(Vec::new());
     }
 
+    if n > SAFE_SQRT_PRECISION_LIMIT {
+        eprintln!(
+            "[WARN] n={} exceeds safe f64 precision limit ({}). \
+             Results may have minor precision loss in sqrt calculations.",
+            n, SAFE_SQRT_PRECISION_LIMIT
+        );
+    }
+
     if n > MAX_N {
         return Err(PrimeGenError::InvalidInput(format!(
-            "n ({}) exceeds maximum supported value {} (1 quadrillion). \
+            "n={} exceeds maximum supported value {} (1 quadrillion). \
              Generating primes above this limit would require impractical computation time.",
             n, MAX_N
         )));
     }
 
-    let workers = workers.unwrap_or_else(|| {
-        std::thread::available_parallelism()
+    let workers = match workers {
+        Some(w) if w == 0 => {
+            return Err(PrimeGenError::InvalidInput(format!(
+                "workers={} is invalid: must be >= 1",
+                w
+            )));
+        }
+        Some(w) if w > MAX_WORKERS => {
+            return Err(PrimeGenError::InvalidInput(format!(
+                "workers={} exceeds maximum allowed value of {}",
+                w, MAX_WORKERS
+            )));
+        }
+        Some(w) => w,
+        None => std::thread::available_parallelism()
             .map(|p| p.get())
-            .unwrap_or(4)
-    });
+            .unwrap_or(4),
+    };
 
-    if workers == 0 || workers > MAX_WORKERS {
-        return Err(PrimeGenError::InvalidInput(format!(
-            "workers must be between 1 and {}",
-            MAX_WORKERS
-        )));
-    }
-
-    let segment_size = segment_size.unwrap_or(DEFAULT_SEGMENT_SIZE);
-
-    if segment_size == 0 || segment_size > MAX_N {
-        return Err(PrimeGenError::InvalidInput(format!(
-            "segment_size must be between 1 and {}",
-            MAX_N
-        )));
-    }
+    let segment_size = match segment_size {
+        Some(0) => {
+            return Err(PrimeGenError::InvalidInput(
+                "segment_size=0 is invalid: must be >= 1".to_string(),
+            ));
+        }
+        Some(s) if s > MAX_N => {
+            return Err(PrimeGenError::InvalidInput(format!(
+                "segment_size={} exceeds maximum allowed value of {}",
+                s, MAX_N
+            )));
+        }
+        Some(s) => {
+            validate_segment_size(n, s).map_err(PrimeGenError::InvalidInput)?;
+            s
+        }
+        None => DEFAULT_SEGMENT_SIZE,
+    };
 
     if parallel && n >= PARALLEL_THRESHOLD {
         parallel_segmented_sieve(n, workers, segment_size, progress)
@@ -505,6 +570,46 @@ mod tests {
         assert_eq!(sieve_of_eratosthenes(0, None).unwrap(), Vec::<usize>::new());
         assert_eq!(sieve_of_eratosthenes(1, None).unwrap(), Vec::<usize>::new());
         assert_eq!(sieve_of_eratosthenes(2, None).unwrap(), Vec::<usize>::new());
+    }
+
+    #[test]
+    fn test_validation_workers_zero() {
+        let result = generate_primes(100, false, Some(0), None, None);
+        assert!(result.is_err());
+        let err_msg = format!("{:?}", result.err().unwrap());
+        assert!(err_msg.contains("workers=0"));
+    }
+
+    #[test]
+    fn test_validation_workers_exceeds_max() {
+        let result = generate_primes(100, false, Some(MAX_WORKERS + 1), None, None);
+        assert!(result.is_err());
+        let err_msg = format!("{:?}", result.err().unwrap());
+        assert!(err_msg.contains("exceeds maximum"));
+    }
+
+    #[test]
+    fn test_validation_segment_size_zero() {
+        let result = generate_primes(100, false, None, Some(0), None);
+        assert!(result.is_err());
+        let err_msg = format!("{:?}", result.err().unwrap());
+        assert!(err_msg.contains("segment_size=0"));
+    }
+
+    #[test]
+    fn test_validation_parallel_segmented_sieve_workers_zero() {
+        let result = parallel_segmented_sieve(100, 0, 100, None);
+        assert!(result.is_err());
+        let err_msg = format!("{:?}", result.err().unwrap());
+        assert!(err_msg.contains("workers=0"));
+    }
+
+    #[test]
+    fn test_validation_segmented_sieve_zero_segment() {
+        let result = segmented_sieve(100, 0, None);
+        assert!(result.is_err());
+        let err_msg = format!("{:?}", result.err().unwrap());
+        assert!(err_msg.contains("segment_size cannot be zero"));
     }
 
     #[test]
