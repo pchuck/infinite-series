@@ -506,36 +506,16 @@ pub fn generate_primes(
     }
 
     let workers = match workers {
-        Some(w) if w == 0 => {
-            return Err(PrimeGenError::InvalidInput(format!(
-                "workers={} is invalid: must be >= 1",
-                w
-            )));
+        Some(w) => {
+            validate_workers(w).map_err(PrimeGenError::InvalidInput)?;
+            w
         }
-        Some(w) if w > MAX_WORKERS => {
-            return Err(PrimeGenError::InvalidInput(format!(
-                "workers={} exceeds maximum allowed value of {}",
-                w, MAX_WORKERS
-            )));
-        }
-        Some(w) => w,
         None => std::thread::available_parallelism()
             .map(|p| p.get())
             .unwrap_or(4),
     };
 
     let segment_size = match segment_size {
-        Some(0) => {
-            return Err(PrimeGenError::InvalidInput(
-                "segment_size=0 is invalid: must be >= 1".to_string(),
-            ));
-        }
-        Some(s) if s > MAX_N => {
-            return Err(PrimeGenError::InvalidInput(format!(
-                "segment_size={} exceeds maximum allowed value of {}",
-                s, MAX_N
-            )));
-        }
         Some(s) => {
             validate_segment_size(n, s).map_err(PrimeGenError::InvalidInput)?;
             s
@@ -593,7 +573,7 @@ mod tests {
         let result = generate_primes(100, false, None, Some(0), None);
         assert!(result.is_err());
         let err_msg = format!("{:?}", result.err().unwrap());
-        assert!(err_msg.contains("segment_size=0"));
+        assert!(err_msg.contains("segment_size cannot be zero"));
     }
 
     #[test]
