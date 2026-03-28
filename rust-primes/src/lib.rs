@@ -489,14 +489,6 @@ pub fn generate_primes(
         return Ok(Vec::new());
     }
 
-    if n > SAFE_SQRT_PRECISION_LIMIT {
-        eprintln!(
-            "[WARN] n={} exceeds safe f64 precision limit ({}). \
-             Results may have minor precision loss in sqrt calculations.",
-            n, SAFE_SQRT_PRECISION_LIMIT
-        );
-    }
-
     if n > MAX_N {
         return Err(PrimeGenError::InvalidInput(format!(
             "n={} exceeds maximum supported value {} (1 quadrillion). \
