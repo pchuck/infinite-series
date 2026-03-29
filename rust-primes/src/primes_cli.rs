@@ -1,13 +1,11 @@
 use clap::Parser;
-use std::io::Write;
+use std::io::{ErrorKind, Write};
 use std::sync::Arc;
 use std::thread;
 use std::time::Instant;
 
 use primes::{generate_primes, PARALLEL_THRESHOLD};
 use progress::ProgressBar;
-
-pub const DEFAULT_PROGRESS_SEGMENT_SIZE: usize = 100_000;
 
 mod progress;
 
@@ -100,7 +98,11 @@ fn main() {
     let compute_start = Instant::now();
 
     let primes: Vec<usize> = if args.progress {
-        let progress_bar = Arc::new(ProgressBar::new(progress_ticks.max(1), "Generating primes"));
+        let progress_bar = Arc::new(ProgressBar::new(
+            progress_ticks.max(1),
+            "Generating primes",
+            segment,
+        ));
 
         let progress_callback = Arc::clone(&progress_bar);
 
@@ -108,7 +110,7 @@ fn main() {
             let progress_bar = Arc::clone(&progress_bar);
             let result = generate_primes(
                 n,
-                args.parallel && n >= PARALLEL_THRESHOLD,
+                args.parallel,
                 Some(workers),
                 Some(segment),
                 Some(Arc::new(move |delta: usize| {
@@ -134,13 +136,7 @@ fn main() {
             }
         }
     } else {
-        match generate_primes(
-            n,
-            args.parallel && n >= PARALLEL_THRESHOLD,
-            Some(workers),
-            Some(segment),
-            None,
-        ) {
+        match generate_primes(n, args.parallel, Some(workers), Some(segment), None) {
             Ok(primes) => primes,
             Err(e) => {
                 eprintln!("Error: Prime generation failed: {:?}", e);
@@ -156,15 +152,45 @@ fn main() {
             // Stream output with BufWriter to avoid building a huge String in memory
             let stdout = std::io::stdout();
             let mut writer = std::io::BufWriter::new(stdout.lock());
-            writeln!(writer, "Primes less than {}:", n).unwrap();
+            if let Err(e) = writeln!(writer, "Primes less than {}:", n) {
+                if e.kind() != ErrorKind::BrokenPipe {
+                    eprintln!("Write error: {}", e);
+                    std::process::exit(1);
+                }
+                return;
+            }
             for (i, &p) in primes.iter().enumerate() {
                 if i > 0 {
-                    write!(writer, ", ").unwrap();
+                    if let Err(e) = write!(writer, ", ") {
+                        if e.kind() != ErrorKind::BrokenPipe {
+                            eprintln!("Write error: {}", e);
+                            std::process::exit(1);
+                        }
+                        return;
+                    }
                 }
-                write!(writer, "{}", p).unwrap();
+                if let Err(e) = write!(writer, "{}", p) {
+                    if e.kind() != ErrorKind::BrokenPipe {
+                        eprintln!("Write error: {}", e);
+                        std::process::exit(1);
+                    }
+                    return;
+                }
             }
-            writeln!(writer).unwrap();
-            writeln!(writer, "Total primes: {}", primes.len()).unwrap();
+            if let Err(e) = writeln!(writer) {
+                if e.kind() != ErrorKind::BrokenPipe {
+                    eprintln!("Write error: {}", e);
+                    std::process::exit(1);
+                }
+                return;
+            }
+            if let Err(e) = writeln!(writer, "Total primes: {}", primes.len()) {
+                if e.kind() != ErrorKind::BrokenPipe {
+                    eprintln!("Write error: {}", e);
+                    std::process::exit(1);
+                }
+                return;
+            }
         } else {
             println!("{}", primes.len());
         }
@@ -203,7 +229,7 @@ fn format_number(n: usize) -> String {
 
     let mut result = String::with_capacity(len + len / 3);
     for (i, ch) in s.chars().enumerate() {
-        if i > 0 && (len - i).is_multiple_of(3) {
+        if i > 0 && (len - i) % 3 == 0 {
             result.push(',');
         }
         result.push(ch);

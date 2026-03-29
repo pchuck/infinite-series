@@ -6,7 +6,11 @@ description = "High-performance prime number generator"
 authors = ["Prime Generator"]
 
 [dependencies]
-clap = { version = "4.4", features = ["derive"] }
+clap = { version = "4.4", features = ["derive"], optional = true }
+
+[features]
+default = ["cli"]
+cli = ["clap"]
 
 [dev-dependencies]
 criterion = { version = "0.5", features = ["html_reports"] }
@@ -25,6 +29,7 @@ codegen-units = 1
 [[bin]]
 name = "primes_cli"
 path = "src/primes_cli.rs"
+required-features = ["cli"]
 
 [[bin]]
 name = "bench_thresholds"

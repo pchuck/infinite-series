@@ -2,7 +2,7 @@
 //! Uses ANSI escape codes, no external dependencies
 
 use std::io::Write;
-use std::sync::Mutex;
+use std::sync::{Mutex, Once};
 use std::time::{Duration, Instant};
 
 /// Default progress bar width in characters
@@ -23,10 +23,12 @@ pub struct ProgressBar {
     description: String,
     start_time: Instant,
     update_interval: Duration,
+    warn_once: Once,
+    segment_size: usize,
 }
 
 impl ProgressBar {
-    pub fn new(total: usize, description: &str) -> Self {
+    pub fn new(total: usize, description: &str, segment_size: usize) -> Self {
         Self {
             total,
             state: Mutex::new(ProgressState {
@@ -37,12 +39,16 @@ impl ProgressBar {
             description: description.to_string(),
             start_time: Instant::now(),
             update_interval: Duration::from_millis(PROGRESS_UPDATE_INTERVAL_MS),
+            warn_once: Once::new(),
+            segment_size,
         }
     }
 
     pub fn update(&self, delta: usize) {
         let mut state = self.state.lock().unwrap_or_else(|poisoned| {
-            eprintln!("[WARN] Progress callback interrupted by thread panic, recovering state");
+            self.warn_once.call_once(|| {
+                eprintln!("[WARN] Progress callback interrupted by thread panic, recovering state");
+            });
             poisoned.into_inner()
         });
         state.completed += delta;
@@ -75,7 +81,7 @@ impl ProgressBar {
 
         let elapsed = self.start_time.elapsed().as_secs_f64();
         let rate = if elapsed > 0.0 {
-            completed as f64 / elapsed
+            (completed * self.segment_size) as f64 / elapsed
         } else {
             0.0
         };
