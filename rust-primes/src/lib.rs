@@ -68,7 +68,7 @@ fn isqrt(n: usize) -> usize {
     while x > 0 && x * x > n {
         x -= 1;
     }
-    while (x + 1).checked_mul(x + 1).map_or(false, |sq| sq <= n) {
+    while (x + 1).checked_mul(x + 1).is_some_and(|sq| sq <= n) {
         x += 1;
     }
     x
