@@ -246,10 +246,8 @@ pub fn sieve_of_eratosthenes(
             };
             let start_idx = squared.saturating_sub(3) / 2;
             let step = current;
-            let mut j = start_idx;
-            while j < sieve_size {
+            for j in (start_idx..sieve_size).step_by(step) {
                 sieve[j] = false;
-                j += step;
             }
         }
         current += 2;
