@@ -1,3 +1,5 @@
+#![allow(clippy::manual_is_multiple_of)]
+
 use clap::Parser;
 use std::io::{ErrorKind, Write};
 use std::sync::Arc;
