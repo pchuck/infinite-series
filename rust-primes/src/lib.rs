@@ -316,7 +316,7 @@ pub fn segmented_sieve(
     let base_primes_odd: Vec<usize> = all_base_primes.into_iter().filter(|&p| p > 2).collect();
 
     let segments = n.div_ceil(segment_size);
-    // Safe capacity estimation using Prime Number Theorem: π(n) ≈ n / ln(n)
+    // Safe capacity estimation using upper bound: π(n) ≤ n / (ln(n) - 1.1)
     let mut primes = Vec::with_capacity(estimate_prime_count(n));
 
     // Reusable buffer for segments (odd-only indexing uses ~segment_size/2 entries)
