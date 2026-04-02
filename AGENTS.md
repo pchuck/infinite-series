@@ -1,6 +1,6 @@
 # AGENTS.md - Number Sequence Generator Project
 
-This project implements high-performance number sequence generators in Python, Go, and Rust.
+This project implements high-performance number sequence generators in Python, Go, Rust, and C.
 
 ## Build/Lint/Test Commands
 
@@ -57,6 +57,16 @@ This project implements high-performance number sequence generators in Python, G
 - **Quick run**: `cd rust-series && make run S=fib`
 - **Quick run**: `cd rust-series && make run S=lucas`
 
+### C
+- **Build**: `cd c-primes && make all`
+- **Run tests**: `cd c-primes && make test`
+- **Debug build**: `cd c-primes && make debug`
+- **Run release CLI**: `cd c-primes && make run-release`
+- **Run debug CLI**: `cd c-primes && make run-debug`
+- **Clean**: `cd c-primes && make clean`
+- **Help**: `cd c-primes && make help`
+- **Run CLI directly**: `cd c-primes && ./build/primes_cli -n 1000000 --quiet`
+
 ## Code Style Guidelines
 
 ### General Principles
@@ -98,13 +108,13 @@ This project implements high-performance number sequence generators in Python, G
 
 ### Naming Conventions
 
-| Element | Python | Go | Rust |
-|---------|--------|----|----|
-| Functions | `snake_case` | `CamelCase` | `snake_case` |
-| Constants | `UPPER_SNAKE_CASE` | `PascalCase` | `UPPER_SNAKE_CASE` |
-| Variables | `snake_case` | `snake_case` | `snake_case` |
-| Types/Classes | `PascalCase` | `PascalCase` | `PascalCase` |
-| Private methods | `_leading_underscore` | `lowercase` | `leading_underscore` |
+| Element | Python | Go | Rust | C |
+|---------|--------|----|----|---|
+| Functions | `snake_case` | `CamelCase` | `snake_case` | `snake_case` |
+| Constants | `UPPER_SNAKE_CASE` | `PascalCase` | `UPPER_SNAKE_CASE` | `UPPER_SNAKE_CASE` |
+| Variables | `snake_case` | `snake_case` | `snake_case` | `snake_case` |
+| Types/Classes | `PascalCase` | `PascalCase` | `PascalCase` | `snake_case` |
+| Private methods | `_leading_underscore` | `lowercase` | `leading_underscore` | `static` |
 
 ### Type Annotations
 
@@ -151,6 +161,19 @@ def generate_primes(n: int) -> List[int]:
     if n < 2:
         raise ValueError("n must be >= 2")
     return primes
+```
+
+**C**: Return error codes and set error messages
+```c
+prime_result_t generate_primes(size_t n, bool parallel, size_t workers, ...) {
+    if (n < 2) {
+        prime_result_t result = create_result(0);
+        result.error = PRIME_OK;  // Empty result is valid for n < 2
+        return result;
+    }
+    // ...
+    return result;
+}
 ```
 
 ### Algorithm Selection (Primes)
