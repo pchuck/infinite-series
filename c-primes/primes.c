@@ -5,6 +5,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <unistd.h>
 
 /* Integer square root using Newton's method */
 size_t isqrt(size_t n) {
@@ -302,29 +303,14 @@ prime_result_t segmented_sieve(size_t n, size_t segment_size, progress_callback_
     return result;
 }
 
-/* Worker thread function for parallel segmented sieve */
+/* Worker thread function for parallel segmented sieve
+ * Buffers (worker_primes, is_prime_buffer) are pre-allocated by the caller
+ */
 static void *worker_thread(void *arg) {
     worker_context_t *ctx = (worker_context_t *)arg;
     
     ctx->worker_count = 0;
-    ctx->worker_capacity = (ctx->end_seg - ctx->start_seg) * ctx->segment_size;
-    ctx->worker_primes = (size_t *)malloc(ctx->worker_capacity * sizeof(size_t));
-    
-    if (!ctx->worker_primes) {
-        ctx->error = PRIME_ERR_MEMORY_ALLOCATION;
-        ctx->error_msg = strdup("Failed to allocate worker primes array");
-        return NULL;
-    }
-    
     size_t buffer_size = ctx->segment_size / 2 + 1;
-    ctx->is_prime_buffer = (bool *)malloc(buffer_size * sizeof(bool));
-    
-    if (!ctx->is_prime_buffer) {
-        free(ctx->worker_primes);
-        ctx->error = PRIME_ERR_MEMORY_ALLOCATION;
-        ctx->error_msg = strdup("Failed to allocate worker buffer");
-        return NULL;
-    }
     
     for (size_t seg_idx = ctx->start_seg; seg_idx < ctx->end_seg; seg_idx++) {
         size_t low = seg_idx * ctx->segment_size;
@@ -359,8 +345,15 @@ prime_result_t parallel_segmented_sieve(size_t n, size_t workers, size_t segment
         return result;
     }
     
-    /* Validate workers */
-    if (workers == 0) workers = 1;
+    /* Auto-detect available parallelism if workers not specified */
+    if (workers == 0) {
+#ifdef _SC_NPROCESSORS_ONLN
+        long ncpu = sysconf(_SC_NPROCESSORS_ONLN);
+        workers = (ncpu > 0) ? (size_t)ncpu : 4;
+#else
+        workers = 4;
+#endif
+    }
     if (workers > MAX_WORKERS) workers = MAX_WORKERS;
     
     /* Validate segment size */
@@ -419,6 +412,36 @@ prime_result_t parallel_segmented_sieve(size_t n, size_t workers, size_t segment
         return result;
     }
     
+    /* Pre-allocate worker buffers in main thread */
+    size_t buffer_size = segment_size / 2 + 1;
+    for (size_t w = 0; w < workers; w++) {
+        size_t segs_for_worker = chunk_size;
+        if (w * chunk_size + chunk_size > segments) {
+            segs_for_worker = segments - w * chunk_size;
+        }
+        size_t worker_capacity = segs_for_worker * segment_size;
+        
+        contexts[w].worker_primes = (size_t *)malloc(worker_capacity * sizeof(size_t));
+        contexts[w].is_prime_buffer = (bool *)malloc(buffer_size * sizeof(bool));
+        
+        if (!contexts[w].worker_primes || !contexts[w].is_prime_buffer) {
+            /* Clean up on allocation failure */
+            for (size_t k = 0; k <= w; k++) {
+                free(contexts[k].worker_primes);
+                free(contexts[k].is_prime_buffer);
+            }
+            free(contexts);
+            free(threads);
+            free(base_primes_odd);
+            prime_result_t result = create_result(0);
+            result.error = PRIME_ERR_MEMORY_ALLOCATION;
+            result.error_msg = strdup("Failed to allocate worker buffers");
+            return result;
+        }
+        
+        contexts[w].worker_capacity = worker_capacity;
+    }
+    
     for (size_t w = 0; w < workers; w++) {
         contexts[w].n = n;
         contexts[w].start_seg = w * chunk_size;
@@ -427,13 +450,10 @@ prime_result_t parallel_segmented_sieve(size_t n, size_t workers, size_t segment
         contexts[w].segment_size = segment_size;
         contexts[w].base_primes_odd = base_primes_odd;
         contexts[w].base_primes_count = base_odd_count;
-        contexts[w].worker_primes = NULL;
-        contexts[w].worker_capacity = 0;
         contexts[w].worker_count = 0;
         contexts[w].progress = progress;
         contexts[w].error = PRIME_OK;
         contexts[w].error_msg = NULL;
-        contexts[w].is_prime_buffer = NULL;
         
         if (contexts[w].start_seg >= segments) {
             contexts[w].end_seg = contexts[w].start_seg;
@@ -441,10 +461,11 @@ prime_result_t parallel_segmented_sieve(size_t n, size_t workers, size_t segment
     }
     
     /* Launch worker threads */
+    size_t launched = 0;
     for (size_t w = 0; w < workers; w++) {
         if (contexts[w].start_seg >= contexts[w].end_seg) continue;
         
-        int rc = pthread_create(&threads[w], NULL, worker_thread, &contexts[w]);
+        int rc = pthread_create(&threads[launched], NULL, worker_thread, &contexts[w]);
         if (rc != 0) {
             prime_result_t result = create_result(0);
             result.error = PRIME_ERR_WORKER_THREAD_PANIC;
@@ -453,19 +474,23 @@ prime_result_t parallel_segmented_sieve(size_t n, size_t workers, size_t segment
             result.error_msg = strdup(msg);
             
             /* Clean up */
-            for (size_t k = 0; k < w; k++) {
+            for (size_t k = 0; k < launched; k++) {
                 pthread_join(threads[k], NULL);
+            }
+            for (size_t k = 0; k < workers; k++) {
+                free(contexts[k].worker_primes);
+                free(contexts[k].is_prime_buffer);
             }
             free(contexts);
             free(threads);
             free(base_primes_odd);
             return result;
         }
+        launched++;
     }
     
     /* Wait for all workers */
-    for (size_t w = 0; w < workers; w++) {
-        if (contexts[w].start_seg >= contexts[w].end_seg) continue;
+    for (size_t w = 0; w < launched; w++) {
         pthread_join(threads[w], NULL);
     }
     
@@ -482,11 +507,12 @@ prime_result_t parallel_segmented_sieve(size_t n, size_t workers, size_t segment
         for (size_t i = 0; i < contexts[w].worker_count; i++) {
             add_prime(&result, contexts[w].worker_primes[i]);
         }
-        
+    }
+    
+    /* Free pre-allocated worker buffers */
+    for (size_t w = 0; w < workers; w++) {
         free(contexts[w].worker_primes);
-        if (contexts[w].is_prime_buffer) {
-            free(contexts[w].is_prime_buffer);
-        }
+        free(contexts[w].is_prime_buffer);
     }
     
     free(contexts);

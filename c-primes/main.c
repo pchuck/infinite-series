@@ -1,3 +1,4 @@
+#define _POSIX_C_SOURCE 199309L
 #include "primes.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -171,17 +172,19 @@ int main(int argc, char *argv[]) {
         return 1;
     }
     
-    /* Time the computation */
-    clock_t compute_start = clock();
+    /* Time the computation (wall-clock using CLOCK_MONOTONIC) */
+    struct timespec ts_start, ts_end;
+    clock_gettime(CLOCK_MONOTONIC, &ts_start);
     
     /* Generate primes */
     prime_result_t result = generate_primes(n, args.parallel,
-                                            args.workers_specified ? args.workers : 4,
+                                            args.workers_specified ? args.workers : 0,
                                             args.segment,
                                             NULL);
     
-    clock_t compute_end = clock();
-    double compute_secs = (double)(compute_end - compute_start) / CLOCKS_PER_SEC;
+    clock_gettime(CLOCK_MONOTONIC, &ts_end);
+    double compute_secs = (double)(ts_end.tv_sec - ts_start.tv_sec) +
+                          (double)(ts_end.tv_nsec - ts_start.tv_nsec) / 1e9;
     
     /* Check for errors */
     if (result.error != PRIME_OK) {

@@ -11,9 +11,9 @@
 
 | Input | Python | Go | Rust | C | Fastest |
 |-------|--------|-----|------|-----|---------|
-| 10M | ~0.35s | ~7ms | ~6ms | ~14ms | **Rust** |
-| 50M | ~2s | ~40ms | ~35ms | ~64ms | **Rust** |
-| 100M | ~5s | ~85ms | ~70ms | ~126ms | **Rust** |
+| 10M | ~0.35s | ~7ms | ~6ms | ~8ms | **Rust** |
+| 50M | ~2s | ~40ms | ~35ms | ~39ms | **Rust** |
+| 100M | ~5s | ~85ms | ~70ms | ~75ms | **Rust** |
 
 ## Rate (Primes per Second, quiet mode)
 
@@ -28,9 +28,9 @@
 
 | Input | Python | Go | Rust | C | C vs Python |
 |-------|--------|-----|------|-----|-------------|
-| 10M | ~1.7M/s | ~40M/s | ~138M/s | ~45M/s | **26x** |
-| 50M | ~25M/s | ~42M/s | ~196M/s | ~47M/s | **1.9x** |
-| 100M | ~20M/s | ~153M/s | ~200M/s | ~46M/s | **2.3x** |
+| 10M | ~1.7M/s | ~40M/s | ~138M/s | ~79M/s | **46x** |
+| 50M | ~25M/s | ~42M/s | ~196M/s | ~76M/s | **3x** |
+| 100M | ~20M/s | ~153M/s | ~200M/s | ~76M/s | **3.8x** |
 
 ## System Benchmarks
 
@@ -38,10 +38,9 @@ Run `make benchmark` to generate benchmark data for the current system.
 
 | System | Python (primes/s) | Go (primes/s) | Rust (primes/s) | C (primes/s) |
 |--------|-------------------|---------------|-----------------|--------------|
-| x86_64 (Linux) | ~20M/s | ~153M/s (100M parallel) | ~200M/s (100M parallel) | ~63M/s (10M sequential) |
 | Apple M2 (macOS) | 5,162,263 | 128,241,213 | 189,089,516 | -- |
 | Apple M3 Ultra (macOS) | 4,893,819 | 288,442,776 | 437,251,921 | -- |
-| Ryzen 9 7900X (Linux) | 2,004,809 | 61,862,555 | 88,468,221 | -- |
+| Ryzen 9 7900X (Linux) | 2,004,809 | 61,862,555 | 88,468,221 | 76,000,000 |
 | Ryzen 9 7950X (Linux) | 2,081,523 | 67,656,939 | 110,742,428 | -- |
 
 ## Key Observations
@@ -66,12 +65,12 @@ Run `make benchmark` to generate benchmark data for the current system.
 - No mutex overhead -- contiguous segment ordering guarantees sorted output without synchronization
 - Auto-detects available parallelism vs C's hardcoded 4-worker default
 
-### C Parallel Limitations
+### C Parallel Performance
 
-- C's parallel mode shows minimal speedup over sequential due to pthread overhead and per-worker malloc allocations
-- Each worker allocates its own `worker_primes` and `is_prime_buffer` buffers (vs Rust's shared references)
-- Thread creation/join overhead dominates at smaller input sizes
-- Hardcoded 4-worker default vs Rust's auto-detected `available_parallelism()`
+- C's parallel mode benefits from pre-allocated worker buffers (single malloc per worker in main thread)
+- Auto-detects available parallelism via `sysconf(_SC_NPROCESSORS_ONLN)`
+- Wall-clock timing via `CLOCK_MONOTONIC` (replaces `clock()` which measured summed CPU time)
+- Still trails Rust by ~2.5-3x due to pthread overhead vs `thread::scope` and per-worker buffer allocations vs zero-copy shared references
 
 ### Summary
 
