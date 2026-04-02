@@ -2,7 +2,8 @@
 //! Uses ANSI escape codes, no external dependencies
 
 use std::io::Write;
-use std::sync::{Mutex, Once};
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Mutex;
 use std::time::{Duration, Instant};
 
 /// Default progress bar width in characters
@@ -23,7 +24,7 @@ pub struct ProgressBar {
     description: String,
     start_time: Instant,
     update_interval: Duration,
-    warn_once: Once,
+    warned: AtomicBool,
     segment_size: usize,
 }
 
@@ -39,16 +40,16 @@ impl ProgressBar {
             description: description.to_string(),
             start_time: Instant::now(),
             update_interval: Duration::from_millis(PROGRESS_UPDATE_INTERVAL_MS),
-            warn_once: Once::new(),
+            warned: AtomicBool::new(false),
             segment_size,
         }
     }
 
     pub fn update(&self, delta: usize) {
         let mut state = self.state.lock().unwrap_or_else(|poisoned| {
-            self.warn_once.call_once(|| {
-                eprintln!("[WARN] Progress callback interrupted by thread panic, recovering state");
-            });
+            if !self.warned.swap(true, Ordering::Relaxed) {
+                eprintln!("[WARN] Progress state recovered from thread panic");
+            }
             poisoned.into_inner()
         });
         state.completed += delta;
