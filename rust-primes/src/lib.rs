@@ -446,11 +446,12 @@ pub fn parallel_segmented_sieve(
             match handle.join() {
                 Ok(worker_primes) => all_primes.extend(worker_primes),
                 Err(e) => {
-                    return Err(PrimeGenError::WorkerThreadPanic(
-                        e.downcast::<String>()
-                            .map(|s| s.to_string())
-                            .unwrap_or_else(|_| "Unknown panic".to_string()),
-                    ));
+                    let msg = e
+                        .downcast::<String>()
+                        .map(|s| *s)
+                        .or_else(|e| e.downcast::<&str>().map(|s| s.to_string()))
+                        .unwrap_or_else(|_| "Unknown panic".to_string());
+                    return Err(PrimeGenError::WorkerThreadPanic(msg));
                 }
             }
         }
