@@ -57,19 +57,17 @@ impl From<String> for PrimeGenError {
 }
 
 /// Integer square root using Newton's method.
-/// Accurate for all usize values without f64 precision issues.
+/// Pure integer implementation — accurate for all usize values without f64 precision issues.
 #[inline]
 fn isqrt(n: usize) -> usize {
     if n == 0 {
         return 0;
     }
-    let mut x = (n as f64).sqrt() as usize;
-    // Refine the estimate to ensure correctness
-    while x > 0 && x * x > n {
-        x -= 1;
-    }
-    while (x + 1).checked_mul(x + 1).is_some_and(|sq| sq <= n) {
-        x += 1;
+    let mut x = n;
+    let mut y = (x + 1) / 2;
+    while y < x {
+        x = y;
+        y = (x + n / x) / 2;
     }
     x
 }
