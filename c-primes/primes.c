@@ -253,13 +253,22 @@ prime_result_t segmented_sieve(size_t n, size_t segment_size, progress_callback_
     /* Allocate result */
     prime_result_t result = create_result(estimate_prime_count(n));
     
-    /* Reusable buffer for segments */
+    /* Reusable buffers for segments */
     size_t buffer_size = segment_size / 2 + 1;
     bool *is_prime = (bool *)malloc(buffer_size * sizeof(bool));
     if (!is_prime) {
         free(base_primes_odd);
         result.error = PRIME_ERR_MEMORY_ALLOCATION;
         result.error_msg = strdup("Failed to allocate segment buffer");
+        return result;
+    }
+    
+    size_t *seg_primes = (size_t *)malloc(segment_size * sizeof(size_t));
+    if (!seg_primes) {
+        free(is_prime);
+        free(base_primes_odd);
+        result.error = PRIME_ERR_MEMORY_ALLOCATION;
+        result.error_msg = strdup("Failed to allocate segment primes array");
         return result;
     }
     
@@ -271,16 +280,6 @@ prime_result_t segmented_sieve(size_t n, size_t segment_size, progress_callback_
         
         if (high <= 2) continue;
         
-        /* Collect primes for this segment */
-        size_t *seg_primes = (size_t *)malloc(segment_size * sizeof(size_t));
-        if (!seg_primes) {
-            free(is_prime);
-            free(base_primes_odd);
-            result.error = PRIME_ERR_MEMORY_ALLOCATION;
-            result.error_msg = strdup("Failed to allocate segment primes array");
-            return result;
-        }
-        
         size_t seg_count = 0;
         sieve_segment_odd_only(low, high, base_primes_odd, base_odd_count,
                               is_prime, buffer_size, seg_primes, &seg_count, segment_size);
@@ -290,14 +289,13 @@ prime_result_t segmented_sieve(size_t n, size_t segment_size, progress_callback_
             add_prime(&result, seg_primes[i]);
         }
         
-        free(seg_primes);
-        
         /* Progress callback */
         if (progress) {
             progress(1);
         }
     }
     
+    free(seg_primes);
     free(is_prime);
     free(base_primes_odd);
     
