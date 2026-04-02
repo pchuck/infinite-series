@@ -124,7 +124,7 @@ fn main() {
             Ok(result) => match result {
                 Ok(primes) => primes,
                 Err(e) => {
-                    eprintln!("Error: Prime generation failed: {:?}", e);
+                    eprintln!("Error: Prime generation failed: {}", e);
                     std::process::exit(1);
                 }
             },
@@ -142,7 +142,7 @@ fn main() {
         match generate_primes(n, args.parallel, Some(workers), Some(segment), None) {
             Ok(primes) => primes,
             Err(e) => {
-                eprintln!("Error: Prime generation failed: {:?}", e);
+                eprintln!("Error: Prime generation failed: {}", e);
                 std::process::exit(1);
             }
         }
