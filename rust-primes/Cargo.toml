@@ -2,6 +2,7 @@
 name = "primes"
 version = "1.0.1"
 edition = "2021"
+rust-version = "1.87"
 description = "High-performance prime number generator"
 authors = ["Prime Generator"]
 

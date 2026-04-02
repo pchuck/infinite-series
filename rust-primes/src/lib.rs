@@ -64,7 +64,7 @@ fn isqrt(n: usize) -> usize {
         return 0;
     }
     let mut x = n;
-    let mut y = (x + 1) / 2;
+    let mut y = x.div_ceil(2);
     while y < x {
         x = y;
         y = (x + n / x) / 2;
@@ -141,7 +141,7 @@ fn sieve_segment_odd_only(
 
     // Odd-only sieve: index i represents number odd_low + 2*i
     let mut odd_low = if low < 3 { 3 } else { low };
-    if odd_low % 2 == 0 {
+    if odd_low.is_multiple_of(2) {
         odd_low += 1;
     }
     if odd_low >= high {
@@ -162,7 +162,7 @@ fn sieve_segment_odd_only(
         if start < p * p {
             start = p * p;
         }
-        if start % 2 == 0 {
+        if start.is_multiple_of(2) {
             start += p;
         }
 
@@ -624,7 +624,7 @@ mod tests {
         for &p in &primes {
             assert!(p >= 2, "Found value < 2: {}", p);
             if p > 2 {
-                assert!(p % 2 != 0, "Found even composite: {}", p);
+                assert!(!p.is_multiple_of(2), "Found even composite: {}", p);
                 let mut d = 3;
                 while d * d <= p {
                     assert!(p % d != 0, "Found composite: {} (divisible by {})", p, d);
