@@ -619,6 +619,91 @@ mod tests {
     }
 
     #[test]
+    fn test_estimate_prime_count_edge_cases() {
+        assert_eq!(estimate_prime_count(0), 1);
+        assert_eq!(estimate_prime_count(1), 1);
+        assert_eq!(estimate_prime_count(2), 1);
+    }
+
+    #[test]
+    fn test_estimate_prime_count_small_values() {
+        // For n <= 2, returns 1
+        // For n = 3, ln(3) ≈ 1.099 < 1.1, so returns n = 3
+        // For n >= 4, ln(n) > 1.1, so uses n/(ln(n)-1.1) formula
+        assert_eq!(estimate_prime_count(3), 3);
+        // n=4: ln(4)≈1.386, 4/(1.386-1.1)≈14
+        assert!(estimate_prime_count(4) >= 4);
+        // n=10: ln(10)≈2.303, 10/(2.303-1.1)≈8
+        assert!(estimate_prime_count(10) >= 4); // actual π(10)=4
+    }
+
+    #[test]
+    fn test_estimate_prime_count_upper_bound() {
+        // The estimate must always be >= actual π(n) for capacity pre-allocation
+        let test_cases: [(usize, usize); 12] = [
+            (10, 4),
+            (100, 25),
+            (1_000, 168),
+            (10_000, 1229),
+            (100_000, 9592),
+            (1_000_000, 78498),
+            (10_000_000, 664579),
+            (100_000_000, 5761455),
+            (1_000_000_000, 50847534),
+            (10_000_000_000, 455052511),
+            (100_000_000_000, 4118054813),
+            (1_000_000_000_000, 37607912018),
+        ];
+        for (n, actual_pi) in test_cases {
+            let estimated = estimate_prime_count(n);
+            assert!(
+                estimated >= actual_pi,
+                "estimate_prime_count({}) = {} must be >= actual π(n) = {}",
+                n,
+                estimated,
+                actual_pi
+            );
+        }
+    }
+
+    #[test]
+    fn test_estimate_prime_count_reasonable_overestimate() {
+        // The estimate should not be wildly larger than the actual count
+        let n = 1_000_000;
+        let estimated = estimate_prime_count(n);
+        let actual = 78498;
+        assert!(
+            estimated < actual * 2,
+            "estimate {} is too far from actual {}",
+            estimated,
+            actual
+        );
+    }
+
+    #[test]
+    fn test_estimate_prime_count_always_sufficient() {
+        // Spot-check that the estimate is always >= actual π(n) across a range
+        // These are known values of π(n)
+        let known_pi: [(usize, usize); 8] = [
+            (10, 4),
+            (100, 25),
+            (1_000, 168),
+            (10_000, 1229),
+            (100_000, 9592),
+            (1_000_000, 78498),
+            (10_000_000, 664579),
+            (100_000_000, 5761455),
+        ];
+        for (n, actual) in known_pi {
+            let est = estimate_prime_count(n);
+            assert!(
+                est >= actual,
+                "estimate_prime_count({n}) = {est} < actual π(n) = {actual}",
+            );
+        }
+    }
+
+    #[test]
     fn test_no_composites() {
         let primes = sieve_of_eratosthenes(200, None).unwrap();
         for &p in &primes {
