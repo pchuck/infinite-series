@@ -152,48 +152,19 @@ fn main() {
 
     if !primes.is_empty() {
         if !args.quiet {
-            // Stream output with BufWriter to avoid building a huge String in memory
             let stdout = std::io::stdout();
             let mut writer = std::io::BufWriter::new(stdout.lock());
-            if let Err(e) = writeln!(writer, "Primes less than {}:", n) {
-                if e.kind() != ErrorKind::BrokenPipe {
-                    eprintln!("Write error: {}", e);
-                    std::process::exit(1);
-                }
-                return;
-            }
+            write_or_exit(&mut writer, format_args!("Primes less than {}:\n", n));
             for (i, &p) in primes.iter().enumerate() {
                 if i > 0 {
-                    if let Err(e) = write!(writer, ", ") {
-                        if e.kind() != ErrorKind::BrokenPipe {
-                            eprintln!("Write error: {}", e);
-                            std::process::exit(1);
-                        }
-                        return;
-                    }
+                    write_or_exit(&mut writer, format_args!(", "));
                 }
-                if let Err(e) = write!(writer, "{}", p) {
-                    if e.kind() != ErrorKind::BrokenPipe {
-                        eprintln!("Write error: {}", e);
-                        std::process::exit(1);
-                    }
-                    return;
-                }
+                write_or_exit(&mut writer, format_args!("{}", p));
             }
-            if let Err(e) = writeln!(writer) {
-                if e.kind() != ErrorKind::BrokenPipe {
-                    eprintln!("Write error: {}", e);
-                    std::process::exit(1);
-                }
-                return;
-            }
-            if let Err(e) = writeln!(writer, "Total primes: {}", primes.len()) {
-                if e.kind() != ErrorKind::BrokenPipe {
-                    eprintln!("Write error: {}", e);
-                    std::process::exit(1);
-                }
-                return;
-            }
+            write_or_exit(
+                &mut writer,
+                format_args!("\nTotal primes: {}\n", primes.len()),
+            );
         } else {
             println!("{}", primes.len());
         }
@@ -219,6 +190,15 @@ fn main() {
             compute_time.as_secs_f64(),
             rate_str
         );
+    }
+}
+
+fn write_or_exit<W: Write>(writer: &mut W, args: std::fmt::Arguments) {
+    if let Err(e) = writer.write_fmt(args) {
+        if e.kind() != ErrorKind::BrokenPipe {
+            eprintln!("Write error: {}", e);
+            std::process::exit(1);
+        }
     }
 }
 
