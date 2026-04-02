@@ -6,7 +6,7 @@ use std::sync::Arc;
 use std::thread;
 use std::time::Instant;
 
-use primes::{generate_primes, PARALLEL_THRESHOLD};
+use primes::{generate_primes, DEFAULT_SEGMENT_SIZE, PARALLEL_THRESHOLD};
 use progress::ProgressBar;
 
 mod progress;
@@ -41,12 +41,10 @@ struct Args {
     quiet: bool,
 }
 
-const DEFAULT_SEGMENT_SIZE_CLI: usize = 1_000_000;
-
 fn main() {
     let args = Args::parse();
 
-    let segment = args.segment.unwrap_or(DEFAULT_SEGMENT_SIZE_CLI);
+    let segment = args.segment.unwrap_or(DEFAULT_SEGMENT_SIZE);
 
     if segment == 0 {
         eprintln!("Error: --segment must be greater than 0");
@@ -132,8 +130,13 @@ fn main() {
                     std::process::exit(1);
                 }
             },
-            Err(_) => {
-                eprintln!("Error: Worker thread panicked during prime generation");
+            Err(e) => {
+                let msg = e
+                    .downcast::<String>()
+                    .map(|s| *s)
+                    .or_else(|e| e.downcast::<&str>().map(|s| s.to_string()))
+                    .unwrap_or_else(|_| "Unknown panic".to_string());
+                eprintln!("Error: Worker thread panicked: {}", msg);
                 std::process::exit(1);
             }
         }
