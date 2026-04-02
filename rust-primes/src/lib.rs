@@ -93,23 +93,14 @@ pub fn estimate_prime_count(n: usize) -> usize {
     estimated.max(1)
 }
 
-/// Validate that segment_size won't cause overflow in segment boundary calculations.
-fn validate_segment_size(n: usize, segment_size: usize) -> Result<(), PrimeGenError> {
+/// Validate that segment_size is non-zero.
+fn validate_segment_size(segment_size: usize) -> Result<(), PrimeGenError> {
     if segment_size == 0 {
         return Err(PrimeGenError::InvalidInput(
             "segment_size cannot be zero".to_string(),
         ));
     }
-
-    let segments = n.div_ceil(segment_size);
-    if segments.checked_mul(segment_size).is_none() {
-        Err(PrimeGenError::InvalidInput(format!(
-            "segment_size={} would cause overflow in segment boundary calculations (n={}, segments={})",
-            segment_size, n, segments
-        )))
-    } else {
-        Ok(())
-    }
+    Ok(())
 }
 
 /// Validate workers parameter.
@@ -308,7 +299,7 @@ pub fn segmented_sieve(
         return Ok(Vec::new());
     }
 
-    validate_segment_size(n, segment_size)?;
+    validate_segment_size(segment_size)?;
 
     let base_limit = isqrt(n);
     let all_base_primes = sieve_of_eratosthenes(base_limit + 1, None)?;
@@ -382,7 +373,7 @@ pub fn parallel_segmented_sieve(
     }
 
     validate_workers(workers)?;
-    validate_segment_size(n, segment_size)?;
+    validate_segment_size(segment_size)?;
 
     let base_limit = isqrt(n);
     let all_base_primes = sieve_of_eratosthenes(base_limit + 1, None)?;
@@ -522,7 +513,7 @@ pub fn generate_primes(
     };
 
     let segment_size = match segment_size {
-        Some(s) => validate_segment_size(n, s).map(|_| s)?,
+        Some(s) => validate_segment_size(s).map(|_| s)?,
         None => DEFAULT_SEGMENT_SIZE,
     };
 
