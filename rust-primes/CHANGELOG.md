@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Summary
 - Classic Sieve of Eratosthenes implementation (odd-only)
 - Segmented Sieve of Eratosthenes (odd-only)
-- Parallel Segmented Sieve for large inputs (n >= 100M)
+- Parallel Segmented Sieve for large inputs (n >= 5M)
 - CLI with progress bar support
 - Benchmark suite using Criterion
 - Integration tests for CLI

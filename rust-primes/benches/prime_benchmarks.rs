@@ -37,7 +37,7 @@ fn bench_auto_selection(c: &mut Criterion) {
     // Tests auto-selection logic:
     // n < 1M: classic sieve
     // n >= 1M: segmented sieve
-    // n >= 100M: parallel segmented sieve (if parallel=true)
+    // n >= 5M: parallel segmented sieve (if parallel=true)
     for &n in &[100_000, 1_000_000, 10_000_000, 100_000_000] {
         group.throughput(Throughput::Elements(n as u64));
         group.bench_function(format!("n_{}_sequential", n), |b| {
