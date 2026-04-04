@@ -1,0 +1,168 @@
+use crate::error::PrimeGenError;
+use crate::{MAX_N, MAX_WORKERS};
+
+/// Integer square root using Newton's method.
+/// Pure integer implementation — accurate for all usize values without f64 precision issues.
+#[inline]
+pub fn isqrt(n: usize) -> usize {
+    if n == 0 {
+        return 0;
+    }
+    let mut x = n;
+    let mut y = x.div_ceil(2);
+    while y < x {
+        x = y;
+        y = (x + n / x) / 2;
+    }
+    x
+}
+
+/// Estimate the number of primes up to n using the Prime Number Theorem.
+/// Returns a safe capacity for Vec::with_capacity (at least 1).
+///
+/// Uses the upper bound n / (ln(n) - 1.1) for n >= 60 to avoid reallocations.
+/// For smaller n, returns n as a safe upper bound.
+///
+/// Note: `n as f64` loses precision above 2^53 (~9e15), but MAX_N is 1e15,
+/// so this is safe for all valid inputs.
+#[must_use]
+pub fn estimate_prime_count(n: usize) -> usize {
+    if n <= 2 {
+        return 1;
+    }
+    let ln_n = (n as f64).ln();
+    let estimated = if ln_n > 1.1 {
+        (n as f64 / (ln_n - 1.1)) as usize
+    } else {
+        n
+    };
+    estimated.max(1)
+}
+
+/// Validate that segment_size is non-zero.
+pub fn validate_segment_size(segment_size: usize) -> Result<(), PrimeGenError> {
+    if segment_size == 0 {
+        return Err(PrimeGenError::InvalidInput(
+            "segment_size cannot be zero".to_string(),
+        ));
+    }
+    Ok(())
+}
+
+/// Validate workers parameter.
+pub fn validate_workers(workers: usize) -> Result<(), PrimeGenError> {
+    if workers == 0 {
+        return Err(PrimeGenError::InvalidInput(format!(
+            "workers={} is invalid: must be >= 1",
+            workers
+        )));
+    }
+    if workers > MAX_WORKERS {
+        return Err(PrimeGenError::InvalidInput(format!(
+            "workers={} exceeds maximum allowed value of {}",
+            workers, MAX_WORKERS
+        )));
+    }
+    Ok(())
+}
+
+/// Validate that n does not exceed the maximum supported input size.
+pub fn validate_n(n: usize) -> Result<(), PrimeGenError> {
+    if n > MAX_N {
+        return Err(PrimeGenError::InvalidInput(format!(
+            "n={} exceeds maximum supported value {} (1 quadrillion). \
+             Generating primes above this limit would require impractical computation time.",
+            n, MAX_N
+        )));
+    }
+    Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_estimate_prime_count_edge_cases() {
+        assert_eq!(estimate_prime_count(0), 1);
+        assert_eq!(estimate_prime_count(1), 1);
+        assert_eq!(estimate_prime_count(2), 1);
+    }
+
+    #[test]
+    fn test_estimate_prime_count_small_values() {
+        assert_eq!(estimate_prime_count(3), 3);
+        assert!(estimate_prime_count(4) >= 4);
+        assert!(estimate_prime_count(10) >= 4);
+    }
+
+    #[test]
+    fn test_estimate_prime_count_upper_bound() {
+        let test_cases: [(usize, usize); 12] = [
+            (10, 4),
+            (100, 25),
+            (1_000, 168),
+            (10_000, 1229),
+            (100_000, 9592),
+            (1_000_000, 78498),
+            (10_000_000, 664579),
+            (100_000_000, 5761455),
+            (1_000_000_000, 50847534),
+            (10_000_000_000, 455052511),
+            (100_000_000_000, 4118054813),
+            (1_000_000_000_000, 37607912018),
+        ];
+        for (n, actual_pi) in test_cases {
+            let estimated = estimate_prime_count(n);
+            assert!(
+                estimated >= actual_pi,
+                "estimate_prime_count({}) = {} must be >= actual π(n) = {}",
+                n,
+                estimated,
+                actual_pi
+            );
+        }
+    }
+
+    #[test]
+    fn test_estimate_prime_count_reasonable_overestimate() {
+        let n = 1_000_000;
+        let estimated = estimate_prime_count(n);
+        let actual = 78498;
+        assert!(
+            estimated < actual * 2,
+            "estimate {} is too far from actual {}",
+            estimated,
+            actual
+        );
+    }
+
+    #[test]
+    fn test_estimate_prime_count_always_sufficient() {
+        let known_pi: [(usize, usize); 8] = [
+            (10, 4),
+            (100, 25),
+            (1_000, 168),
+            (10_000, 1229),
+            (100_000, 9592),
+            (1_000_000, 78498),
+            (10_000_000, 664579),
+            (100_000_000, 5761455),
+        ];
+        for (n, actual) in known_pi {
+            let est = estimate_prime_count(n);
+            assert!(
+                est >= actual,
+                "estimate_prime_count({n}) = {est} < actual π(n) = {actual}",
+            );
+        }
+    }
+
+    #[test]
+    fn test_validate_n_exceeds_max() {
+        let result = validate_n(MAX_N + 1);
+        assert!(
+            matches!(result, Err(PrimeGenError::InvalidInput(msg)) if msg.contains("exceeds maximum"))
+        );
+    }
+}
