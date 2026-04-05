@@ -229,10 +229,10 @@ mod tests {
         assert_eq!(format_number(0), "0");
         assert_eq!(format_number(1), "1");
         assert_eq!(format_number(999), "999");
-        assert_eq!(format_number(1000), "1,000");
-        assert_eq!(format_number(12345), "12,345");
-        assert_eq!(format_number(123456), "123,456");
-        assert_eq!(format_number(1234567), "1,234,567");
-        assert_eq!(format_number(1000000000), "1,000,000,000");
+        assert_eq!(format_number(1_000), "1,000");
+        assert_eq!(format_number(12_345), "12,345");
+        assert_eq!(format_number(123_456), "123,456");
+        assert_eq!(format_number(1_234_567), "1,234,567");
+        assert_eq!(format_number(1_000_000_000), "1,000,000,000");
     }
 }
