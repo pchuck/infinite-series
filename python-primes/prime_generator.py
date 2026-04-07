@@ -24,8 +24,9 @@ from typing import List, Optional, Callable, Any
 SharedCounter = Any
 
 SEGMENTED_SIEVE_THRESHOLD = 10_000_000
-PARALLEL_SIEVE_THRESHOLD = 500_000_000
-DEFAULT_SEGMENT_SIZE = 1_000_000
+PARALLEL_SIEVE_THRESHOLD = 1_000_000_000
+DEFAULT_SEGMENT_SIZE = 500_000
+DEFAULT_NUM_WORKERS = max(1, multiprocessing.cpu_count() // 4)
 
 
 def _sieve_segment_odd_only(
@@ -300,7 +301,7 @@ def parallel_segmented_sieve(
     segments = (n + segment_size - 1) // segment_size
 
     if num_workers is None:
-        num_workers = max(1, multiprocessing.cpu_count() - 1)
+        num_workers = DEFAULT_NUM_WORKERS
 
     num_workers = min(num_workers, segments)
 
