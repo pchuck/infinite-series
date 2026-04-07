@@ -164,7 +164,7 @@ mod tests {
         let primes = segmented_sieve(1_000_000, DEFAULT_SEGMENT_SIZE, None).unwrap();
         assert_eq!(primes.len(), 78498);
         assert_eq!(primes[0], 2);
-        assert_eq!(primes.last().unwrap(), &999983);
+        assert_eq!(primes.last().unwrap(), &999_983);
     }
 
     #[test]
