@@ -60,7 +60,11 @@ func main() {
 	if n <= 0 {
 		fmt.Fprint(os.Stderr, "Enter upper bound (n): ")
 		reader := bufio.NewReader(os.Stdin)
-		input, _ := reader.ReadString('\n')
+		input, err := reader.ReadString('\n')
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error: failed to read input: %v\n", err)
+			os.Exit(1)
+		}
 		parsed, err := strconv.Atoi(strings.TrimSpace(input))
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error: invalid number %q: %v\n", strings.TrimSpace(input), err)
