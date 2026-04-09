@@ -277,4 +277,3 @@ infinite-series/
 - **rust-gui**: Interactive visualizer for all series (`visualizer`)
 - Custom ANSI progress bar with rate display
 - Uses `thread::scope` for safe scoped parallelism with zero-copy data sharing
-
