@@ -7,7 +7,7 @@ A Python project containing optimized prime generation utilities.
 ### Prime Generator
 - **Auto-Algorithm Selection**: Automatically chooses between classic sieve, segmented sieve, and parallel segmented sieve based on input size for optimal performance
 - **Memory-Efficient Segmented Sieve**: Processes primes in segments to reduce memory from O(n) to O(sqrt n), enabling generation of primes up to billions
-- **Parallel Processing**: Multi-core CPU utilization for very large inputs (≥500M) with configurable worker processes
+- **Parallel Processing**: Multi-core CPU utilization for very large inputs (≥1B) with configurable worker processes
 - **Performance Metrics**: Built-in timing and throughput statistics (primes/second) output to stderr
 - **Smart Fallbacks**: Gracefully degrades to sequential processing if parallel processing fails
 - Supports both command-line arguments and interactive input
@@ -52,16 +52,17 @@ python prime_generator.py
 
 ## Performance
 
-The prime generator uses the Sieve of Eratosthenes algorithm, which is significantly faster than trial division:
-- **Small numbers (100)**: 2.5x faster
-- **Medium numbers (1,000)**: 2.7x faster
-- **Large numbers (10,000)**: 6.2x faster
-- **Very large numbers (100,000)**: 8.3x faster
+The prime generator uses the Sieve of Eratosthenes algorithm with several optimizations:
+- Odd-only sieve (2x memory/work reduction)
+- Bytearray with slice assignment
+- Memory-efficient segmented sieve for large inputs
+- Optional parallel processing for inputs ≥1B
 
-Real-world performance
-- 5.3M primes/s on an M3 Ultra
+Real-world performance:
+- ~5.3M primes/s on an M3 Ultra (n=5B)
+- Memory usage: O(sqrt(n)) for segmented sieve
 
-See [Performance](PERFORMANCE.md)
+See [Performance](PERFORMANCE.md) for detailed benchmarks.
 
 ### Memory Efficiency
 
@@ -71,11 +72,12 @@ The segmented sieve reduces memory usage from O(n) to O(sqrt n):
 
 ### CPU Parallel Processing
 
-Available for very large inputs (≥ 500M):
-- Uses `cpu_count() - 1` worker processes by default
+Available for very large inputs (≥ 1B):
+- Uses `cpu_count() // 4` worker processes by default
 - Progress tracking via shared counter
-- Note: Speedup depends on CPU cores, cache locality, and input size
-- In environments with limited CPUs or high multiprocessing overhead, sequential may be faster
+- Note: Parallel processing has significant overhead from process spawning,
+  inter-process communication, and result merging. On systems with fewer cores
+  or for inputs below ~1B, sequential processing may be faster or equivalent.
 
 ## Testing
 
@@ -99,12 +101,14 @@ python performance_comparison.py
 
 ```
 .
-├── prime_generator.py      # Prime number generator (optimized)
-├── test_generators.py      # Comprehensive test suite
-├── performance_comparison.py  # Performance benchmark tool (old vs optimized)
-├── parallel_comparison.py     # Parallel vs sequential comparison
-├── OPTIMIZATION_SUMMARY.md  # Detailed optimization notes
-└── README.md               # This file
+├── prime_generator.py           # Prime number generator (optimized)
+├── test_generators.py           # Comprehensive test suite
+├── performance_comparison.py    # Sieve vs trial division benchmark
+├── parallel_comparison.py       # Sequential vs parallel benchmark
+├── find_optimal_threshold.py    # Threshold tuning utility
+├── PERFORMANCE.md               # Performance benchmarks
+├── PARALLEL.md                  # Parallel processing documentation
+└── README.md                    # This file
 ```
 
 ## Code Style

@@ -13,7 +13,7 @@ CPU parallel processing has been implemented for prime generation using Python's
 - Main process merges and sorts results from all workers
 
 ### Worker Count
-- Default: `cpu_count() - 1` (leaves one CPU for system/other tasks)
+- Default: `cpu_count() // 4` (conservative to avoid overhead)
 - Can be overridden via parameter
 
 ### Progress Tracking
@@ -72,7 +72,7 @@ def parallel_segmented_sieve(
 Added parameter: `parallel: bool = False`
 
 **Auto-selection logic:**
-- Only activates when n >= PARALLEL_SIEVE_THRESHOLD
+- Only activates when n >= PARALLEL_SIEVE_THRESHOLD (default 1B)
 - Can be forced via `force_algorithm="parallel"`
 - Falls back to sequential if multiprocessing fails
 
@@ -80,26 +80,29 @@ Added parameter: `parallel: bool = False`
 
 ### Command-line
 ```bash
-# Auto-select parallel for large inputs (>= PARALLEL_SIEVE_THRESHOLD)
-python prime_generator.py 100000000 --progress
+# Auto-select parallel for very large inputs (>= 1B)
+python prime_generator.py 1000000000 --progress
 
-# Force parallel mode
-python prime_generator.py 25000000 --parallel --progress
+# Force parallel mode (use caution - may be slower for small n)
+python prime_generator.py 1000000000 --parallel --progress
 ```
 
 ### Python API
 ```python
 from prime_generator import generate_primes, parallel_segmented_sieve
 
-# Auto-select based on n
-primes = generate_primes(100_000_000, show_progress=True, parallel=True)
+# Auto-select based on n (parallel only for n >= 1B)
+primes = generate_primes(1_000_000_000, show_progress=True, parallel=True)
 
 # Direct parallel call with custom workers
 primes = parallel_segmented_sieve(
-    100_000_000,
+    1_000_000_000,
     num_workers=4,
     segment_size=1_000_000
 )
+
+# For most cases, segmented sieve (sequential) is recommended:
+primes = generate_primes(100_000_000, show_progress=True)  # No parallel flag
 ```
 
 ## Performance Characteristics
@@ -107,18 +110,19 @@ primes = parallel_segmented_sieve(
 ### When Parallel Helps
 
 Parallel processing provides speedup when:
-- Large input size (>= PARALLEL_SIEVE_THRESHOLD)
-- Multiple CPU cores available
+- Very large input size (>= PARALLEL_SIEVE_THRESHOLD, typically 1B+)
+- Many CPU cores available (8+)
 - Low multiprocessing overhead relative to work time
 - Good cache locality for workers
 
 ### When Sequential is Faster
 
-Sequential may be faster when:
-- Small inputs where overhead dominates
-- Limited CPU cores in environment
+Sequential is often faster when:
+- Input size < 1B (overhead dominates computation)
+- Limited CPU cores (< 8)
 - High process spawning/serialization cost
 - Memory-bound operations (sieve is memory-intensive)
+- Test/sandbox environments with virtualized CPUs
 
 ### Realistic Speedups
 
@@ -128,7 +132,11 @@ Speedup depends on:
 3. Hardware characteristics: CPU cache, memory bandwidth
 4. Python multiprocessing implementation overhead
 
-**Note:** In test environments with limited CPUs or high overhead, sequential may appear faster. 
+**Note:** Parallel processing has significant overhead from process spawning,
+inter-process communication, and result merging. Benchmarks show that parallel
+processing typically only becomes beneficial for inputs >= 1B on systems with
+8+ physical cores. For most use cases, the segmented sieve (sequential) provides
+excellent performance with zero overhead. 
 
 ## Edge Cases Handled
 
@@ -137,6 +145,7 @@ Speedup depends on:
 3. **Uneven chunks**: Handles remainder division correctly
 4. **Windows vs Linux multiprocessing**: Compatible with both systems
 5. **Multiprocessing failures**: Gracefully falls back to sequential
+6. **Low-core environments**: Conservative worker count (cpu_count // 4) avoids overhead
 
 ## Testing
 
