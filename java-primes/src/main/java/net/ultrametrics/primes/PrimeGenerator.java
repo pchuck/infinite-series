@@ -2,7 +2,6 @@ package net.ultrametrics.primes;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.RecursiveTask;
@@ -16,7 +15,7 @@ public class PrimeGenerator {
 
     @FunctionalInterface
     public interface ProgressCallback {
-        void accept(int count);
+        void accept(int count, int total);
     }
 
     private static int[] sieveSegmentOddOnly(int low, int high, int[] basePrimes, byte[] isPrime) {
@@ -112,6 +111,32 @@ public class PrimeGenerator {
         return primesList.stream().mapToInt(Integer::intValue).toArray();
     }
 
+    private static long safeCalculateSegments(long n, long segmentSize) {
+        if (n <= 0 || segmentSize <= 0) {
+            return 0;
+        }
+        return (n + segmentSize - 1) / segmentSize;
+    }
+
+    private static int calculateTotalPrimes(List<int[]> segments) {
+        int total = 0;
+        for (int[] seg : segments) {
+            total += seg.length;
+        }
+        return total;
+    }
+
+    private static int[] combineSegments(List<int[]> segments) {
+        int totalPrimes = calculateTotalPrimes(segments);
+        int[] result = new int[totalPrimes];
+        int offset = 0;
+        for (int[] seg : segments) {
+            System.arraycopy(seg, 0, result, offset, seg.length);
+            offset += seg.length;
+        }
+        return result;
+    }
+
     public static int[] segmentedSieve(int n, int segmentSize, ProgressCallback progressCallback) {
         if (n < 0) {
             throw new IllegalArgumentException("n must be non-negative, got " + n);
@@ -125,8 +150,8 @@ public class PrimeGenerator {
             segmentSize = DEFAULT_SEGMENT_SIZE;
         }
 
-        int baseLimit = (int) Math.sqrt(n);
-        int[] allBasePrimes = sieveOfEratosthenes(baseLimit + 1);
+        long baseLimit = (long) Math.sqrt(n);
+        int[] allBasePrimes = sieveOfEratosthenes((int) baseLimit + 1);
 
         List<Integer> basePrimesOddList = new ArrayList<>();
         for (int p : allBasePrimes) {
@@ -136,7 +161,11 @@ public class PrimeGenerator {
         }
         int[] basePrimesOdd = basePrimesOddList.stream().mapToInt(Integer::intValue).toArray();
 
-        int segments = (n + segmentSize - 1) / segmentSize;
+        long segmentsLong = safeCalculateSegments(n, segmentSize);
+        if (segmentsLong > Integer.MAX_VALUE) {
+            throw new IllegalArgumentException("n too large: would require " + segmentsLong + " segments");
+        }
+        int segments = (int) segmentsLong;
         List<int[]> allSegmentPrimes = new ArrayList<>(segments);
 
         byte[] isPrime = new byte[segmentSize];
@@ -147,7 +176,7 @@ public class PrimeGenerator {
 
             if (high <= 2) {
                 if (progressCallback != null) {
-                    progressCallback.accept(1);
+                    progressCallback.accept(1, segments);
                 }
                 continue;
             }
@@ -156,23 +185,11 @@ public class PrimeGenerator {
             allSegmentPrimes.add(segPrimes);
 
             if (progressCallback != null) {
-                progressCallback.accept(1);
+                progressCallback.accept(1, segments);
             }
         }
 
-        int totalPrimes = 0;
-        for (int[] seg : allSegmentPrimes) {
-            totalPrimes += seg.length;
-        }
-
-        int[] result = new int[totalPrimes];
-        int offset = 0;
-        for (int[] seg : allSegmentPrimes) {
-            System.arraycopy(seg, 0, result, offset, seg.length);
-            offset += seg.length;
-        }
-
-        return result;
+        return combineSegments(allSegmentPrimes);
     }
 
     private static class SegmentTask extends RecursiveTask<int[]> {
@@ -240,8 +257,8 @@ public class PrimeGenerator {
             numWorkers = Runtime.getRuntime().availableProcessors();
         }
 
-        int baseLimit = (int) Math.sqrt(n);
-        int[] allBasePrimes = sieveOfEratosthenes(baseLimit + 1);
+        long baseLimit = (long) Math.sqrt(n);
+        int[] allBasePrimes = sieveOfEratosthenes((int) baseLimit + 1);
 
         List<Integer> basePrimesOddList = new ArrayList<>();
         for (int p : allBasePrimes) {
@@ -251,7 +268,11 @@ public class PrimeGenerator {
         }
         int[] basePrimesOdd = basePrimesOddList.stream().mapToInt(Integer::intValue).toArray();
 
-        int segments = (n + segmentSize - 1) / segmentSize;
+        long segmentsLong = safeCalculateSegments(n, segmentSize);
+        if (segmentsLong > Integer.MAX_VALUE) {
+            throw new IllegalArgumentException("n too large: would require " + segmentsLong + " segments");
+        }
+        int segments = (int) segmentsLong;
         int actualWorkers = Math.min(numWorkers, segments);
 
         ForkJoinPool pool = ForkJoinPool.commonPool();
@@ -297,7 +318,7 @@ public class PrimeGenerator {
 
                     int delta = currentCompleted - lastReported.get();
                     if (delta > 0) {
-                        progressCallback.accept(delta);
+                        progressCallback.accept(delta, segments);
                         lastReported.set(currentCompleted);
                     }
                 }
@@ -310,17 +331,7 @@ public class PrimeGenerator {
             allResults.add(result);
         }
 
-        int totalPrimes = 0;
-        for (int[] seg : allResults) {
-            totalPrimes += seg.length;
-        }
-
-        int[] finalResult = new int[totalPrimes];
-        int offset = 0;
-        for (int[] seg : allResults) {
-            System.arraycopy(seg, 0, finalResult, offset, seg.length);
-            offset += seg.length;
-        }
+        int[] finalResult = combineSegments(allResults);
 
         Arrays.sort(finalResult);
 
@@ -336,25 +347,30 @@ public class PrimeGenerator {
             return new int[0];
         }
 
-        ProgressCallback progressCallback = showProgress ? new ProgressCallback() {
+        boolean useSegmented = "segmented".equals(forceAlgorithm) || "parallel".equals(forceAlgorithm) ||
+                (forceAlgorithm == null && n >= SEGMENTED_SIEVE_THRESHOLD);
+
+        boolean useParallel = "parallel".equals(forceAlgorithm) ||
+                (parallel && n >= PARALLEL_SIEVE_THRESHOLD);
+
+        final int segmentSize = DEFAULT_SEGMENT_SIZE;
+        final int totalSegments = useSegmented ? (int) safeCalculateSegments(n, segmentSize) : 0;
+
+        ProgressCallback progressCallback = showProgress && totalSegments > 0 ? new ProgressCallback() {
             private int lastProgress = 0;
             private long startTime = System.currentTimeMillis();
             private static final int UPDATE_INTERVAL_MS = 100;
             private long lastUpdate = 0;
+            private final int total = totalSegments;
 
             @Override
-            public void accept(int count) {
-                long now = System.currentTimeMillis();
-                if (now - lastUpdate < UPDATE_INTERVAL_MS && lastProgress + count < getTotal()) {
-                    return;
-                }
-                lastUpdate = now;
+            public void accept(int count, int totalArg) {
                 lastProgress += count;
-                render(lastProgress, getTotal());
-            }
-
-            private int getTotal() {
-                return (n + DEFAULT_SEGMENT_SIZE - 1) / DEFAULT_SEGMENT_SIZE;
+                long now = System.currentTimeMillis();
+                if (now - lastUpdate >= UPDATE_INTERVAL_MS || lastProgress >= totalArg) {
+                    lastUpdate = now;
+                    render(lastProgress, totalArg);
+                }
             }
 
             private void render(int completed, int total) {
@@ -399,18 +415,12 @@ public class PrimeGenerator {
             }
         } : null;
 
-        boolean useSegmented = "segmented".equals(forceAlgorithm) || "parallel".equals(forceAlgorithm) ||
-                (forceAlgorithm == null && n >= SEGMENTED_SIEVE_THRESHOLD);
-
-        boolean useParallel = "parallel".equals(forceAlgorithm) ||
-                (parallel && n >= PARALLEL_SIEVE_THRESHOLD);
-
         int[] primes;
         if (useSegmented) {
             if (useParallel) {
-                primes = parallelSegmentedSieve(n, 0, DEFAULT_SEGMENT_SIZE, progressCallback);
+                primes = parallelSegmentedSieve(n, 0, segmentSize, progressCallback);
             } else {
-                primes = segmentedSieve(n, DEFAULT_SEGMENT_SIZE, progressCallback);
+                primes = segmentedSieve(n, segmentSize, progressCallback);
             }
         } else {
             primes = sieveOfEratosthenes(n);
