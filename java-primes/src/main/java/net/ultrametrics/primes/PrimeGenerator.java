@@ -293,42 +293,18 @@ public class PrimeGenerator {
             pool.execute(task);
         }
 
-        List<int[]> allResults = new ArrayList<>();
-        int completedSegments = 0;
-        AtomicInteger lastReported = new AtomicInteger(0);
-
-        if (progressCallback != null) {
-            Thread progressThread = new Thread(() -> {
-                while (completedSegments < segments) {
-                    try {
-                        Thread.sleep(100);
-                    } catch (InterruptedException e) {
-                        break;
-                    }
-
-                    int currentCompleted = 0;
-                    for (RecursiveTask<int[]> task : tasks) {
-                        if (task.isDone()) {
-                            int taskStartSeg = (tasks.indexOf(task) * chunkSize);
-                            int taskEndSeg = Math.min(taskStartSeg + chunkSize, segments);
-                            int taskSegments = taskEndSeg - taskStartSeg;
-                            currentCompleted += taskSegments;
-                        }
-                    }
-
-                    int delta = currentCompleted - lastReported.get();
-                    if (delta > 0) {
-                        progressCallback.accept(delta, segments);
-                        lastReported.set(currentCompleted);
-                    }
-                }
-            });
-            progressThread.start();
-        }
+        List<int[]> allResults = new ArrayList<>(tasks.size());
+        AtomicInteger completedSegments = new AtomicInteger(0);
 
         for (RecursiveTask<int[]> task : tasks) {
             int[] result = task.join();
             allResults.add(result);
+            if (progressCallback != null) {
+                int taskChunks = Math.min(chunkSize, segments - completedSegments.get());
+                if (taskChunks > 0) {
+                    progressCallback.accept(taskChunks, segments);
+                }
+            }
         }
 
         int[] finalResult = combineSegments(allResults);
