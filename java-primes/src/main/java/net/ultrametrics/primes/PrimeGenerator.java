@@ -323,8 +323,11 @@ public class PrimeGenerator {
             return new int[0];
         }
 
-        boolean useSegmented = "segmented".equals(forceAlgorithm) || "parallel".equals(forceAlgorithm) ||
-                (forceAlgorithm == null && n >= SEGMENTED_SIEVE_THRESHOLD);
+        boolean isForcedSegmented = "segmented".equals(forceAlgorithm) || "parallel".equals(forceAlgorithm);
+        boolean isForcedClassic = "classic".equals(forceAlgorithm);
+
+        boolean useSegmented = isForcedSegmented ||
+                (!isForcedClassic && n >= SEGMENTED_SIEVE_THRESHOLD);
 
         boolean useParallel = "parallel".equals(forceAlgorithm) ||
                 (parallel && n >= PARALLEL_SIEVE_THRESHOLD);
