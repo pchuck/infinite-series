@@ -21,6 +21,10 @@ pub fn isqrt(n: usize) -> usize {
 /// Returns a safe capacity for Vec::with_capacity (at least 1).
 ///
 /// Uses the upper bound n / (ln(n) - 1.1) for n >= 60 to avoid reallocations.
+/// The constant 1.1 comes from the PNT refinement: π(n) ≈ n / (ln(n) - 1)
+/// provides a tight upper bound for n >= 60. Using 1.1 instead of 1.0 adds
+/// a small safety margin to ensure the estimate never underestimates.
+///
 /// For smaller n, returns n as a safe upper bound.
 ///
 /// Note: `n as f64` loses precision above 2^53 (~9e15), but MAX_N is 1e15,
@@ -31,8 +35,10 @@ pub fn estimate_prime_count(n: usize) -> usize {
         return 1;
     }
     let ln_n = (n as f64).ln();
-    let estimated = if ln_n > 1.1 {
-        (n as f64 / (ln_n - 1.1)) as usize
+    // Threshold: ln(n) > 1.1 means n > e^1.1 ≈ 3.0, so formula applies for n >= 4
+    const LN_THRESHOLD: f64 = 1.1;
+    let estimated = if ln_n > LN_THRESHOLD {
+        (n as f64 / (ln_n - LN_THRESHOLD)) as usize
     } else {
         n
     };
