@@ -44,11 +44,6 @@ fn main() {
 
     let segment = args.segment.unwrap_or(DEFAULT_SEGMENT_SIZE);
 
-    if segment == 0 {
-        eprintln!("Error: --segment must be greater than 0");
-        std::process::exit(1);
-    }
-
     let n = match args.n {
         Some(v) => v,
         None => {
