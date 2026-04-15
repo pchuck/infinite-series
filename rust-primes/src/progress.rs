@@ -89,7 +89,7 @@ impl ProgressBar {
         let rate_str = format_rate(rate);
 
         eprint!(
-            "\r{}: [{}{}] {:3.0}% | {}/{} | {}    ",
+            "\r{}: [{}{}] {:3.0}% | {}/{} | {}",
             self.description,
             filled_str,
             empty_str,
