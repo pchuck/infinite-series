@@ -2,11 +2,14 @@
 //!
 //! Run with: cargo bench
 
+use std::time::Duration;
+
 use criterion::{black_box, criterion_group, criterion_main, Criterion, Throughput};
 use primes::{generate_primes, segmented_sieve, sieve_of_eratosthenes, DEFAULT_SEGMENT_SIZE};
 
 fn bench_classic_sieve(c: &mut Criterion) {
     let mut group = c.benchmark_group("classic_sieve");
+    group.warm_up_time(Duration::from_secs(1));
 
     for &n in &[1_000, 10_000, 100_000, 1_000_000] {
         group.throughput(Throughput::Elements(n as u64));
@@ -20,6 +23,7 @@ fn bench_classic_sieve(c: &mut Criterion) {
 
 fn bench_segmented_sieve(c: &mut Criterion) {
     let mut group = c.benchmark_group("segmented_sieve");
+    group.warm_up_time(Duration::from_secs(1));
 
     for &n in &[100_000, 1_000_000, 10_000_000] {
         group.throughput(Throughput::Elements(n as u64));
@@ -33,6 +37,7 @@ fn bench_segmented_sieve(c: &mut Criterion) {
 
 fn bench_auto_selection(c: &mut Criterion) {
     let mut group = c.benchmark_group("auto_selection");
+    group.warm_up_time(Duration::from_secs(1));
 
     // Tests auto-selection logic:
     // n < 1M: classic sieve
@@ -58,6 +63,7 @@ fn bench_auto_selection(c: &mut Criterion) {
 
 fn bench_segment_sizes(c: &mut Criterion) {
     let mut group = c.benchmark_group("segment_sizes");
+    group.warm_up_time(Duration::from_secs(1));
     let n = 10_000_000;
 
     for &seg_size in &[100_000, 500_000, 1_000_000, 5_000_000] {
@@ -72,6 +78,7 @@ fn bench_segment_sizes(c: &mut Criterion) {
 
 fn bench_parallel_large(c: &mut Criterion) {
     let mut group = c.benchmark_group("parallel_large");
+    group.warm_up_time(Duration::from_secs(2));
 
     for &n in &[100_000_000, 200_000_000] {
         group.throughput(Throughput::Elements(n as u64));
@@ -85,6 +92,7 @@ fn bench_parallel_large(c: &mut Criterion) {
 
 fn bench_segmented_large(c: &mut Criterion) {
     let mut group = c.benchmark_group("segmented_large");
+    group.warm_up_time(Duration::from_secs(2));
 
     for &n in &[100_000_000, 200_000_000] {
         group.throughput(Throughput::Elements(n as u64));
