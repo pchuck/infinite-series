@@ -9,7 +9,7 @@
 #define DEFAULT_SEGMENT_SIZE 1000000
 
 /* Maximum number of worker threads */
-#define MAX_WORKERS 16384
+#define MAX_WORKERS 1024
 
 /* Minimum input size for parallel processing (5M) */
 #define PARALLEL_THRESHOLD 5000000
