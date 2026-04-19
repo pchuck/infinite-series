@@ -13,35 +13,38 @@ fn main() {
         return;
     }
 
+    let (segment_size, workers, custom_values) = parse_args(&args);
+
     println!("=== Threshold Benchmark Script ===\n");
     println!("Testing algorithm performance across different input sizes...\n");
 
-    // Test range: from small (10K) to very large (500M)
-    let test_values = [
-        10_000,
-        100_000,
-        500_000,
-        1_000_000,
-        2_000_000,
-        5_000_000,
-        10_000_000,
-        20_000_000,
-        50_000_000,
-        100_000_000,
-        200_000_000,
-        500_000_000,
-    ];
+    let test_values: &[usize] = if let Some(values) = &custom_values {
+        values
+    } else {
+        &[
+            10_000,
+            100_000,
+            500_000,
+            1_000_000,
+            2_000_000,
+            5_000_000,
+            10_000_000,
+            20_000_000,
+            50_000_000,
+            100_000_000,
+            200_000_000,
+            500_000_000,
+        ]
+    };
 
-    let segment_size = 1_000_000;
-    let workers = 4;
-
+    println!("Segment size: {}, Workers: {}\n", segment_size, workers);
     println!(
         "{:<15} | {:<12} | {:<12} | {:<12} | Best",
         "n", "Classic", "Segmented", "Parallel"
     );
     println!("{}", "-".repeat(60));
 
-    for n in test_values.iter() {
+    for n in test_values {
         let classic_time = bench_classic(*n);
         let segmented_time = bench_segmented(*n, segment_size);
         let parallel_time = bench_parallel(*n, workers, segment_size);
@@ -70,7 +73,7 @@ fn main() {
     let mut classic_to_segmented: Option<usize> = None;
     let mut segmented_to_parallel: Option<usize> = None;
 
-    for n in test_values.iter() {
+    for n in test_values {
         let classic_time = bench_classic(*n);
         let segmented_time = bench_segmented(*n, segment_size);
 
@@ -194,6 +197,48 @@ fn bench_parallel(n: usize, workers: usize, segment_size: usize) -> f64 {
         eprintln!("Warning: Parallel sieve failed for n={}: {:?}", n, result);
         f64::MAX
     }
+}
+
+fn parse_args(args: &[String]) -> (usize, usize, Option<Vec<usize>>) {
+    let mut segment_size = 1_000_000;
+    let mut workers = 4;
+    let mut custom_values: Option<Vec<usize>> = None;
+
+    let mut i = 1;
+    while i < args.len() {
+        let arg = &args[i];
+
+        if arg == "--help" || arg == "-h" {
+            print_help();
+            std::process::exit(0);
+        } else if let Some(value) = arg.strip_prefix("--custom=") {
+            custom_values = Some(
+                value
+                    .split(',')
+                    .filter_map(|s| s.trim().parse::<usize>().ok())
+                    .collect(),
+            );
+        } else if let Some(value) = arg.strip_prefix("--workers=") {
+            if let Ok(w) = value.parse::<usize>() {
+                workers = w;
+            }
+        } else if let Some(value) = arg.strip_prefix("--segment=") {
+            if let Ok(s) = value.parse::<usize>() {
+                segment_size = s;
+            }
+        }
+
+        i += 1;
+    }
+
+    // Auto-detect workers if not specified
+    if workers == 0 {
+        workers = std::thread::available_parallelism()
+            .map(|p| p.get())
+            .unwrap_or(4);
+    }
+
+    (segment_size, workers, custom_values)
 }
 
 fn format_duration(secs: f64) -> String {
