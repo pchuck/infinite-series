@@ -1,7 +1,6 @@
 use clap::Parser;
 use std::io::{ErrorKind, Write};
 use std::sync::Arc;
-use std::thread;
 use std::time::Instant;
 
 use primes::{generate_primes, DEFAULT_SEGMENT_SIZE, PARALLEL_THRESHOLD};
@@ -44,11 +43,6 @@ fn main() {
 
     let segment = args.segment.unwrap_or(DEFAULT_SEGMENT_SIZE);
 
-    if segment == 0 {
-        eprintln!("Error: --segment must be greater than 0");
-        std::process::exit(1);
-    }
-
     let n = match args.n {
         Some(v) => v,
         None => {
@@ -82,7 +76,7 @@ fn main() {
     }
 
     let workers = args.workers.unwrap_or_else(|| {
-        thread::available_parallelism()
+        std::thread::available_parallelism()
             .map(|p| p.get())
             .unwrap_or(4)
     });
@@ -95,56 +89,36 @@ fn main() {
 
     let compute_start = Instant::now();
 
-    let primes: Vec<usize> = if args.progress {
-        let progress_bar = Arc::new(ProgressBar::new(
+    let progress_bar = args.progress.then(|| {
+        Arc::new(ProgressBar::new(
             progress_ticks.max(1),
             "Generating primes",
             segment,
-        ));
+        ))
+    });
 
-        let progress_callback = Arc::clone(&progress_bar);
+    let progress_callback = progress_bar.as_ref().map(|bar| {
+        let bar = Arc::clone(bar);
+        Arc::new(move |delta: usize| bar.update(delta)) as Arc<dyn Fn(usize) + Send + Sync>
+    });
 
-        let handle = thread::spawn(move || {
-            let progress_bar = Arc::clone(&progress_bar);
-            let result = generate_primes(
-                n,
-                args.parallel,
-                Some(workers),
-                Some(segment),
-                Some(Arc::new(move |delta: usize| {
-                    progress_callback.update(delta);
-                })),
-            );
+    let result = generate_primes(
+        n,
+        args.parallel,
+        Some(workers),
+        Some(segment),
+        progress_callback,
+    );
 
-            progress_bar.finish();
-            result
-        });
+    if let Some(bar) = &progress_bar {
+        bar.finish();
+    }
 
-        match handle.join() {
-            Ok(result) => match result {
-                Ok(primes) => primes,
-                Err(e) => {
-                    eprintln!("Error: Prime generation failed: {}", e);
-                    std::process::exit(1);
-                }
-            },
-            Err(e) => {
-                let msg = e
-                    .downcast::<String>()
-                    .map(|s| *s)
-                    .or_else(|e| e.downcast::<&str>().map(|s| s.to_string()))
-                    .unwrap_or_else(|_| "Unknown panic".to_string());
-                eprintln!("Error: Worker thread panicked: {}", msg);
-                std::process::exit(1);
-            }
-        }
-    } else {
-        match generate_primes(n, args.parallel, Some(workers), Some(segment), None) {
-            Ok(primes) => primes,
-            Err(e) => {
-                eprintln!("Error: Prime generation failed: {}", e);
-                std::process::exit(1);
-            }
+    let primes = match result {
+        Ok(primes) => primes,
+        Err(e) => {
+            eprintln!("Error: Prime generation failed: {}", e);
+            std::process::exit(1);
         }
     };
 

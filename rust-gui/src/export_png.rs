@@ -65,7 +65,7 @@ impl Exporter {
                 Self::render_cube_quadratic_3d(&mut img, app, width, height)
             }
             VisualizationType::CubeSimple3D => {
-                Self::render_cube_quadratic_3d(&mut img, app, width, height)
+                Self::render_cube_simple_3d(&mut img, app, width, height)
             }
             VisualizationType::Mobius3D => Self::render_mobius_3d(&mut img, app, width, height),
             VisualizationType::Klein3D => Self::render_klein_3d(&mut img, app, width, height),
@@ -940,6 +940,65 @@ impl Exporter {
                 3 => Point3D::new(r, -r * angle.cos(), -r * angle.sin()),
                 4 => Point3D::new(r * angle.cos(), r, r * angle.sin()),
                 _ => Point3D::new(r * angle.cos(), -r, -r * angle.sin()),
+            };
+            let (px, py, pz) = project_3d_to_2d(&point, rot_y, rot_x);
+            projected.push((px, py, pz, n, is_highlighted));
+        }
+
+        Self::render_3d_projected(img, app, width, height, &mut projected);
+    }
+
+    fn render_cube_simple_3d(
+        img: &mut ImageBuffer<Rgba<u8>, Vec<u8>>,
+        app: &NumberVisualizerApp,
+        width: u32,
+        height: u32,
+    ) {
+        let max_n = app.config.max_number;
+        if max_n == 0 {
+            return;
+        }
+
+        let highlights = app.highlights();
+        let (rot_x, rot_y) = app.get_rotation();
+
+        let mut face_counts = [0usize; 6];
+        for n in 1..=max_n {
+            let face = ((n * 6) / max_n) % 6;
+            face_counts[face] += 1;
+        }
+
+        let mut face_positions = [0usize; 6];
+
+        let mut projected: Vec<(f32, f32, f32, usize, bool)> = Vec::with_capacity(max_n);
+        for n in 1..=max_n {
+            let is_highlighted = highlights.contains(&n);
+            let face = ((n * 6) / max_n) % 6;
+            let local_idx = face_positions[face];
+            face_positions[face] += 1;
+
+            let face_count = face_counts[face];
+            let side = ((face_count as f32).sqrt().ceil() as usize).max(1);
+            let side_i = local_idx % side;
+            let side_j = local_idx / side;
+
+            let u = (side_i as f32 + 0.5) / side as f32 * 2.0 - 1.0;
+            let v = (side_j as f32 + 0.5) / side as f32 * 2.0 - 1.0;
+
+            let spike = if is_highlighted {
+                app.config.spike_distance
+            } else {
+                0.0
+            };
+            let half = 80.0 / 2.0 + spike;
+
+            let point = match face % 6 {
+                0 => Point3D::new(u * half, half, v * half),
+                1 => Point3D::new(u * half, -half, v * half),
+                2 => Point3D::new(half, u * half, v * half),
+                3 => Point3D::new(-half, u * half, v * half),
+                4 => Point3D::new(u * half, v * half, half),
+                _ => Point3D::new(u * half, v * half, -half),
             };
             let (px, py, pz) = project_3d_to_2d(&point, rot_y, rot_x);
             projected.push((px, py, pz, n, is_highlighted));

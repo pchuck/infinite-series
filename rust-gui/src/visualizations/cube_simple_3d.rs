@@ -2,6 +2,7 @@
 //! Evenly distributes points on all six faces of a cube
 
 use crate::app::NumberVisualizerApp;
+use crate::draw_number::get_prime_pair_color;
 use crate::helpers::MARGIN_SMALL;
 use crate::types::{SeriesType, VisualizationType};
 use crate::visualizations::params::VizParams;
@@ -99,14 +100,16 @@ pub fn draw(app: &mut crate::app::NumberVisualizerApp, ui: &mut egui::Ui, rect: 
     let center_y = rect.center().y;
     let painter = ui.painter();
 
-    for (x, y, depth, _n, is_highlighted) in &projected {
+    for (x, y, depth, n, is_highlighted) in &projected {
         let screen_x = center_x + *x * scale;
         let screen_y = center_y + *y * scale;
         let df = depth_factor(*depth);
 
         if *is_highlighted {
             let size = (app.config.highlight_size as f32 * df) / 2.0;
-            let color = adjust_brightness(app.config.highlight_color, df);
+            let base_color = get_prime_pair_color(*n, highlights, &app.config, app.series_type)
+                .unwrap_or(app.config.highlight_color);
+            let color = adjust_brightness(base_color, df);
             painter.circle_filled(egui::Pos2::new(screen_x, screen_y), size.max(0.5), color);
         } else if app.config.non_highlight_size > 0 {
             let size = (app.config.non_highlight_size as f32 * df) / 2.0;
