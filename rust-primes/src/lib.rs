@@ -9,6 +9,7 @@
 
 mod classic;
 mod dispatcher;
+pub mod progress;
 mod error;
 mod parallel;
 mod segmented;
@@ -18,6 +19,7 @@ pub use classic::sieve_of_eratosthenes;
 pub use dispatcher::generate_primes;
 pub use error::PrimeGenError;
 pub use parallel::parallel_segmented_sieve;
+pub use progress::{ProgressBar, PROGRESS_BAR_WIDTH, PROGRESS_UPDATE_INTERVAL_MS};
 pub use segmented::segmented_sieve;
 pub use utils::estimate_prime_count;
 

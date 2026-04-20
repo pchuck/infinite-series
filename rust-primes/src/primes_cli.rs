@@ -3,10 +3,7 @@ use std::io::{ErrorKind, Write};
 use std::sync::Arc;
 use std::time::Instant;
 
-use primes::{generate_primes, DEFAULT_SEGMENT_SIZE, PARALLEL_THRESHOLD};
-use progress::ProgressBar;
-
-mod progress;
+use primes::{generate_primes, DEFAULT_SEGMENT_SIZE, PARALLEL_THRESHOLD, ProgressBar};
 
 /// Prime Number Generator - High-performance CLI
 #[derive(Parser, Debug)]
