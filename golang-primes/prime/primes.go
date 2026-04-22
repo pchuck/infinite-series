@@ -45,10 +45,8 @@ func sieveSegmentOddOnly(low, high int, basePrimes []int, isPrime []byte) []int 
 		return primes
 	}
 
-	// Reset buffer (no allocation -- just memset the portion we need)
-	for i := 0; i < segLen; i++ {
-		isPrime[i] = 1
-	}
+	// Reset buffer using efficient bulk copy
+	copy(isPrime[:segLen], bytes.Repeat([]byte{1}, segLen))
 
 	for _, p := range basePrimes {
 		// Find first odd multiple of p in [oddLow, high)
@@ -91,6 +89,16 @@ func sieveSegmentOddOnly(low, high int, basePrimes []int, isPrime []byte) []int 
 	return primes
 }
 
+func filterOddPrimes(primes []int) []int {
+	result := make([]int, 0, len(primes))
+	for _, p := range primes {
+		if p > 2 {
+			result = append(result, p)
+		}
+	}
+	return result
+}
+
 func SieveOfEratosthenes(n int) []int {
 	if n <= 2 {
 		return nil
@@ -103,9 +111,7 @@ func SieveOfEratosthenes(n int) []int {
 	// Odd-only sieve: index i represents number 2*i + 3
 	sieveSize := (n - 3 + 1) / 2 // count of odd numbers in [3, n)
 	sieve := make([]byte, sieveSize)
-	for i := range sieve {
-		sieve[i] = 1
-	}
+	copy(sieve, bytes.Repeat([]byte{1}, sieveSize))
 
 	limit := int(math.Sqrt(float64(n)))
 	for current := 3; current <= limit; current += 2 {
@@ -153,13 +159,7 @@ func SegmentedSieve(n int, segmentSize int, progress func(int)) []int {
 
 	baseLimit := int(math.Sqrt(float64(n)))
 	allBasePrimes := SieveOfEratosthenes(baseLimit + 1)
-	// Odd base primes only (exclude 2) for segment sieving
-	basePrimesOdd := make([]int, 0, len(allBasePrimes))
-	for _, p := range allBasePrimes {
-		if p > 2 {
-			basePrimesOdd = append(basePrimesOdd, p)
-		}
-	}
+	basePrimesOdd := filterOddPrimes(allBasePrimes)
 
 	segments := (n + segmentSize - 1) / segmentSize
 	estimated := int(float64(n) / math.Log(float64(n)) * 1.1)
@@ -194,9 +194,9 @@ func SegmentedSieve(n int, segmentSize int, progress func(int)) []int {
 }
 
 type segmentWork struct {
-	segIdx     int
-	low        int
-	high       int
+	segIdx int
+	low    int
+	high   int
 }
 
 type segmentResult struct {
@@ -246,13 +246,7 @@ func ParallelSegmentedSieve(n int, workers, segmentSize int, progress func(int))
 
 	baseLimit := int(math.Sqrt(float64(n)))
 	allBasePrimes := SieveOfEratosthenes(baseLimit + 1)
-	// Odd base primes only (exclude 2) for segment sieving
-	basePrimesOdd := make([]int, 0, len(allBasePrimes))
-	for _, p := range allBasePrimes {
-		if p > 2 {
-			basePrimesOdd = append(basePrimesOdd, p)
-		}
-	}
+	basePrimesOdd := filterOddPrimes(allBasePrimes)
 
 	segments := (n + segmentSize - 1) / segmentSize
 	numWorkers := workers
