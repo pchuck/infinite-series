@@ -119,6 +119,13 @@ func main() {
 		primes = prime.SieveOfEratosthenes(n)
 	}
 
+	if progressBarObj != nil {
+		progressBarObj.Finish()
+		os.Stderr.Sync()
+	}
+
+	totalTime := time.Since(computeStart)
+
 	if len(primes) > 0 {
 		if !quiet {
 			fmt.Printf("Primes less than %d: ", n)
@@ -135,25 +142,15 @@ func main() {
 		} else {
 			fmt.Printf("%d\n", len(primes))
 		}
-	} else {
-		fmt.Printf("No primes less than %d\n", n)
-	}
-
-	if progressBarObj != nil {
-		progressBarObj.Finish()
-		fmt.Fprint(os.Stderr, "\n")
-		os.Stderr.Sync()
-	}
-
-	totalTime := time.Since(computeStart)
-	rate := float64(len(primes)) / totalTime.Seconds()
-
-	if len(primes) > 0 {
 		lastPrime := primes[len(primes)-1]
+		rate := float64(len(primes)) / totalTime.Seconds()
 		rateStr := formatRate(rate)
 		fmt.Fprintf(os.Stderr, "Done! Largest prime < %d is %d. Generated %d primes in %.3fs (%s primes/s).\n",
 			n, lastPrime, len(primes), totalTime.Seconds(), rateStr)
 	} else {
+		if !quiet {
+			fmt.Printf("No primes less than %d\n", n)
+		}
 		fmt.Fprintf(os.Stderr, "Done! Generated 0 primes in %.3fs (0 primes/s).\n",
 			totalTime.Seconds())
 	}

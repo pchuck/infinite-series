@@ -57,6 +57,7 @@ func (p *ProgressBar) SetCompleted(completed int64) {
 func (p *ProgressBar) Finish() {
 	p.mu.Lock()
 	p.completed = p.total
+	fmt.Fprint(os.Stderr, "\r")
 	p.render()
 	fmt.Fprintln(os.Stderr)
 	p.mu.Unlock()
