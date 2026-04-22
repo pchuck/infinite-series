@@ -3,7 +3,6 @@ package progress
 import (
 	"fmt"
 	"os"
-	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -100,10 +99,6 @@ func (p *ProgressBar) render() {
 		p.completed,
 		p.total,
 		rateStr)
-}
-
-func GetCPUCount() int {
-	return runtime.NumCPU()
 }
 
 func FormatNumber(n int64) string {
