@@ -26,7 +26,9 @@ pub use utils::estimate_prime_count;
 /// Default segment size for segmented sieve (1M elements)
 pub const DEFAULT_SEGMENT_SIZE: usize = 1_000_000;
 
-/// Maximum number of worker threads
+/// Maximum number of worker threads.
+/// This is a safeguard against accidental extreme values, not a practical limit.
+/// 1024 workers at the default 1M segment size uses ~512MB of memory.
 pub const MAX_WORKERS: usize = 1024;
 
 /// Minimum input size for parallel processing (5M)
