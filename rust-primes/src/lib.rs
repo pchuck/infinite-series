@@ -7,6 +7,8 @@
 //!
 //! All algorithms use odd-only sieves for 2x memory and work reduction.
 
+use std::sync::Arc;
+
 mod classic;
 mod dispatcher;
 pub mod progress;
@@ -22,6 +24,10 @@ pub use parallel::parallel_segmented_sieve;
 pub use progress::{ProgressBar, PROGRESS_BAR_WIDTH, PROGRESS_UPDATE_INTERVAL_MS};
 pub use segmented::segmented_sieve;
 pub use utils::estimate_prime_count;
+
+/// Type alias for progress callbacks used throughout the library.
+/// Receives the number of segments processed as a progress update.
+pub type ProgressCallback = Arc<dyn Fn(usize) + Send + Sync>;
 
 /// Default segment size for segmented sieve (1M elements)
 pub const DEFAULT_SEGMENT_SIZE: usize = 1_000_000;

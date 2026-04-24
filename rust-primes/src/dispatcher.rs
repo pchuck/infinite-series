@@ -1,8 +1,7 @@
-use std::sync::Arc;
-
 use crate::classic::sieve_of_eratosthenes;
 use crate::error::PrimeGenError;
 use crate::parallel::parallel_segmented_sieve;
+use crate::ProgressCallback;
 use crate::segmented::segmented_sieve;
 use crate::utils::{validate_n, validate_segment_size, validate_workers};
 use crate::{DEFAULT_SEGMENT_SIZE, PARALLEL_THRESHOLD};
@@ -37,7 +36,7 @@ use crate::{DEFAULT_SEGMENT_SIZE, PARALLEL_THRESHOLD};
 /// use std::sync::Arc;
 /// let progress = Some(Arc::new(|delta: usize| {
 ///     eprintln!("Processed {} segments", delta);
-/// }) as Arc<dyn Fn(usize) + Send + Sync>);
+/// }) as primes::ProgressCallback);
 /// let primes = generate_primes(1_000_000, false, Some(4), Some(100_000), progress);
 /// assert!(primes.is_ok());
 /// # Ok::<_, primes::PrimeGenError>(())
@@ -47,7 +46,7 @@ pub fn generate_primes(
     parallel: bool,
     workers: Option<usize>,
     segment_size: Option<usize>,
-    progress: Option<Arc<dyn Fn(usize) + Send + Sync>>,
+    progress: Option<ProgressCallback>,
 ) -> Result<Vec<usize>, PrimeGenError> {
     if n <= 2 {
         return Ok(Vec::new());

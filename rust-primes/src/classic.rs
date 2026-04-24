@@ -1,6 +1,5 @@
-use std::sync::Arc;
-
 use crate::error::PrimeGenError;
+use crate::ProgressCallback;
 use crate::utils::{estimate_prime_count, isqrt};
 
 /// Classic Sieve of Eratosthenes (odd-only)
@@ -25,7 +24,7 @@ use crate::utils::{estimate_prime_count, isqrt};
 /// ```
 pub fn sieve_of_eratosthenes(
     n: usize,
-    progress: Option<Arc<dyn Fn(usize) + Send + Sync>>,
+    progress: Option<ProgressCallback>,
 ) -> Result<Vec<usize>, PrimeGenError> {
     if n <= 2 {
         return Ok(Vec::new());

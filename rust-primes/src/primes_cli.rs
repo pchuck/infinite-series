@@ -3,7 +3,7 @@ use std::io::{ErrorKind, Write};
 use std::sync::Arc;
 use std::time::Instant;
 
-use primes::{generate_primes, DEFAULT_SEGMENT_SIZE, PARALLEL_THRESHOLD, ProgressBar};
+use primes::{generate_primes, DEFAULT_SEGMENT_SIZE, PARALLEL_THRESHOLD, ProgressBar, ProgressCallback};
 
 /// Prime Number Generator - High-performance CLI
 #[derive(Parser, Debug)]
@@ -96,7 +96,7 @@ fn main() {
 
     let progress_callback = progress_bar.as_ref().map(|bar| {
         let bar = Arc::clone(bar);
-        Arc::new(move |delta: usize| bar.update(delta)) as Arc<dyn Fn(usize) + Send + Sync>
+        Arc::new(move |delta: usize| bar.update(delta)) as ProgressCallback
     });
 
     let result = generate_primes(

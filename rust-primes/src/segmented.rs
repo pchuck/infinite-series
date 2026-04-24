@@ -1,8 +1,8 @@
 use std::cmp::min;
-use std::sync::Arc;
 
 use crate::classic::sieve_of_eratosthenes;
 use crate::error::PrimeGenError;
+use crate::ProgressCallback;
 use crate::utils::{estimate_prime_count, isqrt, validate_segment_size};
 
 /// Process a single segment using odd-only sieve.
@@ -92,14 +92,14 @@ pub fn sieve_segment_odd_only(
 /// // Progress callback example
 /// let progress = Some(std::sync::Arc::new(|delta: usize| {
 ///     let _ = delta; // Use the parameter
-/// }) as std::sync::Arc<dyn Fn(usize) + Send + Sync>);
+/// }) as primes::ProgressCallback);
 /// let result = segmented_sieve(1000, 100, progress);
 /// assert!(result.is_ok());
 /// ```
 pub fn segmented_sieve(
     n: usize,
     segment_size: usize,
-    progress: Option<Arc<dyn Fn(usize) + Send + Sync>>,
+    progress: Option<ProgressCallback>,
 ) -> Result<Vec<usize>, PrimeGenError> {
     if n <= 2 {
         return Ok(Vec::new());

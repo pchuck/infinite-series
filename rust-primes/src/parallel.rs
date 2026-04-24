@@ -1,8 +1,8 @@
 use std::cmp::min;
-use std::sync::Arc;
 
 use crate::classic::sieve_of_eratosthenes;
 use crate::error::PrimeGenError;
+use crate::ProgressCallback;
 use crate::segmented::sieve_segment_odd_only;
 use crate::utils::{estimate_prime_count, isqrt, validate_segment_size, validate_workers};
 
@@ -30,7 +30,7 @@ use crate::utils::{estimate_prime_count, isqrt, validate_segment_size, validate_
 /// use std::sync::Arc;
 /// let progress = Arc::new(|delta: usize| {
 ///     // Thread-safe progress updates
-/// });
+/// }) as primes::ProgressCallback;
 /// let result = parallel_segmented_sieve(1_000_000, 4, 1_000_000, Some(progress));
 /// assert!(result.is_ok());
 /// ```
@@ -38,7 +38,7 @@ pub fn parallel_segmented_sieve(
     n: usize,
     workers: usize,
     segment_size: usize,
-    progress: Option<Arc<dyn Fn(usize) + Send + Sync>>,
+    progress: Option<ProgressCallback>,
 ) -> Result<Vec<usize>, PrimeGenError> {
     if n <= 2 {
         return Ok(Vec::new());
