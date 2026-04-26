@@ -1,6 +1,6 @@
 use crate::error::PrimeGenError;
-use crate::ProgressCallback;
 use crate::utils::{estimate_prime_count, isqrt};
+use crate::ProgressCallback;
 
 /// Classic Sieve of Eratosthenes (odd-only)
 /// Best for n < 1,000,000

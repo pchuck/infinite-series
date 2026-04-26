@@ -2,8 +2,8 @@ use std::cmp::min;
 
 use crate::classic::sieve_of_eratosthenes;
 use crate::error::PrimeGenError;
-use crate::ProgressCallback;
 use crate::utils::{estimate_prime_count, isqrt, validate_segment_size};
+use crate::ProgressCallback;
 
 /// Process a single segment using odd-only sieve.
 /// Shared helper used by both sequential and parallel segmented sieves.
