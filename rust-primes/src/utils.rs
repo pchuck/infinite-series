@@ -20,12 +20,13 @@ pub fn isqrt(n: usize) -> usize {
 /// Estimate the number of primes up to n using the Prime Number Theorem.
 /// Returns a safe capacity for Vec::with_capacity (at least 1).
 ///
-/// Uses the upper bound n / (ln(n) - 1.1) for n >= 60 to avoid reallocations.
-/// The constant 1.1 comes from the PNT refinement: π(n) ≈ n / (ln(n) - 1)
-/// provides a tight upper bound for n >= 60. Using 1.1 instead of 1.0 adds
-/// a small safety margin to ensure the estimate never underestimates.
+/// Uses the upper bound n / (ln(n) - 1.1) for ln(n) > 1.1 (i.e., n >= 4)
+/// to avoid reallocations. The constant 1.1 comes from the PNT refinement:
+/// π(n) ≈ n / (ln(n) - 1) provides a tight upper bound. Using 1.1 instead
+/// of 1.0 adds a small safety margin to ensure the estimate never
+/// underestimates.
 ///
-/// For smaller n, returns n as a safe upper bound.
+/// For smaller n (ln(n) <= 1.1), returns `n` as a safe upper bound.
 ///
 /// Note: `n as f64` loses precision above 2^53 (~9e15), but MAX_N is 1e15,
 /// so this is safe for all valid inputs.

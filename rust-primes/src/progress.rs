@@ -60,6 +60,13 @@ pub struct ProgressBar {
     segment_size: usize,
 }
 
+// SAFETY: All fields are Send + Sync:
+// - `Mutex<ProgressState>` is Send + Sync
+// - `AtomicBool` is Sync (and therefore Send when behind Arc)
+// - `usize`, `String`, `Instant`, `Duration` are all Send + Sync
+unsafe impl Send for ProgressBar {}
+unsafe impl Sync for ProgressBar {}
+
 impl ProgressBar {
     /// Creates a new progress bar.
     ///

@@ -107,17 +107,20 @@ fn main() {
         progress_callback,
     );
 
-    if let Some(bar) = &progress_bar {
-        bar.finish();
-    }
-
     let primes = match result {
         Ok(primes) => primes,
         Err(e) => {
+            if let Some(bar) = &progress_bar {
+                bar.finish();
+            }
             eprintln!("Error: Prime generation failed: {}", e);
             std::process::exit(1);
         }
     };
+
+    if let Some(bar) = &progress_bar {
+        bar.finish();
+    }
 
     let compute_time = compute_start.elapsed();
 
