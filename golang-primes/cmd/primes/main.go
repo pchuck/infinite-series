@@ -109,19 +109,25 @@ func main() {
 	}
 
 	var primes []int
+	var err error
 	computeStart := time.Now()
 
 	if parallel {
-		primes = prime.ParallelSegmentedSieve(n, workerCount, segmentSizeForProgress, progressCallback)
+		primes, err = prime.ParallelSegmentedSieve(n, workerCount, segmentSizeForProgress, progressCallback)
 	} else if n >= prime.DefaultSegmentSize {
-		primes = prime.SegmentedSieve(n, segmentSizeForProgress, progressCallback)
+		primes, err = prime.SegmentedSieve(n, segmentSizeForProgress, progressCallback)
 	} else {
-		primes = prime.SieveOfEratosthenes(n)
+		primes, err = prime.SieveOfEratosthenes(n)
 	}
 
 	if progressBarObj != nil {
 		progressBarObj.Finish()
 		os.Stderr.Sync()
+	}
+
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: Prime generation failed: %v\n", err)
+		os.Exit(1)
 	}
 
 	totalTime := time.Since(computeStart)
