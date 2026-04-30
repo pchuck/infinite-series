@@ -336,6 +336,63 @@ enum GenerationState {
     Error,
 }
 
+fn handle_key_after_running(
+    app: &mut AppState,
+    key: event::KeyEvent,
+    prime_thread: &mut Option<std::thread::JoinHandle<Result<Vec<usize>, primes::PrimeGenError>>>,
+    progress_bar: &mut Option<Arc<ProgressBar>>,
+) {
+    let was_running = app.generation_state == GenerationState::Running;
+    handle_key(app, key);
+
+    if was_running {
+        let n = app.n_value().unwrap_or(0);
+        let segment_size = app.segment_size_value().unwrap_or(DEFAULT_SEGMENT_SIZE);
+        let workers = app.effective_workers();
+        let parallel = app.parallel;
+
+        *progress_bar = if app.show_progress {
+            let total_segments = n.div_ceil(segment_size);
+            Some(Arc::new(ProgressBar::new(
+                total_segments.max(1),
+                "Generating primes",
+                segment_size,
+            )))
+        } else {
+            None
+        };
+
+        let progress_callback = progress_bar.as_ref().map(|bar| {
+            let bar = Arc::clone(bar);
+            Arc::new(move |delta: usize| bar.update(delta)) as ProgressCallback
+        });
+
+        let handle = std::thread::spawn(move || {
+            generate_primes(
+                n,
+                parallel,
+                Some(workers),
+                Some(segment_size),
+                progress_callback,
+            )
+        });
+
+        *prime_thread = Some(handle);
+    }
+
+    if let Some(handle) = prime_thread.take() {
+        match handle.join() {
+            Ok(Ok(primes)) => app.finish_generation(Ok(primes)),
+            Ok(Err(e)) => app.finish_generation(Err(e.to_string())),
+            Err(_) => app.finish_generation(Err("worker thread panicked".to_string())),
+        }
+    }
+
+    if matches!(app.active_input, ActiveInput::None) && key.code == KeyCode::Esc {
+        std::process::exit(0);
+    }
+}
+
 fn run(app: &mut AppState) -> Result<(), String> {
     use crossterm::cursor::Hide;
     use crossterm::execute;
@@ -379,53 +436,46 @@ fn run(app: &mut AppState) -> Result<(), String> {
             Err(_) => break,
         };
 
-        match &app.generation_state {
-            GenerationState::Running => {}
-            _ => {
-                handle_key(app, key);
+        if app.generation_state == GenerationState::Running {
+            handle_key_after_running(app, key, &mut prime_thread, &mut progress_bar);
+            continue;
+        }
 
-                if app.generation_state == GenerationState::Running {
-                    let n = app.n_value().unwrap_or(0);
-                    let segment_size = app.segment_size_value().unwrap_or(DEFAULT_SEGMENT_SIZE);
-                    let workers = app.effective_workers();
-                    let parallel = app.parallel;
+        handle_key(app, key);
 
-                    progress_bar = if app.show_progress {
-                        let total_segments = n.div_ceil(segment_size);
-                        Some(Arc::new(ProgressBar::new(
-                            total_segments.max(1),
-                            "Generating primes",
-                            segment_size,
-                        )))
-                    } else {
-                        None
-                    };
+        if app.generation_state == GenerationState::Running {
+            let n = app.n_value().unwrap_or(0);
+            let segment_size = app.segment_size_value().unwrap_or(DEFAULT_SEGMENT_SIZE);
+            let workers = app.effective_workers();
+            let parallel = app.parallel;
 
-                    let progress_callback = progress_bar.as_ref().map(|bar| {
-                        let bar = Arc::clone(bar);
-                        Arc::new(move |delta: usize| bar.update(delta)) as ProgressCallback
-                    });
+            progress_bar = if app.show_progress {
+                let total_segments = n.div_ceil(segment_size);
+                Some(Arc::new(ProgressBar::new(
+                    total_segments.max(1),
+                    "Generating primes",
+                    segment_size,
+                )))
+            } else {
+                None
+            };
 
-                    let pb = progress_bar.clone();
-                    let handle = std::thread::spawn(move || {
-                        let result = generate_primes(
-                            n,
-                            parallel,
-                            Some(workers),
-                            Some(segment_size),
-                            progress_callback,
-                        );
-                        std::thread::sleep(Duration::from_millis(50));
-                        if let Some(bar) = &pb {
-                            bar.finish();
-                        }
-                        println!("\n");
-                        result
-                    });
+            let progress_callback = progress_bar.as_ref().map(|bar| {
+                let bar = Arc::clone(bar);
+                Arc::new(move |delta: usize| bar.update(delta)) as ProgressCallback
+            });
 
-                    prime_thread = Some(handle);
-                }
-            }
+            let handle = std::thread::spawn(move || {
+                generate_primes(
+                    n,
+                    parallel,
+                    Some(workers),
+                    Some(segment_size),
+                    progress_callback,
+                )
+            });
+
+            prime_thread = Some(handle);
         }
 
         if let Some(handle) = prime_thread.take() {
