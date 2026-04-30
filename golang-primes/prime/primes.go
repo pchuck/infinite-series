@@ -2,6 +2,8 @@ package prime
 
 import (
 	"bytes"
+	"errors"
+	"fmt"
 	"math"
 	"runtime"
 	"sync"
@@ -10,8 +12,67 @@ import (
 
 const (
 	DefaultSegmentSize = 1_000_000
-	ParallelThreshold  = 100_000_000
+	ParallelThreshold  = 5_000_000
+
+	// MaxN is the maximum supported input size (1 quadrillion)
+	MaxN = 1_000_000_000_000
 )
+
+// ValidateError represents input validation errors
+type ValidateError struct {
+	msg string
+}
+
+func (e *ValidateError) Error() string {
+	return e.msg
+}
+
+func (e *ValidateError) String() string {
+	return e.msg
+}
+
+// NewValidateError creates a new ValidateError with the given message.
+func NewValidateError(msg string) error {
+	return &ValidateError{msg: msg}
+}
+
+func isValidateError(err error) bool {
+	var ve *ValidateError
+	return errors.As(err, &ve)
+}
+
+// validateN validates that n does not exceed the maximum supported input size.
+func validateN(n int) error {
+	if n < 0 {
+		return NewValidateError(fmt.Sprintf("n=%d is invalid: must be >= 0", n))
+	}
+	if n > MaxN {
+		return NewValidateError(fmt.Sprintf("n=%d exceeds maximum supported value %d (1 quadrillion). Generating primes above this limit would require impractical computation time.", n, MaxN))
+	}
+	return nil
+}
+
+// validateWorkers validates the workers parameter.
+func validateWorkers(workers int) error {
+	if workers < 0 {
+		return NewValidateError(fmt.Sprintf("workers=%d is invalid: must be >= 0", workers))
+	}
+	if workers > 1024 {
+		return NewValidateError(fmt.Sprintf("workers=%d exceeds maximum allowed value of 1024", workers))
+	}
+	return nil
+}
+
+// validateSegmentSize validates that segment_size is non-zero and reasonable.
+func validateSegmentSize(segmentSize int) error {
+	if segmentSize == 0 {
+		return NewValidateError("segment_size cannot be zero")
+	}
+	if segmentSize < 0 {
+		return NewValidateError(fmt.Sprintf("segment_size=%d is invalid: must be >= 0", segmentSize))
+	}
+	return nil
+}
 
 // sieveSegmentOddOnly processes a single segment using odd-only sieve.
 // Shared helper used by both sequential and parallel segmented sieves.
@@ -90,13 +151,17 @@ func sieveSegmentOddOnly(low, high int, basePrimes []int, isPrime []byte) []int 
 	return primes
 }
 
-func SieveOfEratosthenes(n int) []int {
+func SieveOfEratosthenes(n int) ([]int, error) {
+	if err := validateN(n); err != nil {
+		return nil, err
+	}
+
 	if n <= 2 {
-		return nil
+		return []int{}, nil
 	}
 
 	if n <= 3 {
-		return []int{2}
+		return []int{2}, nil
 	}
 
 	// Odd-only sieve: index i represents number 2*i + 3
@@ -139,19 +204,53 @@ func SieveOfEratosthenes(n int) []int {
 		}
 	}
 
-	return primes
+	return primes, nil
 }
 
-func SegmentedSieve(n int, segmentSize int, progress func(int)) []int {
-	if n <= 2 {
-		return nil
+// PrimeGenError is returned when prime generation fails.
+type PrimeGenError struct {
+	msg string
+}
+
+func (e *PrimeGenError) Error() string {
+	return e.msg
+}
+
+// WorkerThreadPanic creates an error for worker thread panics.
+func WorkerThreadPanic(msg string) error {
+	return &PrimeGenError{msg: fmt.Sprintf("worker thread panicked: %s", msg)}
+}
+
+// InvalidInput creates an error for invalid input parameters.
+func InvalidInput(msg string) error {
+	return &PrimeGenError{msg: fmt.Sprintf("invalid input: %s", msg)}
+}
+
+// IsValidateError returns true if the error is a validation error.
+func IsValidateError(err error) bool {
+	return isValidateError(err)
+}
+
+func SegmentedSieve(n int, segmentSize int, progress func(int)) ([]int, error) {
+	if err := validateN(n); err != nil {
+		return nil, err
 	}
-	if segmentSize <= 0 {
+	if err := validateSegmentSize(segmentSize); err != nil {
+		return nil, err
+	}
+
+	if n <= 2 {
+		return []int{}, nil
+	}
+	if segmentSize == 0 {
 		segmentSize = DefaultSegmentSize
 	}
 
 	baseLimit := int(math.Sqrt(float64(n)))
-	allBasePrimes := SieveOfEratosthenes(baseLimit + 1)
+	allBasePrimes, err := SieveOfEratosthenes(baseLimit + 1)
+	if err != nil {
+		return nil, err
+	}
 	basePrimesOdd := allBasePrimes[1:]
 
 	segments := (n + segmentSize - 1) / segmentSize
@@ -183,7 +282,7 @@ func SegmentedSieve(n int, segmentSize int, progress func(int)) []int {
 		}
 	}
 
-	return primes
+	return primes, nil
 }
 
 type segmentWork struct {
@@ -226,19 +325,31 @@ func workerProcessSegment(
 	}
 }
 
-func ParallelSegmentedSieve(n int, workers, segmentSize int, progress func(int)) []int {
-	if n <= 2 {
-		return nil
+func ParallelSegmentedSieve(n int, workers, segmentSize int, progress func(int)) ([]int, error) {
+	if err := validateN(n); err != nil {
+		return nil, err
 	}
-	if segmentSize <= 0 {
+	if segmentSize == 0 {
 		segmentSize = DefaultSegmentSize
+	} else if err := validateSegmentSize(segmentSize); err != nil {
+		return nil, err
+	}
+	if err := validateWorkers(workers); err != nil {
+		return nil, err
+	}
+
+	if n <= 2 {
+		return []int{}, nil
 	}
 	if workers <= 0 {
 		workers = runtime.NumCPU()
 	}
 
 	baseLimit := int(math.Sqrt(float64(n)))
-	allBasePrimes := SieveOfEratosthenes(baseLimit + 1)
+	allBasePrimes, err := SieveOfEratosthenes(baseLimit + 1)
+	if err != nil {
+		return nil, err
+	}
 	basePrimesOdd := allBasePrimes[1:]
 
 	segments := (n + segmentSize - 1) / segmentSize
@@ -324,12 +435,16 @@ func ParallelSegmentedSieve(n int, workers, segmentSize int, progress func(int))
 		allPrimes = append(allPrimes, segPrimes...)
 	}
 
-	return allPrimes
+	return allPrimes, nil
 }
 
-func GeneratePrimes(n int, parallel bool, progress func(int)) []int {
+func GeneratePrimes(n int, parallel bool, progress func(int)) ([]int, error) {
+	if err := validateN(n); err != nil {
+		return nil, err
+	}
+
 	if n <= 2 {
-		return nil
+		return []int{}, nil
 	}
 
 	if parallel && n >= ParallelThreshold {

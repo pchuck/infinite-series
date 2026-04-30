@@ -39,23 +39,27 @@ func TestSieveOfEratosthenes(t *testing.T) {
 		{
 			name:     "n=2",
 			n:        2,
-			expected: nil,
+			expected: []int{},
 		},
 		{
 			name:     "n=1",
 			n:        1,
-			expected: nil,
+			expected: []int{},
 		},
 		{
 			name:     "n=0",
 			n:        0,
-			expected: nil,
+			expected: []int{},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := SieveOfEratosthenes(tt.n)
+			result, err := SieveOfEratosthenes(tt.n)
+			if err != nil {
+				t.Errorf("SieveOfEratosthenes(%d) returned error: %v", tt.n, err)
+				return
+			}
 			if len(result) != len(tt.expected) {
 				t.Errorf("SieveOfEratosthenes(%d) = %v, want %v", tt.n, result, tt.expected)
 				return
@@ -88,18 +92,22 @@ func TestSegmentedSieve(t *testing.T) {
 		{
 			name:     "n=2",
 			n:        2,
-			expected: nil,
+			expected: []int{},
 		},
 		{
 			name:     "n=0",
 			n:        0,
-			expected: nil,
+			expected: []int{},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := SegmentedSieve(tt.n, 10, nil)
+			result, err := SegmentedSieve(tt.n, 10, nil)
+			if err != nil {
+				t.Errorf("SegmentedSieve(%d) returned error: %v", tt.n, err)
+				return
+			}
 			if len(result) != len(tt.expected) {
 				t.Errorf("SegmentedSieve(%d) = %v, want %v", tt.n, result, tt.expected)
 				return
@@ -117,8 +125,12 @@ func TestSegmentedSieveMatchesClassic(t *testing.T) {
 	testValues := []int{100, 500, 1000, 5000, 10000}
 	for _, n := range testValues {
 		t.Run(fmt.Sprintf("n=%d", n), func(t *testing.T) {
-			expected := SieveOfEratosthenes(n)
-			result := SegmentedSieve(n, 100, nil)
+			expected, _ := SieveOfEratosthenes(n)
+			result, err := SegmentedSieve(n, 100, nil)
+			if err != nil {
+				t.Errorf("SegmentedSieve(%d) returned error: %v", n, err)
+				return
+			}
 			if len(result) != len(expected) {
 				t.Errorf("SegmentedSieve(%d) length = %d, want %d", n, len(result), len(expected))
 				return
@@ -134,7 +146,11 @@ func TestSegmentedSieveMatchesClassic(t *testing.T) {
 
 func TestSegmentedSieveLargeInput(t *testing.T) {
 	n := 1000000
-	result := SegmentedSieve(n, DefaultSegmentSize, nil)
+	result, err := SegmentedSieve(n, DefaultSegmentSize, nil)
+	if err != nil {
+		t.Errorf("SegmentedSieve(%d) returned error: %v", n, err)
+		return
+	}
 
 	expectedCount := 78498
 	if len(result) != expectedCount {
@@ -162,13 +178,17 @@ func TestSegmentedSieveWithProgress(t *testing.T) {
 		totalDelta += delta
 	}
 
-	result := SegmentedSieve(n, segmentSize, callback)
+	result, err := SegmentedSieve(n, segmentSize, callback)
+	if err != nil {
+		t.Errorf("SegmentedSieve(%d) returned error: %v", n, err)
+		return
+	}
 
 	if totalDelta == 0 {
 		t.Error("Progress callback was not called")
 	}
 
-	expected := SieveOfEratosthenes(n)
+	expected, _ := SieveOfEratosthenes(n)
 	if len(result) != len(expected) {
 		t.Errorf("SegmentedSieve with callback = %v, want %v", result, expected)
 	}
@@ -176,12 +196,16 @@ func TestSegmentedSieveWithProgress(t *testing.T) {
 
 func TestSegmentedSieveCustomSegmentSize(t *testing.T) {
 	n := 100
-	expected := SieveOfEratosthenes(n)
+	expected, _ := SieveOfEratosthenes(n)
 
 	segmentSizes := []int{1, 10, 100, 1000}
 	for _, segSize := range segmentSizes {
 		t.Run(fmt.Sprintf("seg=%d", segSize), func(t *testing.T) {
-			result := SegmentedSieve(n, segSize, nil)
+			result, err := SegmentedSieve(n, segSize, nil)
+			if err != nil {
+				t.Errorf("SegmentedSieve(%d, %d) returned error: %v", n, segSize, err)
+				return
+			}
 			if len(result) != len(expected) {
 				t.Errorf("SegmentedSieve(%d, %d) count = %d, want %d", n, segSize, len(result), len(expected))
 			}
@@ -201,9 +225,13 @@ func TestSegmentedSieveEdgeCases(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := SegmentedSieve(tt.n, 10, nil)
-			if result != nil {
-				t.Errorf("SegmentedSieve(%d) = %v, want nil", tt.n, result)
+			result, err := SegmentedSieve(tt.n, 10, nil)
+			if err != nil {
+				t.Errorf("SegmentedSieve(%d) returned error: %v", tt.n, err)
+				return
+			}
+			if len(result) != 0 {
+				t.Errorf("SegmentedSieve(%d) = %v, want empty slice", tt.n, result)
 			}
 		})
 	}
@@ -213,8 +241,12 @@ func TestParallelSegmentedSieveMatchesSegmented(t *testing.T) {
 	testValues := []int{100, 500, 1000, 5000, 10000}
 	for _, n := range testValues {
 		t.Run(fmt.Sprintf("n=%d", n), func(t *testing.T) {
-			expected := SegmentedSieve(n, 100, nil)
-			result := ParallelSegmentedSieve(n, 2, 100, nil)
+			expected, _ := SegmentedSieve(n, 100, nil)
+			result, err := ParallelSegmentedSieve(n, 2, 100, nil)
+			if err != nil {
+				t.Errorf("ParallelSegmentedSieve(%d) returned error: %v", n, err)
+				return
+			}
 			if len(result) != len(expected) {
 				t.Errorf("ParallelSegmentedSieve(%d) length = %d, want %d", n, len(result), len(expected))
 				return
@@ -230,12 +262,16 @@ func TestParallelSegmentedSieveMatchesSegmented(t *testing.T) {
 
 func TestParallelSegmentedSieveWithVariousWorkers(t *testing.T) {
 	n := 10000
-	expected := SegmentedSieve(n, 100, nil)
+	expected, _ := SegmentedSieve(n, 100, nil)
 	workerCounts := []int{1, 2, 4}
 
 	for _, workers := range workerCounts {
 		t.Run(fmt.Sprintf("workers=%d", workers), func(t *testing.T) {
-			result := ParallelSegmentedSieve(n, workers, 100, nil)
+			result, err := ParallelSegmentedSieve(n, workers, 100, nil)
+			if err != nil {
+				t.Errorf("ParallelSegmentedSieve(%d, workers=%d) returned error: %v", n, workers, err)
+				return
+			}
 			if len(result) != len(expected) {
 				t.Errorf("ParallelSegmentedSieve(%d, workers=%d) length = %d, want %d", n, workers, len(result), len(expected))
 			}
@@ -247,9 +283,13 @@ func TestParallelSegmentedSieveEdgeCases(t *testing.T) {
 	testValues := []int{0, 1, 2}
 	for _, n := range testValues {
 		t.Run(fmt.Sprintf("n=%d", n), func(t *testing.T) {
-			result := ParallelSegmentedSieve(n, 2, 100, nil)
-			if result != nil {
-				t.Errorf("ParallelSegmentedSieve(%d) = %v, want nil", n, result)
+			result, err := ParallelSegmentedSieve(n, 2, 100, nil)
+			if err != nil {
+				t.Errorf("ParallelSegmentedSieve(%d) returned error: %v", n, err)
+				return
+			}
+			if len(result) != 0 {
+				t.Errorf("ParallelSegmentedSieve(%d) = %v, want empty slice", n, result)
 			}
 		})
 	}
@@ -257,26 +297,33 @@ func TestParallelSegmentedSieveEdgeCases(t *testing.T) {
 
 func TestParallelSegmentedSieveWithProgress(t *testing.T) {
 	n := 10000
-	expected := SegmentedSieve(n, 100, nil)
+	expected, _ := SegmentedSieve(n, 100, nil)
 	totalDelta := 0
 	callback := func(delta int) {
 		totalDelta += delta
 	}
 
-	result := ParallelSegmentedSieve(n, 2, 100, callback)
+	result, err := ParallelSegmentedSieve(n, 2, 100, callback)
+	if err != nil {
+		t.Errorf("ParallelSegmentedSieve(%d) returned error: %v", n, err)
+		return
+	}
 
 	if len(result) != len(expected) {
 		t.Errorf("ParallelSegmentedSieve with callback = %v, want %v", result, expected)
 	}
 
-	// Progress callback should have been called with total segments
 	if totalDelta == 0 {
 		t.Error("Progress callback was not called in parallel mode")
 	}
 }
 
 func TestGeneratePrimesSmallInput(t *testing.T) {
-	result := GeneratePrimes(10, false, nil)
+	result, err := GeneratePrimes(10, false, nil)
+	if err != nil {
+		t.Errorf("GeneratePrimes(10) returned error: %v", err)
+		return
+	}
 	expected := []int{2, 3, 5, 7}
 
 	if len(result) != len(expected) {
@@ -286,7 +333,11 @@ func TestGeneratePrimesSmallInput(t *testing.T) {
 
 func TestGeneratePrimesLargeInput(t *testing.T) {
 	n := 100000
-	result := GeneratePrimes(n, false, nil)
+	result, err := GeneratePrimes(n, false, nil)
+	if err != nil {
+		t.Errorf("GeneratePrimes(%d) returned error: %v", n, err)
+		return
+	}
 
 	expectedCount := 9592
 	if len(result) != expectedCount {
@@ -301,8 +352,16 @@ func TestGeneratePrimesLargeInput(t *testing.T) {
 
 func TestGeneratePrimesWithParallel(t *testing.T) {
 	n := 100000
-	seqResult := GeneratePrimes(n, false, nil)
-	parResult := GeneratePrimes(n, true, nil)
+	seqResult, err := GeneratePrimes(n, false, nil)
+	if err != nil {
+		t.Errorf("GeneratePrimes(%d, parallel=false) returned error: %v", n, err)
+		return
+	}
+	parResult, parErr := GeneratePrimes(n, true, nil)
+	if parErr != nil {
+		t.Errorf("GeneratePrimes(%d, parallel=true) returned error: %v", n, parErr)
+		return
+	}
 
 	if len(seqResult) != len(parResult) {
 		t.Errorf("Sequential and parallel results have different lengths: %d vs %d", len(seqResult), len(parResult))
@@ -317,8 +376,16 @@ func TestGeneratePrimesWithParallel(t *testing.T) {
 }
 
 func TestGeneratePrimesProgressParameter(t *testing.T) {
-	resultWithProgress := GeneratePrimes(50, false, func(i int) {})
-	resultWithoutProgress := GeneratePrimes(50, false, nil)
+	resultWithProgress, err1 := GeneratePrimes(50, false, func(i int) {})
+	if err1 != nil {
+		t.Errorf("GeneratePrimes(with progress) returned error: %v", err1)
+		return
+	}
+	resultWithoutProgress, err2 := GeneratePrimes(50, false, nil)
+	if err2 != nil {
+		t.Errorf("GeneratePrimes(without progress) returned error: %v", err2)
+		return
+	}
 
 	if len(resultWithProgress) != len(resultWithoutProgress) {
 		t.Error("Results differ based on progress parameter")
@@ -326,12 +393,15 @@ func TestGeneratePrimesProgressParameter(t *testing.T) {
 }
 
 func TestNoComposites(t *testing.T) {
-	primes := GeneratePrimes(50, false, nil)
+	primes, err := GeneratePrimes(50, false, nil)
+	if err != nil {
+		t.Errorf("GeneratePrimes(50) returned error: %v", err)
+		return
+	}
 	for _, p := range primes {
 		if p <= 1 {
 			t.Errorf("Found non-prime: %d", p)
 		}
-		// Actually verify primality
 		if p > 2 && p%2 == 0 {
 			t.Errorf("Found even composite: %d", p)
 		}
@@ -344,10 +414,84 @@ func TestNoComposites(t *testing.T) {
 }
 
 func TestConsecutivePrimes(t *testing.T) {
-	result := GeneratePrimes(20, false, nil)
+	result, err := GeneratePrimes(20, false, nil)
+	if err != nil {
+		t.Errorf("GeneratePrimes(20) returned error: %v", err)
+		return
+	}
 	expected := []int{2, 3, 5, 7, 11, 13, 17, 19}
 
 	if len(result) != len(expected) {
 		t.Errorf("GeneratePrimes(20) = %v, want %v", result, expected)
+	}
+}
+
+func TestValidationNExceedsMax(t *testing.T) {
+	n := MaxN + 1
+	_, err := GeneratePrimes(n, false, nil)
+	if err == nil {
+		t.Errorf("GeneratePrimes(%d) should return error for n > MaxN", n)
+	}
+	if !IsValidateError(err) {
+		t.Errorf("GeneratePrimes(%d) error should be ValidateError, got: %v", n, err)
+	}
+}
+
+func TestValidationWorkersExceedsMax(t *testing.T) {
+	n := 100
+	_, err := GeneratePrimes(n, false, nil)
+	if err != nil {
+		t.Errorf("GeneratePrimes(100) returned error: %v", err)
+		return
+	}
+	_, err = ParallelSegmentedSieve(n, 1025, 100, nil)
+	if err == nil {
+		t.Errorf("ParallelSegmentedSieve should return error for workers > 1024")
+	}
+	if !IsValidateError(err) {
+		t.Errorf("ParallelSegmentedSieve error should be ValidateError, got: %v", err)
+	}
+}
+
+func TestValidationSegmentSizeZero(t *testing.T) {
+	n := 100
+	_, err := SegmentedSieve(n, 0, nil)
+	if err == nil {
+		t.Errorf("SegmentedSieve should return error for segment_size = 0")
+	}
+	if !IsValidateError(err) {
+		t.Errorf("SegmentedSieve error should be ValidateError, got: %v", err)
+	}
+}
+
+func TestValidationNegativeWorkers(t *testing.T) {
+	n := 100
+	_, err := ParallelSegmentedSieve(n, -1, 100, nil)
+	if err == nil {
+		t.Errorf("ParallelSegmentedSieve should return error for workers < 0")
+	}
+	if !IsValidateError(err) {
+		t.Errorf("ParallelSegmentedSieve error should be ValidateError, got: %v", err)
+	}
+}
+
+func TestValidationNegativeSegmentSize(t *testing.T) {
+	n := 100
+	_, err := SegmentedSieve(n, -1, nil)
+	if err == nil {
+		t.Errorf("SegmentedSieve should return error for segment_size < 0")
+	}
+	if !IsValidateError(err) {
+		t.Errorf("SegmentedSieve error should be ValidateError, got: %v", err)
+	}
+}
+
+func TestValidationNegativeN(t *testing.T) {
+	_, err := SieveOfEratosthenes(-1)
+	if err == nil {
+		t.Errorf("SieveOfEratosthenes should return error for n < 0")
+	}
+	if !IsValidateError(err) {
+		t.Errorf("SieveOfEratosthenes error should be ValidateError, got: %v", err)
 	}
 }
