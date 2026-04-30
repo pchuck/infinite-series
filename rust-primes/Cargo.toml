@@ -8,10 +8,14 @@ authors = ["Prime Generator"]
 
 [dependencies]
 clap = { version = "4.4", features = ["derive"], optional = true }
+crossterm = { version = "0.28", features = ["event-stream"], optional = true }
+ratatui = { version = "0.29", default-features = false, features = ["crossterm"], optional = true }
+tokio = { version = "1", features = ["full"], optional = true }
 
 [features]
 default = ["cli"]
 cli = ["clap"]
+tui = ["crossterm", "ratatui", "tokio"]
 
 [dev-dependencies]
 criterion = { version = "0.5", features = ["html_reports"] }
@@ -35,3 +39,8 @@ required-features = ["cli"]
 [[bin]]
 name = "bench_thresholds"
 path = "scripts/benchmark_thresholds.rs"
+
+[[bin]]
+name = "primes_tui"
+path = "src/primes_tui.rs"
+required-features = ["tui"]
