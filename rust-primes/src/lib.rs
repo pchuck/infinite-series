@@ -11,9 +11,9 @@ use std::sync::Arc;
 
 mod classic;
 mod dispatcher;
-pub mod progress;
 mod error;
 mod parallel;
+pub mod progress;
 mod segmented;
 mod utils;
 

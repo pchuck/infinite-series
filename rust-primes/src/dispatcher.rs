@@ -1,9 +1,9 @@
 use crate::classic::sieve_of_eratosthenes;
 use crate::error::PrimeGenError;
 use crate::parallel::parallel_segmented_sieve;
-use crate::ProgressCallback;
 use crate::segmented::segmented_sieve;
 use crate::utils::{validate_n, validate_segment_size, validate_workers};
+use crate::ProgressCallback;
 use crate::{DEFAULT_SEGMENT_SIZE, PARALLEL_THRESHOLD};
 
 /// Auto-select algorithm based on n

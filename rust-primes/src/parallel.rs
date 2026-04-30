@@ -2,9 +2,9 @@ use std::cmp::min;
 
 use crate::classic::sieve_of_eratosthenes;
 use crate::error::PrimeGenError;
-use crate::ProgressCallback;
 use crate::segmented::sieve_segment_odd_only;
 use crate::utils::{estimate_prime_count, isqrt, validate_segment_size, validate_workers};
+use crate::ProgressCallback;
 
 /// Parallel Segmented Sieve (odd-only)
 /// Best for n >= 5,000,000
