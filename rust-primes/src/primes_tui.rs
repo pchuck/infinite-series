@@ -1,6 +1,7 @@
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
+use clap::Parser;
 use crossterm::event::{self, Event, KeyCode, KeyEventKind};
 use ratatui::backend::CrosstermBackend;
 use ratatui::layout::{Alignment, Constraint, Direction, Layout};
@@ -11,6 +12,43 @@ use ratatui::Terminal;
 
 use primes::ProgressCallback;
 use primes::{generate_primes, ProgressBar, DEFAULT_SEGMENT_SIZE, PARALLEL_THRESHOLD};
+
+/// Command-line arguments shared by the CLI and TUI binaries.
+#[derive(Parser, Debug)]
+#[command(
+    name = "primes_tui",
+    about = "Interactive prime number generator",
+    version
+)]
+struct Args {
+    /// Upper bound (exclusive) for prime generation
+    #[arg(short, long)]
+    n: Option<usize>,
+
+    /// Use parallel processing (for n >= 5M)
+    #[arg(short, long)]
+    parallel: bool,
+
+    /// Number of worker threads (0 = auto-detect)
+    #[arg(short, long)]
+    workers: Option<usize>,
+
+    /// Segment size for segmented sieve (default: 1M)
+    #[arg(long)]
+    segment: Option<usize>,
+
+    /// Show progress bar (enabled by default in TUI)
+    #[arg(short = 'P', long)]
+    progress: bool,
+
+    /// Only print count (no prime list) - TUI only
+    #[arg(long)]
+    quiet: bool,
+
+    /// Print one prime per line - TUI only
+    #[arg(short = 'l', long)]
+    lines: bool,
+}
 
 #[derive(Clone, Copy, PartialEq, Debug)]
 enum Tab {
@@ -1133,47 +1171,25 @@ fn draw_input_line(frame: &mut ratatui::Frame, main_area: &ratatui::layout::Rect
     frame.render_widget(help, footer_chunks[1]);
 }
 
-fn app_state_from_args() -> AppState {
-    let args: Vec<String> = std::env::args().collect();
-
-    if args.len() < 2 {
-        return AppState::new();
-    }
-
-    // Simple arg parsing - look for -n value
-    let mut n = 100000u64;
-    let mut parallel = false;
-
-    for i in 1..args.len() {
-        if args[i] == "-n" || args[i] == "--n" {
-            if i + 1 < args.len() {
-                n = args[i + 1].parse().unwrap_or(100000);
-            }
-        } else if args[i] == "-p" || args[i] == "--parallel" {
-            parallel = true;
-        } else if args[i] == "-P" || args[i] == "--progress" {
-            // progress is enabled by default in TUI
-        } else if args[i] == "-q" || args[i] == "--quiet" {
-            // quiet mode not applicable for TUI
-        } else if i > 0 && (args[i - 1] == "-n" || args[i - 1] == "--n") {
-            // already handled above
-        } else if args[i].parse::<u64>().is_ok() && n == 100000 {
-            // positional argument for n
-            if args.len() == 2 || (i == args.len() - 1 && i > 0) {
-                n = args[i].parse().unwrap_or(100000);
-            }
-        }
-    }
-
-    AppState {
-        n_input: n.to_string(),
-        parallel,
-        ..AppState::new()
-    }
-}
-
 fn main() {
-    let mut app = app_state_from_args();
+    let args = Args::parse();
+
+    let n: usize = args.n.unwrap_or(100_000);
+    let workers: Option<usize> = args.workers;
+    let segment_size: usize = args.segment.unwrap_or(DEFAULT_SEGMENT_SIZE);
+
+    let mut app = AppState {
+        n_input: n.to_string(),
+        workers: workers.unwrap_or_else(|| {
+            std::thread::available_parallelism()
+                .map(|p| p.get())
+                .unwrap_or(4)
+        }),
+        segment_size_input: segment_size.to_string(),
+        parallel: args.parallel,
+        show_progress: true,
+        ..AppState::new()
+    };
 
     println!("Starting Prime Generator TUI...");
     println!("Press q or Esc to quit, g/Enter to generate primes.");
@@ -1603,11 +1619,15 @@ mod tests {
     }
 
     #[test]
-    fn test_app_state_from_args_no_args() {
-        // Can't easily change env::args in tests, so just verify the function
-        // returns a valid AppState with defaults when args are present
-        let app = AppState::new();
-        assert_eq!(app.n_input, "100000");
+    fn test_args_default_n() {
+        let args = Args::parse_from(["primes_tui"]);
+        assert!(args.n.is_none());
+    }
+
+    #[test]
+    fn test_args_parses_n() {
+        let args = Args::parse_from(["primes_tui", "-n", "50000"]);
+        assert_eq!(args.n, Some(50_000));
     }
 
     #[test]

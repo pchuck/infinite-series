@@ -15,7 +15,7 @@ tokio = { version = "1", features = ["full"], optional = true }
 [features]
 default = ["cli"]
 cli = ["clap"]
-tui = ["crossterm", "ratatui", "tokio"]
+tui = ["crossterm", "clap", "ratatui", "tokio"]
 
 [dev-dependencies]
 criterion = { version = "0.5", features = ["html_reports"] }
