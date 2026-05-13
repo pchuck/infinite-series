@@ -80,6 +80,9 @@ cargo run -- -n 10000000 -P
 
 # Parallel processing
 cargo run -- -n 100000000 -p -P
+
+# One prime per line (useful for piping to other tools)
+cargo run -- -n 1000 -l
 ```
 
 ### CLI Options
@@ -92,6 +95,7 @@ cargo run -- -n 100000000 -p -P
 | `-w, --workers` | Number of worker threads (default: all available) |
 | `--segment` | Segment size for segmented sieve (default: 1M) |
 | `-q, --quiet` | Only print count (no prime list) |
+| `-l, --lines` | Print one prime per line instead of comma-separated |
 
 **Notes:**
 - Parallel processing automatically enabled for n >= 5M when `-p` flag is used

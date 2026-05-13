@@ -35,6 +35,10 @@ struct Args {
     /// Only print count (no prime list)
     #[arg(long)]
     quiet: bool,
+
+    /// Print one prime per line instead of comma-separated
+    #[arg(short = 'l', long)]
+    lines: bool,
 }
 
 fn main() {
@@ -131,11 +135,17 @@ fn main() {
             let stdout = std::io::stdout();
             let mut writer = std::io::BufWriter::new(stdout.lock());
             write_or_exit(&mut writer, format_args!("Primes less than {}:\n", n));
-            for (i, &p) in primes.iter().enumerate() {
-                if i > 0 {
-                    write_or_exit(&mut writer, format_args!(", "));
+            if args.lines {
+                for &p in primes.iter() {
+                    write_or_exit(&mut writer, format_args!("{}\n", p));
                 }
-                write_or_exit(&mut writer, format_args!("{}", p));
+            } else {
+                for (i, &p) in primes.iter().enumerate() {
+                    if i > 0 {
+                        write_or_exit(&mut writer, format_args!(", "));
+                    }
+                    write_or_exit(&mut writer, format_args!("{}", p));
+                }
             }
             write_or_exit(
                 &mut writer,

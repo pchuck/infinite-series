@@ -1,4 +1,4 @@
-.PHONY: all build release run run-release test clean help bench bench-quick bench-report tui build-tui run-tui
+.PHONY: all build release run run-release test clean help bench bench-quick bench-report tui build-tui run-tui run-release-parallel-lines
 
 # Default target
 all: build
@@ -25,6 +25,9 @@ run-release-quiet: release
 
 run-release-parallel: release
 	@./target/release/primes_cli -n $(N) -p -P --quiet
+
+run-release-parallel-lines: release
+	@./target/release/primes_cli -n 10000000 -p --lines | head -5
 
 build-tui:
 	cargo build --features tui --bin primes_tui
@@ -89,6 +92,7 @@ help:
 	@echo "  make run-release              - Run release, count primes < 1M"
 	@echo "  make run-release-quiet        - Run release, count primes < 1M (alias)"
 	@echo "  make run-release-parallel     - Run parallel + progress(10M)"
+	@echo "  make run-release-parallel-lines - Run parallel with --lines flag"
 	@echo "  make build-tui                - Build TUI binary"
 	@echo "  make run-tui                  - Run TUI frontend"
 	@echo "  make test                     - Run all tests"
