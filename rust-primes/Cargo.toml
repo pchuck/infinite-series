@@ -14,6 +14,7 @@ ratatui = { version = "0.29", default-features = false, features = ["crossterm"]
 default = ["cli"]
 cli = ["clap"]
 tui = ["crossterm", "clap", "ratatui"]
+bench-tools = []
 
 [dev-dependencies]
 criterion = { version = "0.5", features = ["html_reports"] }
@@ -37,6 +38,7 @@ required-features = ["cli"]
 [[bin]]
 name = "bench_thresholds"
 path = "scripts/benchmark_thresholds.rs"
+required-features = ["bench-tools"]
 
 [[bin]]
 name = "primes_tui"
