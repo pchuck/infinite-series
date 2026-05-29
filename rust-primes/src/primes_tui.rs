@@ -11,7 +11,10 @@ use ratatui::widgets::{Block, Borders, Gauge, List, Paragraph, Tabs};
 use ratatui::Terminal;
 
 use primes::ProgressCallback;
-use primes::{generate_primes, ProgressBar, DEFAULT_SEGMENT_SIZE, PARALLEL_THRESHOLD};
+use primes::{
+    format_number as format_number_shared, generate_primes, ProgressBar, DEFAULT_SEGMENT_SIZE,
+    PARALLEL_THRESHOLD,
+};
 
 /// Command-line arguments shared by the CLI and TUI binaries.
 #[derive(Parser, Debug)]
@@ -280,20 +283,7 @@ impl AppState {
     }
 
     fn format_number(n: usize) -> String {
-        let s = n.to_string();
-        let len = s.len();
-        if len <= 3 {
-            return s;
-        }
-
-        let mut result = String::with_capacity(len + len / 3);
-        for (i, ch) in s.chars().enumerate() {
-            if i > 0 && (len - i).is_multiple_of(3) {
-                result.push(',');
-            }
-            result.push(ch);
-        }
-        result
+        format_number_shared(n)
     }
 
     fn format_duration(d: Duration) -> String {

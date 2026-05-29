@@ -4,7 +4,8 @@ use std::sync::Arc;
 use std::time::Instant;
 
 use primes::{
-    generate_primes, ProgressBar, ProgressCallback, DEFAULT_SEGMENT_SIZE, PARALLEL_THRESHOLD,
+    format_number, generate_primes, ProgressBar, ProgressCallback, DEFAULT_SEGMENT_SIZE,
+    PARALLEL_THRESHOLD,
 };
 
 /// Prime Number Generator - High-performance CLI
@@ -185,40 +186,5 @@ fn write_or_exit<W: Write>(writer: &mut W, args: std::fmt::Arguments) {
             eprintln!("Write error: {}", e);
             std::process::exit(1);
         }
-    }
-}
-
-/// Format a number with comma separators (e.g., 1234567 -> "1,234,567")
-fn format_number(n: usize) -> String {
-    let s = n.to_string();
-    let len = s.len();
-    if len <= 3 {
-        return s;
-    }
-
-    let mut result = String::with_capacity(len + len / 3);
-    for (i, ch) in s.chars().enumerate() {
-        if i > 0 && (len - i).is_multiple_of(3) {
-            result.push(',');
-        }
-        result.push(ch);
-    }
-    result
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_format_number() {
-        assert_eq!(format_number(0), "0");
-        assert_eq!(format_number(1), "1");
-        assert_eq!(format_number(999), "999");
-        assert_eq!(format_number(1_000), "1,000");
-        assert_eq!(format_number(12_345), "12,345");
-        assert_eq!(format_number(123_456), "123,456");
-        assert_eq!(format_number(1_234_567), "1,234,567");
-        assert_eq!(format_number(1_000_000_000), "1,000,000,000");
     }
 }

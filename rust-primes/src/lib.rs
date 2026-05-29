@@ -23,7 +23,7 @@ pub use error::PrimeGenError;
 pub use parallel::parallel_segmented_sieve;
 pub use progress::{ProgressBar, PROGRESS_BAR_WIDTH, PROGRESS_UPDATE_INTERVAL_MS};
 pub use segmented::segmented_sieve;
-pub use utils::estimate_prime_count;
+pub use utils::{estimate_prime_count, format_number};
 
 /// Type alias for progress callbacks used throughout the library.
 /// Receives the number of segments processed as a progress update.

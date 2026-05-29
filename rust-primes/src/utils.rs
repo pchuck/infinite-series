@@ -73,6 +73,24 @@ pub fn validate_workers(workers: usize) -> Result<(), PrimeGenError> {
     Ok(())
 }
 
+/// Format a number with comma separators (e.g., 1234567 -> "1,234,567")
+pub fn format_number(n: usize) -> String {
+    let s = n.to_string();
+    let len = s.len();
+    if len <= 3 {
+        return s;
+    }
+
+    let mut result = String::with_capacity(len + len / 3);
+    for (i, ch) in s.chars().enumerate() {
+        if i > 0 && (len - i).is_multiple_of(3) {
+            result.push(',');
+        }
+        result.push(ch);
+    }
+    result
+}
+
 /// Validate that n does not exceed the maximum supported input size.
 pub fn validate_n(n: usize) -> Result<(), PrimeGenError> {
     if n > MAX_N {
@@ -171,5 +189,17 @@ mod tests {
         assert!(
             matches!(result, Err(PrimeGenError::InvalidInput(msg)) if msg.contains("exceeds maximum"))
         );
+    }
+
+    #[test]
+    fn test_format_number() {
+        assert_eq!(format_number(0), "0");
+        assert_eq!(format_number(1), "1");
+        assert_eq!(format_number(999), "999");
+        assert_eq!(format_number(1_000), "1,000");
+        assert_eq!(format_number(12_345), "12,345");
+        assert_eq!(format_number(123_456), "123,456");
+        assert_eq!(format_number(1_234_567), "1,234,567");
+        assert_eq!(format_number(1_000_000_000), "1,000,000,000");
     }
 }
