@@ -2,7 +2,9 @@ use std::cmp::min;
 
 use crate::classic::sieve_of_eratosthenes;
 use crate::error::PrimeGenError;
-use crate::utils::{estimate_prime_count, isqrt, validate_segment_size};
+use crate::utils::{
+    estimate_prime_count, isqrt, odd_at, validate_segment_size, value_to_odd_index,
+};
 use crate::ProgressCallback;
 
 /// Process a single segment using odd-only sieve.
@@ -53,7 +55,12 @@ pub fn sieve_segment_odd_only(
             continue;
         }
 
-        let adjusted_start = (start - odd_low) / 2;
+        debug_assert!(
+            start >= odd_low,
+            "sieve start underflow: start={start} < odd_low={odd_low} \
+             (p={p}, low={low}, high={high})"
+        );
+        let adjusted_start = value_to_odd_index(start, odd_low);
         let step = p;
         for j in (adjusted_start..seg_len).step_by(step) {
             is_prime[j] = false;
@@ -62,7 +69,7 @@ pub fn sieve_segment_odd_only(
 
     for (i, &is_p) in is_prime[..seg_len].iter().enumerate() {
         if is_p {
-            primes.push(odd_low + 2 * i);
+            primes.push(odd_at(i, odd_low));
         }
     }
 
