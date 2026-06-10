@@ -121,10 +121,23 @@ Auto-selects the best algorithm based on input size:
 rust-primes/
 ├── Cargo.toml
 ├── Makefile
-└── src/
-    ├── lib.rs              # Core implementation (Sieve algorithms)
-    ├── primes_cli.rs       # CLI entry point
-    └── progress.rs         # Progress bar
+├── README.md
+├── CHANGELOG.md
+├── src/
+│   ├── lib.rs              # Library root, public exports, constants
+│   ├── classic.rs          # Classic Sieve of Eratosthenes (odd-only)
+│   ├── segmented.rs        # Segmented Sieve (odd-only)
+│   ├── parallel.rs         # Parallel Segmented Sieve (odd-only)
+│   ├── dispatcher.rs       # Auto algorithm selection based on input size
+│   ├── progress.rs         # Thread-safe ANSI progress bar (no external deps)
+│   ├── utils.rs            # isqrt, prime count estimation, validation
+│   └── error.rs            # PrimeGenError enum
+├── tests/
+│   └── cli_integration.rs  # Integration tests for CLI binary
+├── benches/
+│   └── prime_benchmarks.rs # Criterion benchmarks
+└── scripts/
+    └── benchmark_thresholds.rs # Binary to benchmark algorithm cutoffs
 ```
 
 ## Building
