@@ -60,8 +60,6 @@ pub struct ProgressBar {
     segment_size: usize,
 }
 
-
-
 impl ProgressBar {
     /// Creates a new progress bar.
     ///

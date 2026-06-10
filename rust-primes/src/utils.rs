@@ -4,7 +4,7 @@ use crate::{MAX_N, MAX_WORKERS};
 /// Integer square root using Newton's method.
 /// Pure integer implementation — accurate for all usize values without f64 precision issues.
 #[inline]
-pub fn isqrt(n: usize) -> usize {
+pub const fn isqrt(n: usize) -> usize {
     if n == 0 {
         return 0;
     }
@@ -15,6 +15,38 @@ pub fn isqrt(n: usize) -> usize {
         y = (x + n / x) / 2;
     }
     x
+}
+
+/// Returns the odd number at the given index relative to `base_odd`.
+///
+/// `base_odd` must itself be odd. Index 0 yields `base_odd`; index 1 yields `base_odd + 2`;
+/// and so on. Inverse of [`value_to_odd_index`].
+///
+/// [`value_to_odd_index`]: crate::utils::value_to_odd_index
+#[inline]
+pub const fn odd_at(idx: usize, base_odd: usize) -> usize {
+    base_odd + 2 * idx
+}
+
+/// Returns the odd-only index of `value` relative to `base_odd`.
+///
+/// `value` must be odd and `value >= base_odd`. The result is the inverse of [`odd_at`]:
+/// `value_to_odd_index(odd_at(i, b), b) == i`.
+///
+/// # Panics
+///
+/// Debug-asserts that `value >= base_odd`.
+///
+/// [`odd_at`]: crate::utils::odd_at
+#[inline]
+pub fn value_to_odd_index(value: usize, base_odd: usize) -> usize {
+    debug_assert!(
+        value >= base_odd,
+        "value_to_odd_index: value={} < base_odd={}",
+        value,
+        base_odd
+    );
+    (value - base_odd) / 2
 }
 
 /// Estimate the number of primes up to n using the Prime Number Theorem.
@@ -71,6 +103,24 @@ pub fn validate_workers(workers: usize) -> Result<(), PrimeGenError> {
         )));
     }
     Ok(())
+}
+
+/// Format a number with comma separators (e.g., 1234567 -> "1,234,567")
+pub fn format_number(n: usize) -> String {
+    let s = n.to_string();
+    let len = s.len();
+    if len <= 3 {
+        return s;
+    }
+
+    let mut result = String::with_capacity(len + len / 3);
+    for (i, ch) in s.chars().enumerate() {
+        if i > 0 && (len - i).is_multiple_of(3) {
+            result.push(',');
+        }
+        result.push(ch);
+    }
+    result
 }
 
 /// Validate that n does not exceed the maximum supported input size.
@@ -171,5 +221,44 @@ mod tests {
         assert!(
             matches!(result, Err(PrimeGenError::InvalidInput(msg)) if msg.contains("exceeds maximum"))
         );
+    }
+
+    #[test]
+    fn test_format_number() {
+        assert_eq!(format_number(0), "0");
+        assert_eq!(format_number(1), "1");
+        assert_eq!(format_number(999), "999");
+        assert_eq!(format_number(1_000), "1,000");
+        assert_eq!(format_number(12_345), "12,345");
+        assert_eq!(format_number(123_456), "123,456");
+        assert_eq!(format_number(1_234_567), "1,234,567");
+        assert_eq!(format_number(1_000_000_000), "1,000,000,000");
+    }
+
+    #[test]
+    fn test_odd_at() {
+        assert_eq!(odd_at(0, 3), 3);
+        assert_eq!(odd_at(1, 3), 5);
+        assert_eq!(odd_at(2, 3), 7);
+        assert_eq!(odd_at(0, 11), 11);
+        assert_eq!(odd_at(3, 11), 17);
+    }
+
+    #[test]
+    fn test_value_to_odd_index() {
+        assert_eq!(value_to_odd_index(3, 3), 0);
+        assert_eq!(value_to_odd_index(5, 3), 1);
+        assert_eq!(value_to_odd_index(7, 3), 2);
+        assert_eq!(value_to_odd_index(11, 11), 0);
+        assert_eq!(value_to_odd_index(17, 11), 3);
+    }
+
+    #[test]
+    fn test_odd_helpers_inverse() {
+        for base_odd in [3_usize, 11, 99, 1_001, 999_999] {
+            for idx in [0_usize, 1, 5, 100, 10_000] {
+                assert_eq!(value_to_odd_index(odd_at(idx, base_odd), base_odd), idx);
+            }
+        }
     }
 }

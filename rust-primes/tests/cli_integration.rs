@@ -165,3 +165,22 @@ fn test_progress_with_custom_segment() {
         .success()
         .stdout("5761455\n");
 }
+
+#[test]
+fn test_lines_flag_one_prime_per_line() {
+    let mut cmd = cargo_bin_cmd!("primes_cli");
+    cmd.args(["-n", "20", "--lines"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("2\n3\n5\n7\n11\n13\n17\n19"))
+        .stdout(predicate::str::contains("Total primes: 8"));
+}
+
+#[test]
+fn test_lines_flag_no_commas() {
+    let mut cmd = cargo_bin_cmd!("primes_cli");
+    let output = cmd.args(["-n", "50", "--lines"]).output().unwrap();
+    assert!(output.status.success());
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(!stdout.contains(", "));
+}

@@ -19,9 +19,3 @@ impl std::fmt::Display for PrimeGenError {
 }
 
 impl std::error::Error for PrimeGenError {}
-
-impl From<String> for PrimeGenError {
-    fn from(msg: String) -> Self {
-        PrimeGenError::InvalidInput(msg)
-    }
-}

@@ -1,5 +1,5 @@
 use crate::error::PrimeGenError;
-use crate::utils::{estimate_prime_count, isqrt};
+use crate::utils::{estimate_prime_count, isqrt, odd_at, value_to_odd_index};
 use crate::ProgressCallback;
 
 /// Classic Sieve of Eratosthenes (odd-only)
@@ -41,7 +41,7 @@ pub fn sieve_of_eratosthenes(
     let limit = isqrt(n);
     let mut current = 3;
     while current <= limit {
-        let idx = (current - 3) / 2;
+        let idx = value_to_odd_index(current, 3);
         if idx < sieve_size && sieve[idx] {
             let Some(squared) = current.checked_mul(current) else {
                 break;
@@ -59,7 +59,7 @@ pub fn sieve_of_eratosthenes(
     primes.push(2);
     for (i, &is_p) in sieve.iter().enumerate() {
         if is_p {
-            let prime = 2 * i + 3;
+            let prime = odd_at(i, 3);
             if prime < n {
                 primes.push(prime);
             }
